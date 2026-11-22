@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="126" height="232" viewBox="3 57 126 232">
+  <!-- Vignette excerpt from the Arcana Rider–Waite–Smith deck. -->
+  <rect x="3" y="57" width="126" height="232" fill="#F6E3B9" />
+  <g transform="translate(0 35)">
+    <polygon points="1.00,318.00 32.00,168.00 131.00,259.00 131.00,318.00" fill="#191a13" />
+    <polygon points="13.00,219.00 13.00,133.00 51.00,183.00" fill="#093b66" />
+    <circle cx="81" cy="186" r="24" fill="#cd8c14" />
+    <path d="M28 167 L37 143 M42 131 L51 107 M56 95 L65 71 M70 59 L80 34" fill="none" stroke="#191a13" stroke-width="4" />
+    <circle cx="102" cy="31" r="14" fill="#191a13" />
+    <polygon points="85.00,82.00 87.35,87.76 93.56,88.22 88.80,92.24 90.29,98.28 85.00,95.00 79.71,98.28 81.20,92.24 76.44,88.22 82.65,87.76" fill="#faebc8" />
+    <path d="M85 100 L82 113" fill="none" stroke="#686323" stroke-width="1.2" />
+    <polygon points="54.00,190.00 51.00,177.00 58.00,180.00 68.00,163.00 73.00,175.00 80.00,177.00 72.00,184.00 69.00,196.00" fill="#faebc8" />
+  </g>
+</svg>

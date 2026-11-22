@@ -1,0 +1,71 @@
+{
+  "@@locale": "en",
+  "appTitle": "Tarot Squared",
+  "foolChapter": "The Fool",
+  "campaignPath": "Path",
+  "lockedPhase": "Locked",
+  "phaseLabel": "Phase {number}, {title}",
+  "lightGoal": "{count} light",
+  "@phaseLabel": {"placeholders": {"number": {"type": "int"}, "title": {"type": "String"}}},
+  "@lightGoal": {"placeholders": {"count": {"type": "int"}}},
+  "play": "Play",
+  "settings": "Settings",
+  "language": "Language",
+  "close": "Close",
+  "home": "Home",
+  "nextPuzzle": "Next puzzle",
+  "lampFaded": "Lost {light} light",
+  "@lampFaded": { "placeholders": { "light": { "type": "int" } } },
+  "lampFadingHint": "The lamp loses {light} light on moves that don’t feed it.",
+  "@lampFadingHint": { "placeholders": { "light": { "type": "int" } } },
+  "moveLimit": "{count, plural, =1{1 move} other{{count} moves}}",
+  "normalDifficulty": "Normal",
+  "hardDifficulty": "Hard",
+  "superHardDifficulty": "Super Hard",
+  "@moveLimit": {"placeholders": {"count": {"type": "int"}}},
+  "movesRemaining": "{count, plural, =0{No moves left} =1{1 move left} other{{count} moves left}}",
+  "@movesRemaining": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "wands": "Wands",
+  "cups": "Cups",
+  "swords": "Swords",
+  "coins": "Coins",
+  "wand": "Wand",
+  "cup": "Cup",
+  "sword": "Sword",
+  "coin": "Coin",
+  "clear": "Deal complete",
+  "retry": "Try again",
+  "commit": "Commit stroke",
+  "cancel": "Cancel stroke",
+  "board": "Puzzle board",
+  "moon": "The Moon",
+  "gestureGuide": "Gesture demonstration",
+  "guideAim": "The last step sets the direction. {suit} send +{light} light into the marker.",
+  "guideEnclose": "Clear every suit. Enclosing this marker with {suit} adds +{light} light.",
+  "@guideAim": {
+    "placeholders": {
+      "light": {
+        "type": "int"
+      },
+      "suit": {"type": "String"}
+    }
+  },
+  "@guideEnclose": {
+    "placeholders": {
+      "light": {
+        "type": "int"
+      },
+      "suit": {"type": "String"}
+    }
+  },
+  "guideCupRectangle": "A rectangle clears every suit inside and along its sides.",
+  "guideCoinWildcard": "The marker matches any suit at a corner. Here it completes a Coin square.",
+  "guideMatch": "Trace matching pieces of any suit to clear them.",
+  "guideSquare": "Four matching corners clear every suit in the square."
+}
