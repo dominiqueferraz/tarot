@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart' show FilledButton;
@@ -5,6 +6,7 @@ import 'package:tarot_squared/artwork.dart';
 import 'package:tarot_squared/fool/puzzle_deal.dart';
 import 'package:tarot_squared/fool/stroke.dart';
 import 'package:tarot_squared/fool/tableau_art.dart';
+import 'package:tarot_squared/l10n/generated/app_localizations.dart';
 import 'package:tarot_squared/main.dart';
 
 import 'fool_deal_test.dart'
@@ -15,9 +17,34 @@ import 'fool_deal_test.dart'
         guidedRoutes,
         lampReplay,
         lampSize,
+        marketDayCatalog,
+        marketDaySize,
+        marketSize,
         openingSize,
         tallCatalog,
         wideCatalog;
+
+final english = lookupAppLocalizations(const Locale('en'));
+final portuguese = lookupAppLocalizations(const Locale('pt'));
+final spanish = lookupAppLocalizations(const Locale('es'));
+
+String targetSemantics(
+  AppLocalizations strings,
+  String cell,
+  String name,
+  int current,
+  int quota, {
+  String? suit,
+}) {
+  final progress = strings.namedTargetProgress(
+    name,
+    strings.targetProgress(current, quota),
+  );
+  return strings.labelWithDetail(
+    cell,
+    suit == null ? progress : strings.labelWithDetail(progress, suit),
+  );
+}
 
 Future<void> dragStroke(
   WidgetTester tester,
@@ -47,22 +74,30 @@ Future<void> dragStroke(
 Future<void> openPhase(
   WidgetTester tester,
   String id, {
-  String playLabel = 'Play',
+  AppLocalizations? strings,
 }) async {
-  await tester.tap(find.text(playLabel));
+  final play = find.text((strings ?? english).play);
+  await tester.tap(play);
   await tester.pumpAndSettle();
   final phase = find.byKey(Key('phase-$id'));
   await tester.ensureVisible(phase);
   await tester.tap(phase);
   await tester.pumpAndSettle();
-  await tester.tap(find.text(playLabel));
+  await tester.ensureVisible(play);
+  await tester.tap(play);
   await tester.pumpAndSettle();
 }
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   late Artwork artwork;
-  setUpAll(() async => artwork = await Artwork.load());
+  late PuzzleCatalog mixedMarket;
+  setUpAll(() async {
+    artwork = await Artwork.load();
+    mixedMarket = marketDayCatalog(
+      await rootBundle.loadString(PuzzleCatalog.assetPath),
+    );
+  });
   testWidgets('tall and wide boards draw and accept edge traces', (
     tester,
   ) async {
@@ -89,11 +124,18 @@ void main() {
       expect(grid.width / grid.height, closeTo(size.aspectRatio, .0001));
       expect(grid.top, greaterThan(0));
       expect(grid.bottom, lessThan(640));
-      expect(find.bySemanticsLabel('$marker, Quay lamp 0/44'), findsOneWidget);
-      await dragStroke(tester, route, size: size);
-      expect(find.bySemanticsLabel('24 moves left'), findsOneWidget);
       expect(
-        find.bySemanticsLabel('$marker, Quay lamp $light/44'),
+        find.bySemanticsLabel(
+          targetSemantics(english, marker, english.quayLamp, 0, 44),
+        ),
+        findsOneWidget,
+      );
+      await dragStroke(tester, route, size: size);
+      expect(find.bySemanticsLabel(english.movesRemaining(24)), findsOneWidget);
+      expect(
+        find.bySemanticsLabel(
+          targetSemantics(english, marker, english.quayLamp, light, 44),
+        ),
         findsOneWidget,
       );
       expect(tester.takeException(), isNull);
@@ -114,14 +156,22 @@ void main() {
         initialLanguage: 'en',
       ),
     );
-    await tester.tap(find.text('Play'));
+    await tester.tap(find.text(english.play));
     await tester.pumpAndSettle();
 
     final first = find.byKey(const Key('phase-001'));
     final next = find.byKey(const Key('phase-002'));
-    expect(find.text('The Fool’s Step'), findsNothing);
-    expect(find.text('Lamplighter'), findsNothing);
-    expect(find.bySemanticsLabel('Phase 2, Lamplighter, Cups'), findsOneWidget);
+    expect(find.text(english.foolsStepTitle), findsNothing);
+    expect(find.text(english.lamplighterTitle), findsNothing);
+    expect(
+      find.bySemanticsLabel(
+        english.labelWithDetail(
+          english.phaseLabel(2, english.lamplighterTitle),
+          english.cups,
+        ),
+      ),
+      findsOneWidget,
+    );
     final firstMarker = find.byKey(const Key('phase-medallion-001'));
     final nextMarker = find.byKey(const Key('phase-medallion-002'));
     final delta = tester.getCenter(firstMarker) - tester.getCenter(nextMarker);
@@ -132,7 +182,11 @@ void main() {
     expect(tester.getSize(firstMarker), const Size.square(42));
     expect(tester.getSize(first).height, greaterThanOrEqualTo(44));
     expect(tester.getRect(first).overlaps(tester.getRect(next)), isFalse);
-    for (final (id, number) in [('001', '1'), ('002', '2'), ('003', '3')]) {
+    for (final (id, number) in [
+      ('001', english.puzzleIndex(1)),
+      ('002', english.puzzleIndex(2)),
+      ('003', english.puzzleIndex(3)),
+    ]) {
       final marker = find.byKey(Key('phase-medallion-$id'));
       final badge = tester.getRect(find.byKey(Key('phase-suit-$id')));
       final markerRect = tester.getRect(marker);
@@ -145,42 +199,53 @@ void main() {
     }
     await tester.tap(next);
     await tester.pumpAndSettle();
-    expect(find.text('Lamplighter'), findsOneWidget);
+    expect(find.text(english.lamplighterTitle), findsOneWidget);
     expect(find.byKey(const Key('phase-illustration')), findsOneWidget);
-    expect(find.text('Fuel the quay lamp'), findsOneWidget);
-    expect(find.text('Cups · 44 light'), findsOneWidget);
-    expect(find.text('22 moves'), findsOneWidget);
-    expect(find.text('Normal'), findsOneWidget);
+    expect(find.text(english.lamplighterObjective), findsOneWidget);
+    expect(
+      find.text(english.suitAndQuota(english.cups, english.lightGoal(44))),
+      findsOneWidget,
+    );
+    expect(find.text(english.moveLimit(22)), findsOneWidget);
+    expect(find.text(english.normalDifficulty), findsOneWidget);
     final locked = tester.widget<FilledButton>(
-      find.widgetWithText(FilledButton, 'Locked'),
+      find.widgetWithText(FilledButton, english.lockedPhase),
     );
     expect(locked.onPressed, isNull);
-    await tester.tap(find.byTooltip('Close'));
+    await tester.tap(find.byTooltip(english.close));
     await tester.pumpAndSettle();
 
     await tester.tap(find.byKey(const Key('phase-003')));
     await tester.pumpAndSettle();
-    expect(find.text('High Water'), findsOneWidget);
-    expect(find.text('Cups · 32 units of water'), findsOneWidget);
+    expect(find.text(english.highWaterTitle), findsOneWidget);
+    expect(
+      find.text(english.suitAndQuota(english.cups, english.waterGoal(32))),
+      findsOneWidget,
+    );
     expect(
       tester
-          .widget<FilledButton>(find.widgetWithText(FilledButton, 'Locked'))
+          .widget<FilledButton>(
+            find.widgetWithText(FilledButton, english.lockedPhase),
+          )
           .onPressed,
       isNull,
     );
-    await tester.tap(find.byTooltip('Close'));
+    await tester.tap(find.byTooltip(english.close));
     await tester.pumpAndSettle();
 
     await tester.tap(first);
     await tester.pumpAndSettle();
-    expect(find.text('The Fool’s Step'), findsOneWidget);
-    expect(find.text('Wands · 30 light'), findsOneWidget);
-    await tester.tap(find.text('Play'));
+    expect(find.text(english.foolsStepTitle), findsOneWidget);
+    expect(
+      find.text(english.suitAndQuota(english.wands, english.lightGoal(30))),
+      findsOneWidget,
+    );
+    await tester.tap(find.text(english.play));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('fool-grid')), findsOneWidget);
-    expect(find.text('1'), findsOneWidget);
-    expect(find.bySemanticsLabel('Puzzle 1'), findsOneWidget);
-    await tester.tap(find.byTooltip('Path'));
+    expect(find.text(english.puzzleIndex(1)), findsOneWidget);
+    expect(find.bySemanticsLabel(english.puzzleNumber(1)), findsOneWidget);
+    await tester.tap(find.byTooltip(english.campaignPath));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('campaign-path')), findsOneWidget);
   });
@@ -197,11 +262,11 @@ void main() {
       ),
     );
     await openPhase(tester, '002');
-    expect(find.text('2'), findsOneWidget);
-    expect(find.bySemanticsLabel('Puzzle 2'), findsOneWidget);
-    expect(find.text('Fuel the quay lamp'), findsOneWidget);
-    expect(find.bySemanticsLabel('Cups'), findsOneWidget);
-    expect(find.bySemanticsLabel('Wands'), findsNothing);
+    expect(find.text(english.puzzleIndex(2)), findsOneWidget);
+    expect(find.bySemanticsLabel(english.puzzleNumber(2)), findsOneWidget);
+    expect(find.text(english.lamplighterObjective), findsOneWidget);
+    expect(find.bySemanticsLabel(english.cups), findsOneWidget);
+    expect(find.bySemanticsLabel(english.wands), findsNothing);
     final paint = find.byWidgetPredicate(
       (widget) => widget is CustomPaint && widget.painter is TableauPainter,
     );
@@ -213,7 +278,7 @@ void main() {
     double sceneLight() =>
         (tester.widget<CustomPaint>(quay).painter! as QuayPainter).light;
     final hint = find.text(
-      'The lamp loses 1 light on moves that don’t feed it.',
+      english.targetFadingHint(english.quayLamp, english.lightGoal(1)),
     );
 
     expect(sceneLight(), 0);
@@ -223,17 +288,20 @@ void main() {
     expect(sceneLight(), inExclusiveRange(0, 4 / 44));
     await tester.pumpAndSettle();
     expect(sceneLight(), 4 / 44);
-    expect(painter().light, 4 / 44);
+    expect(painter().progress[lampSize.parseCell('C3')], 4 / 44);
     expect(painter().fadeProgress, 1);
     await dragStroke(tester, lampReplay[1].$1, size: lampSize, settle: false);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 90));
     expect(painter().fadeProgress, inExclusiveRange(0, 1));
-    expect(painter().light, inExclusiveRange(3 / 44, 4 / 44));
-    expect(sceneLight(), painter().light);
+    expect(
+      painter().progress[lampSize.parseCell('C3')],
+      inExclusiveRange(3 / 44, 4 / 44),
+    );
+    expect(sceneLight(), painter().progress[lampSize.parseCell('C3')]);
     await tester.pumpAndSettle();
     expect(painter().fadeProgress, 1);
-    expect(painter().light, 3 / 44);
+    expect(painter().progress[lampSize.parseCell('C3')], 3 / 44);
     expect(sceneLight(), 3 / 44);
     expect(hint, findsOneWidget);
     expect(find.text('−1'), findsNothing);
@@ -251,32 +319,34 @@ void main() {
         saveLanguage: (code) async => saved.add(code),
       ),
     );
-    expect(find.bySemanticsLabel('Tarot Squared'), findsWidgets);
-    expect(find.text('THE MOON'), findsOneWidget);
-    await tester.tap(find.byTooltip('Settings'));
+    expect(find.bySemanticsLabel(english.appTitle), findsWidgets);
+    expect(find.text(english.moon.toUpperCase()), findsOneWidget);
+    await tester.tap(find.byTooltip(english.settings));
     await tester.pumpAndSettle();
-    expect(find.text('Language'), findsOneWidget);
+    expect(find.text(english.language), findsOneWidget);
     await tester.tap(find.text('Português'));
     await tester.pumpAndSettle();
-    expect(find.text('Jogar'), findsOneWidget);
-    expect(find.text('A LUA'), findsOneWidget);
-    await tester.tap(find.byTooltip('Configurações'));
+    expect(find.text(portuguese.play), findsOneWidget);
+    expect(find.text(portuguese.moon.toUpperCase()), findsOneWidget);
+    await tester.tap(find.byTooltip(portuguese.settings));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Español'));
     await tester.pumpAndSettle();
-    expect(find.text('Jugar'), findsOneWidget);
+    expect(find.text(spanish.play), findsOneWidget);
     expect(saved, ['pt', 'es']);
-    await openPhase(tester, '001', playLabel: 'Jugar');
-    expect(find.text('1'), findsOneWidget);
-    expect(find.bySemanticsLabel('Desafío 1'), findsOneWidget);
-    expect(find.text('El paso del Loco'), findsWidgets);
-    expect(find.text('Enciende la marca del sendero'), findsOneWidget);
-    expect(find.bySemanticsLabel('E4, Marca del sendero 0/30'), findsOneWidget);
+    await openPhase(tester, '001', strings: spanish);
+    expect(find.text(spanish.puzzleIndex(1)), findsOneWidget);
+    expect(find.bySemanticsLabel(spanish.puzzleNumber(1)), findsOneWidget);
+    expect(find.text(spanish.foolsStepTitle), findsWidgets);
+    expect(find.text(spanish.foolsStepObjective), findsOneWidget);
     expect(
-      find.text('Une piezas del mismo palo para eliminarlas.'),
+      find.bySemanticsLabel(
+        targetSemantics(spanish, 'E4', spanish.trailMarker, 0, 30),
+      ),
       findsOneWidget,
     );
-    expect(find.bySemanticsLabel('Bastos'), findsOneWidget);
+    expect(find.text(spanish.guideMatch), findsOneWidget);
+    expect(find.bySemanticsLabel(spanish.wands), findsOneWidget);
     expect(find.text('Pista'), findsNothing);
     expect(find.text('Reiniciar'), findsNothing);
   });
@@ -290,11 +360,134 @@ void main() {
         unlockedPuzzle: '004',
       ),
     );
-    await openPhase(tester, '004', playLabel: 'Jogar');
-    expect(find.text('A Amarração'), findsOneWidget);
-    expect(find.text('Corte as duas amarras'), findsOneWidget);
-    expect(find.bySemanticsLabel('C3, Amarra da proa 0/24'), findsOneWidget);
-    expect(find.bySemanticsLabel('E5, Amarra da popa 0/24'), findsOneWidget);
+    await openPhase(tester, '004', strings: portuguese);
+    expect(find.text(portuguese.mooringTitle), findsOneWidget);
+    expect(find.text(portuguese.mooringObjective), findsOneWidget);
+    expect(
+      find.bySemanticsLabel(
+        targetSemantics(portuguese, 'C3', portuguese.bowCord, 0, 24),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.bySemanticsLabel(
+        targetSemantics(portuguese, 'E5', portuguese.sternCord, 0, 24),
+      ),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('the market fits a compact phone and names both pans', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(360, 640);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(
+      TarotSquaredApp(
+        catalog: catalog,
+        artwork: artwork,
+        initialLanguage: 'pt',
+        unlockedPuzzle: '005',
+      ),
+    );
+    await openPhase(tester, '005', strings: portuguese);
+    expect(find.text(portuguese.ferrymansFareTitle), findsOneWidget);
+    expect(find.text(portuguese.ferrymansFareObjective), findsOneWidget);
+    final bounds = tester.getRect(find.byKey(const Key('fool-grid')));
+    expect(bounds.width, closeTo(bounds.height, .01));
+    expect(bounds.bottom, lessThan(640));
+    await dragStroke(tester, 'D4 E4', size: marketSize);
+    expect(
+      find.bySemanticsLabel(
+        targetSemantics(portuguese, 'C4', portuguese.westPan, 0, 24),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.bySemanticsLabel(
+        targetSemantics(portuguese, 'F4', portuguese.eastPan, 2, 24),
+      ),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('a mixed market previews and announces all three targets', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(360, 640);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(
+      TarotSquaredApp(
+        catalog: mixedMarket,
+        artwork: artwork,
+        initialLanguage: 'es',
+      ),
+    );
+    final play = find.text(spanish.play);
+    await tester.tap(play);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('phase-006')));
+    await tester.pumpAndSettle();
+    expect(
+      find.text(spanish.suitAndQuota(spanish.wands, spanish.lightGoal(6))),
+      findsOneWidget,
+    );
+    expect(
+      find.text(spanish.suitAndQuota(spanish.cups, spanish.waterGoal(6))),
+      findsOneWidget,
+    );
+    expect(
+      find.text(spanish.suitAndQuota(spanish.coins, spanish.coinAmount(6))),
+      findsOneWidget,
+    );
+    await tester.ensureVisible(play);
+    await tester.tap(play);
+    await tester.pumpAndSettle();
+    await dragStroke(tester, 'E3 D3', size: marketDaySize);
+    await dragStroke(tester, 'D3 E3', size: marketDaySize);
+    expect(
+      find.bySemanticsLabel(
+        targetSemantics(
+          spanish,
+          'C3',
+          spanish.marketLamp,
+          2,
+          6,
+          suit: spanish.wands,
+        ),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.bySemanticsLabel(
+        targetSemantics(
+          spanish,
+          'F3',
+          spanish.marketInlet,
+          2,
+          6,
+          suit: spanish.cups,
+        ),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.bySemanticsLabel(
+        targetSemantics(
+          spanish,
+          'C6',
+          spanish.farePan,
+          0,
+          6,
+          suit: spanish.coins,
+        ),
+      ),
+      findsOneWidget,
+    );
   });
 
   testWidgets('touch traces teach and only offer retry after failure', (
@@ -312,20 +505,17 @@ void main() {
       ),
     );
     await openPhase(tester, '001');
-    expect(find.text('25'), findsOneWidget);
-    expect(find.text('Light the trail marker'), findsOneWidget);
+    expect(find.text(english.puzzleIndex(25)), findsOneWidget);
+    expect(find.text(english.foolsStepObjective), findsOneWidget);
     final helpBubble = find.byKey(const Key('fool-help-bubble'));
     expect(helpBubble, findsOneWidget);
-    expect(
-      find.text('Trace matching pieces of any suit to clear them.'),
-      findsOneWidget,
-    );
+    expect(find.text(english.guideMatch), findsOneWidget);
     final headerRule = tester.getRect(
       find.byKey(const Key('fool-header-rule')),
     );
     expect(headerRule.left, 0);
     expect(headerRule.right, 360);
-    final suit = find.bySemanticsLabel('Wands');
+    final suit = find.bySemanticsLabel(english.wands);
     expect(suit, findsOneWidget);
     final ridge = tester.getRect(find.byKey(const Key('fool-ridge')));
     final suitPanel = tester.getRect(find.byKey(const Key('fool-suit-panel')));
@@ -349,12 +539,12 @@ void main() {
       inInclusiveRange(ridge.top, ridge.bottom),
     );
     expect(find.text('Moves'), findsNothing);
-    final moves = find.bySemanticsLabel('25 moves left');
+    final moves = find.bySemanticsLabel(english.movesRemaining(25));
     expect(tester.getBottomLeft(moves).dy, lessThan(ridge.top));
     expect(tester.getSize(moves), const Size.square(50));
-    final headerTop = tester.getTopLeft(find.text('The Fool’s Step')).dy;
+    final headerTop = tester.getTopLeft(find.text(english.foolsStepTitle)).dy;
     final headerBottom = tester
-        .getBottomLeft(find.text('Light the trail marker'))
+        .getBottomLeft(find.text(english.foolsStepObjective))
         .dy;
     expect(
       tester.getCenter(moves).dy,
@@ -364,59 +554,58 @@ void main() {
       tester.getCenter(moves).dx,
       moreOrLessEquals(tester.getCenter(suit).dx),
     );
-    final markerValue = find.byKey(const Key('trail-marker-value'));
+    final markerValue = find.byKey(const Key('target-value-E4'));
     final ridgePaint = find.byWidgetPredicate(
       (widget) => widget is CustomPaint && widget.painter is RidgePainter,
     );
     double ridgeLight() =>
         (tester.widget<CustomPaint>(ridgePaint).painter! as RidgePainter).light;
     expect(ridgeLight(), 0);
-    expect(tester.widget<Text>(markerValue).data, '0/30');
-    expect(find.text('0/30'), findsOneWidget);
+    expect(
+      tester.widget<Text>(markerValue).data,
+      english.targetProgress(0, 30),
+    );
+    expect(find.text(english.targetProgress(0, 30)), findsOneWidget);
     expect(grid.top - ridge.bottom, greaterThanOrEqualTo(10));
     await dragStroke(tester, 'A2 B2');
-    expect(find.text('25'), findsOneWidget);
-    await dragStroke(
-      tester,
-      'C1 D1 C1 C2',
-    );
+    expect(find.text(english.puzzleIndex(25)), findsOneWidget);
+    await dragStroke(tester, 'C1 D1 C1 C2');
     for (var step = 1; step < guidedRoutes.length; step++) {
       expect(helpBubble, findsOneWidget);
       if (step == 1) {
-        expect(
-          find.text('Four matching corners clear every suit in the square.'),
-          findsOneWidget,
-        );
+        expect(find.text(english.guideSquare), findsOneWidget);
       } else if (step == 2) {
-        expect(
-          find.text(
-            'A rectangle clears every suit inside and along its sides.',
-          ),
-          findsOneWidget,
-        );
+        expect(find.text(english.guideRectangle), findsOneWidget);
       } else if (step == 3) {
         expect(
           find.text(
-            'Clear every suit. Enclosing this marker with Wands adds +4 light.',
+            english.guideWithGains(
+              english.guideEnclose(english.wands),
+              english.targetGain(english.trailMarker, english.lightGoal(4)),
+            ),
           ),
           findsOneWidget,
         );
       } else if (step == 4) {
-        expect(tester.widget<Text>(markerValue).data, '4/30');
+        expect(
+          tester.widget<Text>(markerValue).data,
+          english.targetProgress(4, 30),
+        );
         expect(
           find.text(
-            'The last step sets the direction. Wands send +2 light into the marker.',
+            english.guideWithGains(
+              english.guideAim(english.wands),
+              english.targetGain(english.trailMarker, english.lightGoal(2)),
+            ),
           ),
           findsOneWidget,
         );
       } else if (step == 5) {
-        expect(tester.widget<Text>(markerValue).data, '6/30');
         expect(
-          find.text(
-            'The marker matches any suit at a corner. Here it completes a Coin square.',
-          ),
-          findsOneWidget,
+          tester.widget<Text>(markerValue).data,
+          english.targetProgress(6, 30),
         );
+        expect(find.text(english.guideWildcard), findsOneWidget);
       }
       await dragStroke(tester, guidedRoutes[step], settle: step != 3);
       if (step == 3) {
@@ -429,9 +618,12 @@ void main() {
     }
     expect(helpBubble, findsNothing);
     expect(suit, findsOneWidget);
-    expect(tester.widget<Text>(markerValue).data, '6/30');
-    expect(find.text('19'), findsOneWidget);
-    expect(find.text('Try again'), findsNothing);
+    expect(
+      tester.widget<Text>(markerValue).data,
+      english.targetProgress(6, 30),
+    );
+    expect(find.text(english.puzzleIndex(19)), findsOneWidget);
+    expect(find.text(english.retry), findsNothing);
     expect(find.text('Hint'), findsNothing);
     expect(find.text('Restart'), findsNothing);
 
@@ -444,18 +636,21 @@ void main() {
       final setup = [
         for (var cell = 0; cell < size.cellCount; cell++)
           for (final next in size.neighbours(cell))
-            if (replay.inspect([cell, next])?.light == 0) [cell, next],
+            if (replay.inspect([cell, next])?.totalGain == 0) [cell, next],
       ].first;
       replay.play(setup);
       final route = setup.map(size.cellLabel).join(' ');
       await dragStroke(tester, route);
     }
     expect(replay.lost, isTrue);
-    expect(find.text('0'), findsOneWidget);
-    await tester.tap(find.text('Try again'));
+    expect(find.text(english.puzzleIndex(0)), findsOneWidget);
+    await tester.tap(find.text(english.retry));
     await tester.pumpAndSettle();
-    expect(find.text('25'), findsOneWidget);
-    expect(tester.widget<Text>(markerValue).data, '0/30');
-    expect(find.text('Try again'), findsNothing);
+    expect(find.text(english.puzzleIndex(25)), findsOneWidget);
+    expect(
+      tester.widget<Text>(markerValue).data,
+      english.targetProgress(0, 30),
+    );
+    expect(find.text(english.retry), findsNothing);
   });
 }

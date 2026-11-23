@@ -228,7 +228,7 @@ class _CampaignPageState extends State<CampaignPage> {
                     child: CustomPaint(
                       painter: _DeckFragment(
                         widget.artwork,
-                        puzzle.scoringSuit == Suit.cup
+                        puzzle.scoringSuits.contains(Suit.cup)
                             ? Art.cupsFragment
                             : Art.foolFragment,
                       ),
@@ -264,8 +264,10 @@ class _CampaignPageState extends State<CampaignPage> {
       height: CampaignStyle.phaseTapHeight,
       child: Semantics(
         sortKey: OrdinalSortKey(index.toDouble()),
-        label:
-            '${strings.phaseLabel(index + 1, title)}, ${suitName(strings, puzzle.scoringSuit)}',
+        label: strings.labelWithDetail(
+          strings.phaseLabel(index + 1, title),
+          suitNames(strings, puzzle.scoringSuits),
+        ),
         value: locked ? strings.lockedPhase : null,
         button: true,
         onTap: open,
@@ -320,7 +322,7 @@ class _CampaignPageState extends State<CampaignPage> {
             child: FittedBox(
               fit: BoxFit.scaleDown,
               child: Text(
-                '$number',
+                AppLocalizations.of(context)!.puzzleIndex(number),
                 style: displayType(CampaignStyle.phaseNumberSize)
                     .copyWith(color: locked ? mutedInk : paleGold),
               ),
@@ -357,7 +359,7 @@ class _CampaignPageState extends State<CampaignPage> {
             border: Border.all(color: border),
           ),
           child: CustomPaint(
-            painter: SuitPainter(widget.artwork, puzzle.scoringSuit),
+            painter: SuitPainter(widget.artwork, puzzle.scoringSuits),
           ),
         ),
       ),

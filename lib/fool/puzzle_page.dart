@@ -104,12 +104,12 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
       (_turn == null ? _deal.progressAt(cell) : 0);
 
   double get _fadeProgress =>
-      _turn == null || _deal.faded == 0 || _reducedMotion
+      _turn == null || _deal.faded.isEmpty || _reducedMotion
       ? 1
       : (_fallMotion.value / BoardMotion.fadeCueFraction).clamp(0.0, 1.0);
 
   double _fixtureProgress(int cell) {
-    final fade = _turn == null ? 0 : _deal.fadedAt(cell);
+    final fade = _turn == null ? 0 : _deal.faded[cell] ?? 0;
     return (_displayProgress(cell) -
             fade * Curves.easeOut.transform(_fadeProgress)) /
         _puzzle.targets[cell]!.quota;
@@ -369,27 +369,51 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
                   contentWidth >= BoardStyle.wideBreakpoint &&
                   box.maxWidth > box.maxHeight;
               final scaler = MediaQuery.textScalerOf(context);
-              final headerSpace = wide ? 58 : 132 * scaler.scale(1).clamp(1, 2);
-              final availableHeight =
-                  box.maxHeight - headerSpace - BoardStyle.spacing;
+              final headerSpace = wide
+                  ? 58.0
+                  : 132 * scaler.scale(1).clamp(1, 2);
               final maxWidth = wide
                   ? contentWidth -
                         BoardStyle.sidebarWidth -
                         BoardStyle.sidebarGap
                   : math.min(BoardStyle.maxWidth, contentWidth);
-              final size = math.min(
-                maxWidth,
-                availableHeight /
-                    (1 / _size.aspectRatio + 1 / SceneLayout.ratio),
-              );
-              final width = size.clamp(128.0, contentWidth).toDouble();
-              final panelHeight =
+              final tableauRatio =
+                  1 / _size.aspectRatio + 1 / SceneLayout.ratio;
+              double widthFor(double height) => math
+                  .min(maxWidth, height / tableauRatio)
+                  .clamp(128.0, contentWidth)
+                  .toDouble();
+              double panelHeightFor(double width) =>
                   (width - BoardStyle.spacing - BoardStyle.frameWidth * 4) /
                   (SceneLayout.ratio + 1);
+              final nominalHeight =
+                  box.maxHeight - headerSpace - BoardStyle.spacing;
+              final headingWidth = widthFor(nominalHeight);
+              final suitWidth =
+                  panelHeightFor(headingWidth) + BoardStyle.frameWidth * 2;
+              final words = puzzleWords(strings, _puzzle.textKey);
+              final availableHeight = wide
+                  ? nominalHeight
+                  : math.min(
+                      nominalHeight,
+                      box.maxHeight -
+                          kMinInteractiveDimension -
+                          10 -
+                          BoardStyle.spacing * 2 -
+                          BoardStyle.frameWidth * 4 -
+                          _headingHeight(
+                            context,
+                            words,
+                            headingWidth - suitWidth - 12,
+                          ),
+                    );
+              final width = widthFor(availableHeight);
+              final panelHeight = panelHeightFor(width);
               final heading = _heading(
                 strings,
+                words,
                 wide: wide,
-                suitWidth: panelHeight + BoardStyle.frameWidth * 2,
+                suitWidth: suitWidth,
               );
               final boardWidth = math.min(
                 width - BoardStyle.frameWidth * 2,
@@ -427,7 +451,7 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
                           )
                         : Center(
                             child: SizedBox(
-                              width: width,
+                              width: headingWidth,
                               child: Column(
                                 children: [
                                   heading,
@@ -461,27 +485,40 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
     AppLocalizations strings,
     GuideCue cue,
     Stroke stroke,
-  ) => switch (cue) {
-    GuideCue.match => strings.guideMatch,
-    GuideCue.square => strings.guideSquare,
-    GuideCue.rectangle => strings.guideCupRectangle,
-    GuideCue.enclose => strings.guideEnclose(
-      stroke.light,
-      suitName(strings, _puzzle.scoringSuit),
-    ),
-    GuideCue.aim => strings.guideAim(
-      stroke.light,
-      suitName(strings, _puzzle.scoringSuit),
-    ),
-    GuideCue.wildcard => strings.guideCoinWildcard,
-    GuideCue.linkSquare => strings.guideLinkSquare(
-      suitName(strings, _puzzle.scoringSuit),
-    ),
-    GuideCue.linkedAim => strings.guideLinkedAim(
-      suitName(strings, _puzzle.scoringSuit),
-      stroke.gains.values.first,
-    ),
-  };
+  ) {
+    final suit = suitName(strings, stroke.suit);
+    final instruction = switch (cue) {
+      GuideCue.match => strings.guideMatch,
+      GuideCue.square => strings.guideSquare,
+      GuideCue.rectangle => strings.guideRectangle,
+      GuideCue.enclose => strings.guideEnclose(suit),
+      GuideCue.aim => strings.guideAim(suit),
+      GuideCue.wildcard => strings.guideWildcard,
+      GuideCue.linkSquare => strings.guideLinkSquare(
+        suit,
+        stroke.linkedTargets.length,
+      ),
+      GuideCue.linkedAim => strings.guideLinkedAim(
+        suit,
+        stroke.gains.values.first,
+      ),
+    };
+    if ((cue != GuideCue.aim && cue != GuideCue.enclose) ||
+        stroke.gains.isEmpty) {
+      return instruction;
+    }
+    final gains = stroke.gains.entries.map((entry) {
+      final target = _puzzle.targets[entry.key]!;
+      return strings.targetGain(
+        targetName(strings, target.label),
+        targetAmount(strings, target.kind, entry.value),
+      );
+    });
+    return strings.guideWithGains(
+      instruction,
+      gains.reduce(strings.labelWithDetail),
+    );
+  }
 
   Widget _navigation(AppLocalizations strings, EdgeInsets sides) {
     final link = _visibleLink;
@@ -516,7 +553,7 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
                         4,
                       ),
                       child: Text(
-                        '${widget.phaseNumber}',
+                        strings.puzzleIndex(widget.phaseNumber),
                         semanticsLabel: strings.puzzleNumber(
                           widget.phaseNumber,
                         ),
@@ -547,7 +584,10 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
                       vertical: 4,
                     ),
                     child: Semantics(
-                      label: '${_deal.moves + 1}/${_deal.guideLength}',
+                      label: strings.guideStepProgress(
+                        _deal.moves + 1,
+                        _deal.guideLength,
+                      ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
@@ -579,12 +619,40 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
     );
   }
 
+  TextStyle get _objectiveStyle =>
+      labelType.copyWith(fontSize: 14, color: mutedInk);
+
+  double _headingHeight(
+    BuildContext context,
+    ({String title, String objective}) words,
+    double width,
+  ) {
+    final inheritedStyle = DefaultTextStyle.of(context).style;
+    final painter = TextPainter(
+      textDirection: Directionality.of(context),
+      textScaler: MediaQuery.textScalerOf(context),
+      locale: Localizations.maybeLocaleOf(context),
+    );
+    double measure(String text, TextStyle style) {
+      painter.text = TextSpan(text: text, style: inheritedStyle.merge(style));
+      painter.layout(maxWidth: width);
+      return painter.height;
+    }
+
+    final height =
+        measure(words.title, displayType(38)) +
+        5 +
+        measure(words.objective, _objectiveStyle);
+    painter.dispose();
+    return math.max(height, BoardStyle.movesDiameter);
+  }
+
   Widget _heading(
-    AppLocalizations strings, {
+    AppLocalizations strings,
+    ({String title, String objective}) words, {
     required bool wide,
     required double suitWidth,
   }) {
-    final words = puzzleWords(strings, _puzzle.textKey);
     return Row(
       children: [
         Expanded(
@@ -596,10 +664,7 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
                 child: Text(words.title, style: displayType(wide ? 32 : 38)),
               ),
               const SizedBox(height: 5),
-              Text(
-                words.objective,
-                style: labelType.copyWith(fontSize: 14, color: mutedInk),
-              ),
+              Text(words.objective, style: _objectiveStyle),
             ],
           ),
         ),
@@ -632,7 +697,7 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
               child: FittedBox(
                 fit: BoxFit.scaleDown,
                 child: Text(
-                  '${_deal.movesLeft}',
+                  strings.puzzleIndex(_deal.movesLeft),
                   style: labelType.copyWith(
                     color: paper,
                     fontSize: 21,
@@ -658,6 +723,8 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
     final pitch = boardWidth / _size.columns;
     final guide = _demonstration;
     final lesson = _deal.guide;
+    final faded = _deal.faded.entries.firstOrNull;
+    final fadedTarget = faded == null ? null : _puzzle.targets[faded.key]!;
     return SizedBox(
       width: width,
       child: Column(
@@ -673,6 +740,7 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
                       PuzzleScene.quay => const Key('quay-scene'),
                       PuzzleScene.mill => const Key('mill-scene'),
                       PuzzleScene.dock => const Key('dock-scene'),
+                      PuzzleScene.market => const Key('market-scene'),
                     },
                     height: panelHeight,
                     child: AnimatedBuilder(
@@ -683,10 +751,11 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
                             : _sceneMotion.value;
                         return PuzzleIllustration(
                           artwork: widget.artwork,
-                          scene: _puzzle.scene,
-                          progress: _puzzle.targets.keys
-                              .map(_sceneProgress)
-                              .toList(),
+                          puzzle: _puzzle,
+                          progress: {
+                            for (final cell in _puzzle.targets.keys)
+                              cell: _sceneProgress(cell),
+                          },
                           motion: motion,
                         );
                       },
@@ -696,7 +765,7 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
               ),
               const SizedBox(width: BoardStyle.spacing),
               Semantics(
-                label: suitName(strings, _puzzle.scoringSuit),
+                label: suitNames(strings, _puzzle.scoringSuits),
                 image: true,
                 child: _frame(
                   SizedBox.square(
@@ -710,7 +779,7 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
                         child: CustomPaint(
                           painter: SuitPainter(
                             widget.artwork,
-                            _puzzle.scoringSuit,
+                            _puzzle.scoringSuits,
                           ),
                         ),
                       ),
@@ -761,6 +830,7 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
                                   cell: _fixtureProgress(cell),
                               },
                               fadeProgress: _fadeProgress,
+                              fadedCells: _deal.faded.keys,
                               path: _path,
                               preview: _preview,
                               demonstration: demonstration,
@@ -780,7 +850,7 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
                     ),
                   ),
                   for (final cell in _puzzle.targets.keys)
-                    _markerValue(cell, pitch),
+                    _targetValue(strings, cell, pitch),
                   if (guide != null && lesson != null && _path.isEmpty)
                     Positioned.fill(
                       child: GuideHint(
@@ -794,14 +864,22 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
                       ),
                     ),
                   if (_turn == null &&
-                      _deal.faded > 0 &&
+                      faded != null &&
+                      fadedTarget != null &&
                       _path.isEmpty &&
                       !_showResult)
                     Positioned.fill(
                       child: GuideHint(
                         pitch: pitch,
-                        placement: _fadeHintPlacement,
-                        explanation: strings.lampFadingHint(_puzzle.fading),
+                        placement: _fadeHintPlacement(faded.key),
+                        explanation: strings.targetFadingHint(
+                          targetName(strings, fadedTarget.label),
+                          targetAmount(
+                            strings,
+                            fadedTarget.kind,
+                            fadedTarget.fading,
+                          ),
+                        ),
                       ),
                     ),
                   if (showResult) BlockSemantics(child: _result(strings)),
@@ -814,7 +892,7 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
     );
   }
 
-  Widget _markerValue(int cell, double pitch) {
+  Widget _targetValue(AppLocalizations strings, int cell, double pitch) {
     return Positioned(
       left: _size.columnOf(cell) * pitch,
       top: (_size.rowOf(cell) + .73) * pitch,
@@ -827,15 +905,11 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
               child: Padding(
                 padding: EdgeInsets.symmetric(horizontal: pitch * .07),
                 child: Text(
-                  '${_displayProgress(cell)}/${_puzzle.targets[cell]!.quota}',
-                  key: switch (_puzzle.scene) {
-                    PuzzleScene.ridge => const Key('trail-marker-value'),
-                    PuzzleScene.quay => const Key('quay-lamp-value'),
-                    PuzzleScene.mill => const Key('mill-inlet-value'),
-                    PuzzleScene.dock => Key(
-                      'cord-value-${_size.cellLabel(cell)}',
-                    ),
-                  },
+                  strings.targetProgress(
+                    _displayProgress(cell),
+                    _puzzle.targets[cell]!.quota,
+                  ),
+                  key: Key('target-value-${_size.cellLabel(cell)}'),
                   textScaler: TextScaler.noScaling,
                   style: TextStyle(
                     color: paper,
@@ -851,19 +925,11 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
     );
   }
 
-  HintPlacement get _fadeHintPlacement {
-    final row = _size.rowOf(_puzzle.marker);
+  HintPlacement _fadeHintPlacement(int cell) {
+    final row = _size.rowOf(cell);
     return row < _size.rows - 2
-        ? (
-            x: _size.columnOf(_puzzle.marker) + .5,
-            y: row + 1.04,
-            tail: HintTail.top,
-          )
-        : (
-            x: _size.columnOf(_puzzle.marker) + .5,
-            y: row + .10,
-            tail: HintTail.bottom,
-          );
+        ? (x: _size.columnOf(cell) + .5, y: row + 1.04, tail: HintTail.top)
+        : (x: _size.columnOf(cell) + .5, y: row + .10, tail: HintTail.bottom);
   }
 
   Widget _frame(Widget child) => DecoratedBox(
@@ -892,7 +958,7 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
       explicitChildNodes: true,
       label: _demonstration == null
           ? strings.board
-          : '${strings.board}, ${strings.gestureGuide}',
+          : strings.labelWithDetail(strings.board, strings.gestureGuide),
       child: Stack(
         children: [
           for (var cell = 0; cell < _size.cellCount; cell++)
@@ -904,9 +970,10 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
                 height: pitch,
                 child: Semantics(
                   sortKey: OrdinalSortKey(cell.toDouble()),
-                  label:
-                      '${_size.cellLabel(cell)}, '
-                      '${labels[_deal.board[cell]] ?? _targetLabel(strings, cell)}',
+                  label: strings.labelWithDetail(
+                    _size.cellLabel(cell),
+                    labels[_deal.board[cell]] ?? _targetLabel(strings, cell),
+                  ),
                   selected: _path.contains(cell),
                   onTap: _acceptsInput ? () => _markCell(cell) : null,
                   customSemanticsActions: _path.isEmpty
@@ -925,11 +992,17 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
 
   String _targetLabel(AppLocalizations strings, int cell) {
     final target = _puzzle.targets[cell]!;
+    final label = strings.namedTargetProgress(
+      targetName(strings, target.label),
+      strings.targetProgress(_displayProgress(cell), target.quota),
+    );
+    final loss = _turn == null ? _deal.faded[cell] : null;
     return [
-      '${targetName(strings, target.label)} ${_displayProgress(cell)}/${target.quota}',
-      if (_turn == null && _deal.fadedAt(cell) > 0)
-        strings.lampFaded(_deal.fadedAt(cell)),
-    ].join(', ');
+      label,
+      if (_puzzle.scoringSuits.length > 1) suitName(strings, target.suit),
+      if (loss != null)
+        strings.targetLostProgress(targetAmount(strings, target.kind, loss)),
+    ].reduce(strings.labelWithDetail);
   }
 
   Widget _result(AppLocalizations strings) {
@@ -950,7 +1023,7 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
             children: [
               if (_deal.won)
                 Semantics(
-                  label: '${_deal.stars}/3',
+                  label: strings.starRating(_deal.stars),
                   excludeSemantics: true,
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -971,11 +1044,23 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
                 _deal.won
                     ? strings.clear
                     : _puzzle.targets.entries
-                          .map(
-                            (target) =>
-                                '${_deal.progressAt(target.key)}/${target.value.quota}',
-                          )
-                          .join(' · '),
+                          .map((target) {
+                            final progress = strings.targetProgress(
+                              _deal.progressAt(target.key),
+                              target.value.quota,
+                            );
+                            return _puzzle.scoringSuits.length == 1
+                                ? progress
+                                : strings.namedTargetProgress(
+                                    targetName(strings, target.value.label),
+                                    progress,
+                                  );
+                          })
+                          .join(
+                            _puzzle.scoringSuits.length == 1
+                                ? strings.progressSeparator
+                                : '\n',
+                          ),
                 style: displayType(27),
                 textAlign: TextAlign.center,
               ),

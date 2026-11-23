@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart' show listEquals, setEquals;
 import 'package:flutter/widgets.dart';
 
 import '../artwork.dart';
@@ -326,6 +327,79 @@ class DockPainter extends CustomPainter {
       oldDelegate.motion != motion;
 }
 
+class MarketPainter extends CustomPainter {
+  const MarketPainter({
+    required this.artwork,
+    required this.targets,
+    required this.motion,
+  });
+
+  final Artwork artwork;
+  final List<({PuzzleTarget target, double progress})> targets;
+  final double motion;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    canvas.save();
+    canvas.scale(
+      size.width / SceneLayout.width,
+      size.height / SceneLayout.height,
+    );
+    canvas.clipRect(
+      const Rect.fromLTWH(0, 0, SceneLayout.width, SceneLayout.height),
+    );
+    artwork.paint(canvas, Art.quaySky);
+    _polygon(canvas, [93, 85, 441, 85, 469, 94, 109, 97], parchment);
+    _polygon(canvas, [109, 97, 469, 94, 461, 101, 116, 105], ink);
+    artwork.paint(
+      canvas,
+      Art.fool,
+      origin: Offset(187 + 37 * Curves.easeInOut.transform(motion), 89),
+      scale: .86,
+    );
+
+    if (targets.length == 2 &&
+        targets.every((entry) => entry.target.kind == TargetKind.pan)) {
+      _paintScale(canvas, targets.first.progress, targets.last.progress);
+    } else {
+      final spacing = 176 / targets.length;
+      for (final (index, entry) in targets.indexed) {
+        _paintFixture(
+          canvas,
+          artwork,
+          entry.target,
+          Offset(251 + (index + .5) * spacing, 56),
+          entry.progress,
+        );
+      }
+    }
+    canvas.restore();
+  }
+
+  void _paintScale(Canvas canvas, double west, double east) {
+    const pivot = Offset(337, 33);
+    final tilt = 13 * (west - east);
+    final westHook = pivot + Offset(-64, tilt);
+    final eastHook = pivot + Offset(64, -tilt);
+    final support = _pen(ink, 7);
+    canvas.drawLine(pivot, const Offset(337, 87), support);
+    canvas.drawLine(const Offset(319, 88), const Offset(355, 88), support);
+    canvas.drawLine(westHook, eastHook, support);
+    canvas.drawLine(westHook, eastHook, _pen(gold, 2.5));
+    canvas.drawCircle(pivot, 5, Paint()..color = paleGold);
+    for (final (hook, amount) in [(westHook, west), (eastHook, east)]) {
+      canvas.drawLine(hook, hook + const Offset(0, 10), _pen(paleGold, 1.5));
+      _scalePan(canvas, hook + const Offset(0, 27), amount);
+    }
+  }
+
+  @override
+  bool shouldRepaint(MarketPainter oldDelegate) =>
+      oldDelegate.artwork != artwork ||
+      !listEquals(oldDelegate.targets, targets) ||
+      oldDelegate.motion != motion;
+}
+
 void _sceneGlow(Canvas canvas, Offset center, double fullRadius, double light) {
   if (light == 0) return;
   final reach = math.sqrt(light);
@@ -384,6 +458,7 @@ class TableauPainter extends CustomPainter {
     this.link,
     this.turnProgress = 1,
     this.fadeProgress = 1,
+    this.fadedCells = const [],
     this.keyboardCell,
     this.reducedMotion = false,
     this.rejected = false,
@@ -397,11 +472,11 @@ class TableauPainter extends CustomPainter {
   final Stroke? demonstration;
   final double guideTime;
   final Map<int, double> progress;
-  double get light => progress[puzzle.marker]!;
   final Turn? turn;
   final TargetLink? link;
   final double turnProgress;
   final double fadeProgress;
+  final Iterable<int> fadedCells;
   final int? keyboardCell;
   final bool reducedMotion;
   final bool rejected;
@@ -466,18 +541,22 @@ class TableauPainter extends CustomPainter {
     } else {
       _paintFall(canvas, activeTurn);
     }
-    for (final (index, cell) in puzzle.targets.keys.indexed) {
-      final fixtureCenter = _center(cell) - const Offset(0, 7);
-      final amount = progress[cell]!;
-      switch (puzzle.scene) {
-        case PuzzleScene.ridge:
-          _marker(canvas, artwork, fixtureCenter, 24, amount);
-        case PuzzleScene.quay:
-          _lantern(canvas, artwork, fixtureCenter, 1, amount);
-        case PuzzleScene.mill:
-          _inlet(canvas, fixtureCenter, 1, amount);
-        case PuzzleScene.dock:
-          _cord(canvas, fixtureCenter, amount, index == 0 ? gold : _water);
+    for (final entry in puzzle.targets.entries) {
+      final center = _center(entry.key);
+      _paintFixture(
+        canvas,
+        artwork,
+        entry.value,
+        center - const Offset(0, 7),
+        progress[entry.key]!,
+      );
+      if (puzzle.scoringSuits.length > 1) {
+        artwork.paint(
+          canvas,
+          _suitArt(entry.value.suit),
+          origin: center - const Offset(32, 32),
+          scale: .46,
+        );
       }
     }
     canvas.restore();
@@ -485,14 +564,17 @@ class TableauPainter extends CustomPainter {
     if (activeLink != null) _paintLink(canvas, activeLink);
     if (fadeProgress < 1) {
       final strength = 1 - Curves.easeOut.transform(fadeProgress);
-      canvas.drawCircle(
-        _center(puzzle.marker) - const Offset(0, 7),
-        BoardStyle.fadeHaloRadius + BoardStyle.fadeHaloTravel * strength,
-        _pen(
-          gold.withValues(alpha: strength * BoardStyle.fadeHaloOpacity),
-          BoardStyle.fadeHaloStroke,
-        ),
+      final halo = _pen(
+        gold.withValues(alpha: strength * BoardStyle.fadeHaloOpacity),
+        BoardStyle.fadeHaloStroke,
       );
+      for (final cell in fadedCells) {
+        canvas.drawCircle(
+          _center(cell) - const Offset(0, 7),
+          BoardStyle.fadeHaloRadius + BoardStyle.fadeHaloTravel * strength,
+          halo,
+        );
+      }
     }
     if (activeTurn == null) {
       if (demonstration != null && path.isEmpty) {
@@ -579,19 +661,24 @@ class TableauPainter extends CustomPainter {
         }
       }
       if (turn.stroke.gains.isNotEmpty && !turn.stroke.isRectangle) {
+        final aim = _size.aimOf(turn.stroke.path)!;
         final point = Offset.lerp(
           _center(turn.stroke.path.last),
-          _center(_size.aimOf(turn.stroke.path)!),
+          _center(aim),
           dissolve,
         )!;
-        if (puzzle.scoringSuit == Suit.cup) {
+        if (turn.stroke.suit == Suit.cup) {
           artwork.paint(
             canvas,
-            puzzle.scene == PuzzleScene.mill ? Art.waterDrop : Art.oilDrop,
+            puzzle.targets[aim]!.kind == TargetKind.lantern
+                ? Art.oilDrop
+                : Art.waterDrop,
             origin: point,
           );
-        } else if (puzzle.scoringSuit == Suit.sword) {
+        } else if (turn.stroke.suit == Suit.sword) {
           artwork.paint(canvas, Art.sword, origin: point, scale: .75);
+        } else if (turn.stroke.suit == Suit.coin) {
+          artwork.paint(canvas, Art.coin, origin: point, scale: .68);
         } else {
           canvas.drawCircle(point, 12, Paint()..color = paleGold);
         }
@@ -642,7 +729,7 @@ class TableauPainter extends CustomPainter {
     )!;
     final active = _path([...points.take(segment + 1), tip]);
     canvas.drawPath(active, _pen(blue, 6));
-    if (!clue.isRectangle && clue.light > 0) {
+    if (!clue.isRectangle && clue.gains.isNotEmpty) {
       _paintAim(canvas, clue, rust);
     } else if (!clue.isRectangle || reducedMotion) {
       _arrow(canvas, points[points.length - 2], points.last, blue, .5);
@@ -684,24 +771,63 @@ class TableauPainter extends CustomPainter {
 }
 
 class SuitPainter extends CustomPainter {
-  const SuitPainter(this.artwork, this.suit);
+  const SuitPainter(this.artwork, this.suits);
 
   final Artwork artwork;
-  final Suit suit;
+  final Set<Suit> suits;
 
   @override
   void paint(Canvas canvas, Size size) {
-    artwork.paint(
-      canvas,
-      _suitArt(suit),
-      origin: size.center(Offset.zero),
-      scale: size.shortestSide / 60,
-    );
+    final columns = suits.length == 1 ? 1 : 2;
+    final rows = (suits.length + columns - 1) ~/ columns;
+    final pitch = size.shortestSide / columns;
+    final center = size.center(Offset.zero);
+    for (final (index, suit) in suits.indexed) {
+      final row = index ~/ columns;
+      final inRow = math.min(columns, suits.length - row * columns);
+      artwork.paint(
+        canvas,
+        _suitArt(suit),
+        origin:
+            center +
+            Offset(
+              (index % columns + .5 - inRow / 2) * pitch,
+              (row + .5 - rows / 2) * pitch,
+            ),
+        scale: pitch / 60,
+      );
+    }
   }
 
   @override
   bool shouldRepaint(SuitPainter oldDelegate) =>
-      artwork != oldDelegate.artwork || suit != oldDelegate.suit;
+      artwork != oldDelegate.artwork || !setEquals(suits, oldDelegate.suits);
+}
+
+void _paintFixture(
+  Canvas canvas,
+  Artwork artwork,
+  PuzzleTarget target,
+  Offset center,
+  double amount,
+) {
+  switch (target.kind) {
+    case TargetKind.marker:
+      _marker(canvas, artwork, center, 24, amount);
+    case TargetKind.lantern:
+      _lantern(canvas, artwork, center, 1, amount);
+    case TargetKind.inlet:
+      _inlet(canvas, center, 1, amount);
+    case TargetKind.cord:
+      _cord(
+        canvas,
+        center,
+        amount,
+        target.label == TargetLabel.sternCord ? _water : gold,
+      );
+    case TargetKind.pan:
+      _scalePan(canvas, center, amount);
+  }
 }
 
 Art _suitArt(Suit suit) => switch (suit) {
@@ -827,6 +953,38 @@ void _cord(Canvas canvas, Offset center, double cut, Color color) {
   if (cut == 1) {
     canvas.drawLine(const Offset(-17, 0), const Offset(-8, 9), _pen(color, 2));
     canvas.drawLine(const Offset(17, 0), const Offset(8, -9), _pen(color, 2));
+  }
+  canvas.restore();
+}
+
+void _scalePan(Canvas canvas, Offset center, double fill) {
+  canvas.save();
+  canvas.translate(center.dx, center.dy);
+  final hanger = _path([
+    const Offset(-24, 10),
+    const Offset(0, -17),
+    const Offset(24, 10),
+  ]);
+  canvas.drawPath(hanger, _pen(ink, 3.5));
+  canvas.drawPath(hanger, _pen(gold, 1.6));
+  final bowl = Path()
+    ..moveTo(-25, 10)
+    ..lineTo(25, 10)
+    ..quadraticBezierTo(20, 24, 0, 25)
+    ..quadraticBezierTo(-20, 24, -25, 10)
+    ..close();
+  canvas.drawPath(bowl, Paint()..color = gold);
+  canvas.drawPath(bowl, _pen(ink, 2.5));
+  if (fill > 0) {
+    final stack = RRect.fromRectAndRadius(
+      Rect.fromLTRB(-11, 9 - 17 * fill, 11, 10),
+      const Radius.circular(2),
+    );
+    canvas.drawRRect(stack, Paint()..color = paleGold);
+    canvas.drawRRect(stack, _pen(ink, 2));
+    for (var y = 5.0; y > stack.top + 2; y -= 4) {
+      canvas.drawLine(Offset(-9, y), Offset(9, y), _pen(gold, 1.3));
+    }
   }
   canvas.restore();
 }

@@ -23,11 +23,10 @@ class PhasePreview extends StatelessWidget {
   Widget build(BuildContext context) {
     final strings = AppLocalizations.of(context)!;
     final words = puzzleWords(strings, puzzle.textKey);
-    final quota = switch (puzzle.scene) {
-      PuzzleScene.mill => strings.waterGoal(puzzle.target),
-      PuzzleScene.dock => strings.cordGoal(puzzle.target),
-      _ => strings.lightGoal(puzzle.target),
-    };
+    final quotas = <(Suit, TargetKind, int), List<PuzzleTarget>>{};
+    for (final target in puzzle.targets.values) {
+      (quotas[(target.suit, target.kind, target.quota)] ??= []).add(target);
+    }
     return Scaffold(
       key: const Key('phase-preview'),
       body: PaperSurface(
@@ -87,7 +86,7 @@ class PhasePreview extends StatelessWidget {
                               ),
                             ),
                             const SizedBox(height: 24),
-                            _PreviewArt(artwork: artwork, scene: puzzle.scene),
+                            _PreviewArt(artwork: artwork, puzzle: puzzle),
                             const SizedBox(height: 22),
                             Row(
                               children: [
@@ -102,7 +101,7 @@ class PhasePreview extends StatelessWidget {
                                   child: CustomPaint(
                                     painter: SuitPainter(
                                       artwork,
-                                      puzzle.scoringSuit,
+                                      puzzle.scoringSuits,
                                     ),
                                   ),
                                 ),
@@ -117,12 +116,20 @@ class PhasePreview extends StatelessWidget {
                                         style: displayType(23),
                                       ),
                                       const SizedBox(height: 7),
-                                      Text(
-                                        '${suitName(strings, puzzle.scoringSuit)} · $quota',
-                                        style: labelType.copyWith(
-                                          color: mutedInk,
+                                      for (final group in quotas.values)
+                                        Text(
+                                          strings.suitAndQuota(
+                                            suitName(strings, group.first.suit),
+                                            targetQuota(
+                                              strings,
+                                              group.first,
+                                              group.length > 1,
+                                            ),
+                                          ),
+                                          style: labelType.copyWith(
+                                            color: mutedInk,
+                                          ),
                                         ),
-                                      ),
                                     ],
                                   ),
                                 ),
@@ -194,10 +201,10 @@ class _PhaseStats extends StatelessWidget {
 }
 
 class _PreviewArt extends StatelessWidget {
-  const _PreviewArt({required this.artwork, required this.scene});
+  const _PreviewArt({required this.artwork, required this.puzzle});
 
   final Artwork artwork;
-  final PuzzleScene scene;
+  final PuzzleDefinition puzzle;
 
   @override
   Widget build(BuildContext context) => Container(
@@ -216,7 +223,7 @@ class _PreviewArt extends StatelessWidget {
           child: SizedBox(
             width: SceneLayout.width,
             height: SceneLayout.height,
-            child: PuzzleIllustration(artwork: artwork, scene: scene),
+            child: PuzzleIllustration(artwork: artwork, puzzle: puzzle),
           ),
         ),
       ),

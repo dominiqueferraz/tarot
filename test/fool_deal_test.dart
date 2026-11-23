@@ -12,10 +12,67 @@ final foolsStep = catalog.puzzles.first;
 final lamplighter = catalog.puzzles[1];
 final highWater = catalog.puzzles[2];
 final mooring = catalog.puzzles[3];
+final ferrymansFare = catalog.puzzles[4];
 const openingSize = BoardSize(6, 6);
 const lampSize = BoardSize(5, 6);
 const highWaterSize = BoardSize(6, 7);
 const dockSize = BoardSize(7, 6);
+const marketSize = BoardSize(8, 8);
+
+const westFareReplay = [
+  ('E4 D4', 2, 0),
+  ('A3 H3 H7 A7 A3', 6, 4),
+  ('B6 C6 C5', 9, 4),
+  ('D3 G3 G7 D7 D3', 9, 4),
+  ('F6 F5', 9, 6),
+  ('B3 D3 D8 B8 B3', 9, 6),
+  ('D8 E8 E7 D7 D6 C6 C5', 16, 6),
+  ('E1 H1 H7 E7 E1', 16, 10),
+  ('C1 H1 H4 C4 C1', 24, 14),
+  ('E6 D6 D5 D4 E4', 24, 19),
+  ('A3 C3 C4 A4 A3', 24, 19),
+  ('A1 H1 H5 A5 A1', 24, 19),
+  ('B3 H3 H5 B5 B3', 24, 23),
+  ('F3 G3 G4 F4 F3', 24, 24),
+];
+
+const eastFareReplay = [
+  ('D4 E4', 0, 2),
+  ('A3 H3 H7 A7 A3', 4, 6),
+  ('C6 C5', 6, 6),
+  ('D4 F4 F6 D6 D4', 6, 6),
+  ('B4 F4 F6 B6 B4', 10, 10),
+  ('C1 H1 H8 C8 C1', 14, 14),
+  ('G3 G2 F2 F3', 14, 18),
+  ('C1 F1 F4 C4 C1', 14, 18),
+  ('E2 F2 F3', 14, 21),
+  ('C4 H4 H6 C6 C4', 14, 21),
+  ('A4 G4 G6 A6 A4', 14, 21),
+  ('C5 H5 H7 C7 C5', 14, 21),
+  ('C1 H1 H4 C4 C1', 21, 24),
+  ('E5 E4 D4', 24, 24),
+];
+
+const _fareRecovery = [
+  ('A2 A3', 0, 0),
+  ('E4 D4', 2, 0),
+  ('C3 H3 H8 C8 C3', 6, 4),
+  ('B4 H4 H5 B5 B4', 10, 8),
+  ('C3 H3 H6 C6 C3', 14, 12),
+  ('A4 E4 E8 A8 A4', 14, 12),
+  ('A4 B4', 16, 12),
+  ('A2 F2 F8 A8 A2', 16, 12),
+  ('A1 F1 F7 A7 A1', 16, 12),
+  ('A3 D3 D7 A7 A3', 20, 12),
+  ('B2 F2 F5 B5 B2', 20, 12),
+  ('C4 E4 E5 C5 C4', 24, 12),
+  ('E1 F1 F6 E6 E1', 24, 12),
+  ('F6 F5', 24, 14),
+  ('D1 H1 H5 D5 D1', 24, 14),
+  ('C7 D7 D6 D5 D4 E4', 24, 20),
+  ('A2 H2 H6 A6 A2', 24, 20),
+  ('E4 H4 H8 E8 E4', 24, 24),
+];
 
 const guidedRoutes = [
   'C1 C2',
@@ -115,6 +172,68 @@ final wideCatalog = rectangularCatalog([
   'OCOCSCCC',
 ], 'H1');
 
+const marketDaySize = BoardSize(7, 7);
+
+const marketDayReplay = [
+  ('E3 D3', 2, 0, 0),
+  ('D3 E3', 2, 2, 0),
+  ('C1 E1 E6 C6 C1', 2, 2, 6),
+  ('B1 E1 E6 B6 B1', 6, 2, 6),
+  ('B3 G3 G6 B6 B3', 6, 6, 6),
+];
+
+PuzzleCatalog marketDayCatalog(String source, {bool links = false}) {
+  final data = jsonDecode(source) as Map<String, Object?>;
+  data['puzzles'] = [
+    {
+      'id': '006',
+      'scene': 'market',
+      'textKey': 'marketDay',
+      'board': [
+        'SWOCSOC',
+        'OCSCCOW',
+        'SOLWWLC',
+        'COSOWOC',
+        'WCOCSOW',
+        'OWLOOWC',
+        'CWSOOCS',
+      ],
+      'targets': [
+        {
+          'cell': 'C3',
+          'suit': 'W',
+          'quota': 6,
+          'label': 'marketLamp',
+          'kind': 'lantern',
+        },
+        {
+          'cell': 'F3',
+          'suit': 'C',
+          'quota': 6,
+          'label': 'marketInlet',
+          'kind': 'inlet',
+        },
+        {
+          'cell': 'C6',
+          'suit': 'O',
+          'quota': 6,
+          'label': 'farePan',
+          'kind': 'pan',
+        },
+      ],
+      'linksTargets': links,
+      'moves': 18,
+      'par': 12,
+      'refill': {
+        'type': 'guided',
+        'seed': 613,
+        'weights': {'W': 1, 'C': 1, 'S': 1, 'O': 1},
+      },
+    },
+  ];
+  return PuzzleCatalog.parse(jsonEncode(data));
+}
+
 String layout(PuzzleDeal deal) => [
   for (final suit in deal.board)
     switch (suit) {
@@ -127,6 +246,35 @@ String layout(PuzzleDeal deal) => [
 ].join();
 
 void main() {
+  test('mixed targets score independently even on the same square', () {
+    final source = File(PuzzleCatalog.assetPath).readAsStringSync();
+    final puzzle = marketDayCatalog(source, links: true).puzzles.single;
+    final lamp = marketDaySize.parseCell('C3');
+    final inlet = marketDaySize.parseCell('F3');
+    final pan = marketDaySize.parseCell('C6');
+    final deal = PuzzleDeal(puzzle);
+    List<int> route(String path) => cells(path, size: marketDaySize);
+
+    expect(puzzle.scoringSuits, {Suit.wand, Suit.cup, Suit.coin});
+    expect(deal.inspect(route('F5 F4'))?.gains, isEmpty);
+    expect(deal.inspect(route('E6 D6'))?.gains, {pan: 2});
+    final square = deal.inspect(route('C3 F3 F6 C6 C3'))!;
+    expect(square.suit, Suit.wand);
+    expect(square.gains.keys, [lamp]);
+    expect(square.linkedTargets, isEmpty);
+    expect(square.cleared.intersection({lamp, inlet, pan}), isEmpty);
+    for (final (path, light, water, coins) in marketDayReplay) {
+      expect(deal.won, isFalse);
+      expect(deal.play(route(path)), isNotNull, reason: path);
+      expect(
+        [deal.progressAt(lamp), deal.progressAt(inlet), deal.progressAt(pan)],
+        [light, water, coins],
+        reason: path,
+      );
+    }
+    expect(deal.won, isTrue);
+  });
+
   test('rectangular deals use both edges for aim, rectangles and refill', () {
     final puzzle = tallCatalog.puzzles.single;
     final deal = PuzzleDeal(puzzle);
@@ -134,16 +282,16 @@ void main() {
     expect((size.columns, size.rows), (6, 7));
     List<int> route(String value) => cells(value, size: size);
 
-    expect(deal.inspect(route('D7 E7'))?.light, 2);
+    expect(deal.inspect(route('D7 E7'))?.totalGain, 2);
     expect(deal.inspect(route('F6 A7')), isNull);
     expect(() => size.parseCell('G7'), throwsFormatException);
     expect(() => size.parseCell('F8'), throwsFormatException);
     final turn = deal.play(route('C5 F5 F7 C7 C5'))!;
     expect(turn.stroke.isRectangle, isTrue);
     expect(turn.stroke.cleared, hasLength(11));
-    expect(deal.light, 8);
+    expect(deal.progressAt(deal.puzzle.targets.keys.single), 8);
     expect(deal.board.where((suit) => suit == null), hasLength(1));
-    expect(deal.board[puzzle.marker], isNull);
+    expect(deal.board[puzzle.targets.keys.single], isNull);
     expect(
       turn.falls.where((fall) => fall.fromRow < 0).map((fall) => fall.column),
       unorderedEquals([2, 2, 2, 3, 3, 3, 4, 4, 4, 5, 5]),
@@ -164,10 +312,12 @@ void main() {
       '${'C' * 26}L',
     ], 'AA10');
     final puzzle = catalog.puzzles.single;
-    expect(puzzle.marker, 269);
-    expect(puzzle.size.cellLabel(puzzle.marker), 'AA10');
+    expect(puzzle.targets.keys.single, 269);
+    expect(puzzle.size.cellLabel(puzzle.targets.keys.single), 'AA10');
     expect(
-      PuzzleDeal(puzzle).inspect(cells('Y10 Z10', size: puzzle.size))?.light,
+      PuzzleDeal(puzzle)
+          .inspect(cells('Y10 Z10', size: puzzle.size))
+          ?.totalGain,
       2,
     );
 
@@ -180,14 +330,16 @@ void main() {
     expect(catalog.next(foolsStep), lamplighter);
     expect(catalog.next(lamplighter), highWater);
     expect(catalog.next(highWater), mooring);
-    expect(catalog.next(mooring), isNull);
+    expect(catalog.next(mooring), ferrymansFare);
+    expect(catalog.next(ferrymansFare), isNull);
     expect(catalog.unlockedIndex('002'), 1);
     expect(catalog.unlockedIndex('003'), 2);
     expect(catalog.unlockedIndex('004'), 3);
-    expect(catalog.puzzles.map((puzzle) => puzzle.limit), [25, 22, 18, 26]);
+    expect(catalog.unlockedIndex('005'), 4);
+    expect(catalog.puzzles.map((puzzle) => puzzle.limit), [25, 22, 18, 26, 25]);
     expect(
       catalog.puzzles.map((puzzle) => (puzzle.size.columns, puzzle.size.rows)),
-      [(6, 6), (5, 6), (6, 7), (7, 6)],
+      [(6, 6), (5, 6), (6, 7), (7, 6), (8, 8)],
     );
     expect(catalog.unlockedIndex('missing'), 0);
     for (final puzzle in catalog.puzzles) {
@@ -214,15 +366,15 @@ void main() {
     List<int> route(String value) => cells(value, size: size);
 
     expect((size.columns, size.rows), (6, 7));
-    expect(size.cellLabel(highWater.marker), 'B5');
+    expect(size.cellLabel(highWater.targets.keys.single), 'B5');
     expect(highWater.limit, 18);
     expect(deal.guide, isNull);
-    expect(deal.inspect(route('A6 A7 B7 B6'))?.light, 4);
-    expect(deal.inspect(route('D4 D5 C5'))?.light, 3);
+    expect(deal.inspect(route('A6 A7 B7 B6'))?.totalGain, 4);
+    expect(deal.inspect(route('D4 D5 C5'))?.totalGain, 3);
     expect(deal.inspect(route(millReplay[1].$1)), isNull);
 
     final setup = deal.play(route(millReplay[0].$1))!;
-    expect(deal.light, 0);
+    expect(deal.progressAt(deal.puzzle.targets.keys.single), 0);
     expect(
       setup.falls
           .where(
@@ -234,22 +386,26 @@ void main() {
     );
     final expectedClear = deal.inspect(route(millReplay[1].$1))!;
     expect(expectedClear.cleared, hasLength(11));
-    expect(expectedClear.light, 4);
+    expect(expectedClear.totalGain, 4);
     for (final (trace, water) in millReplay.skip(1)) {
       expect(deal.play(route(trace)), isNotNull, reason: trace);
-      expect(deal.light, water, reason: trace);
-      expect(deal.board[highWater.marker], isNull);
+      expect(
+        deal.progressAt(deal.puzzle.targets.keys.single),
+        water,
+        reason: trace,
+      );
+      expect(deal.board[highWater.targets.keys.single], isNull);
     }
     expect(deal.won, isTrue);
     expect(deal.stars, 3);
 
     final missed = PuzzleDeal(highWater);
-    expect(missed.play(route('B6 B7'))?.stroke.light, 0);
+    expect(missed.play(route('B6 B7'))?.stroke.totalGain, 0);
     while (!missed.finished) {
       final misses = [
         for (var cell = 0; cell < size.cellCount; cell++)
           for (final next in size.neighbours(cell))
-            if (missed.inspect([cell, next])?.light == 0) [cell, next],
+            if (missed.inspect([cell, next])?.totalGain == 0) [cell, next],
       ];
       final move = misses.firstWhere(
         (path) => missed.board[path.first] == Suit.cup,
@@ -318,6 +474,78 @@ void main() {
     expect(deal.won, isTrue);
   });
 
+  test('both pans can lead and a missed opening leaves room to recover', () {
+    final west = marketSize.parseCell('C4');
+    final east = marketSize.parseCell('F4');
+    final masked = cells('B1 G1', size: marketSize);
+    expect(ferrymansFare.targets.keys, [west, east]);
+    expect(ferrymansFare.masked, unorderedEquals(masked));
+
+    for (final (replay, stars) in [
+      (westFareReplay, 3),
+      (eastFareReplay, 3),
+      (_fareRecovery, 2),
+    ]) {
+      final deal = PuzzleDeal(ferrymansFare);
+      expect(deal.guide, isNull);
+      for (final (trace, westCoins, eastCoins) in replay) {
+        expect(deal.won, isFalse);
+        expect(
+          deal.play(cells(trace, size: marketSize)),
+          isNotNull,
+          reason: trace,
+        );
+        expect(deal.progressAt(west), westCoins, reason: trace);
+        expect(deal.progressAt(east), eastCoins, reason: trace);
+        expect(deal.link, isNull);
+        for (final cell in [...masked, west, east]) {
+          expect(deal.board[cell], isNull);
+        }
+      }
+      expect(deal.won, isTrue);
+      expect(deal.stars, stars);
+    }
+  });
+
+  test('a Coin square can pay both pans in one move', () {
+    final deal = PuzzleDeal(ferrymansFare);
+    final west = marketSize.parseCell('C4');
+    final east = marketSize.parseCell('F4');
+    for (final trace in ['D4 E4', 'A2 H2 H7 A7 A2', 'C3 G3 G6 C6 C3']) {
+      expect(deal.play(cells(trace, size: marketSize)), isNotNull);
+    }
+    final square = deal.play(cells('C1 F1 F4 C4 C1', size: marketSize))!;
+    expect(square.stroke.gains, {west: 7, east: 7});
+    expect(deal.link, isNull);
+    for (final trace in ['C2 H2 H8 C8 C2', 'C4 G4 G6 C6 C4']) {
+      expect(deal.play(cells(trace, size: marketSize)), isNotNull);
+    }
+    expect(deal.won, isTrue);
+  });
+
+  test('a full west pan does not cover an unpaid east pan', () {
+    final deal = PuzzleDeal(ferrymansFare);
+    final west = marketSize.parseCell('C4');
+    final east = marketSize.parseCell('F4');
+    for (final (trace, _, _) in westFareReplay.take(9)) {
+      expect(deal.play(cells(trace, size: marketSize)), isNotNull);
+    }
+    final pairs = [
+      for (var cell = 0; cell < marketSize.cellCount; cell++)
+        for (final neighbour in marketSize.neighbours(cell)) [cell, neighbour],
+    ];
+    while (!deal.finished) {
+      final miss = pairs.firstWhere(
+        (path) => deal.inspect(path)?.gains.isEmpty ?? false,
+      );
+      expect(deal.play(miss), isNotNull);
+    }
+    expect(deal.progressAt(west), 24);
+    expect(deal.progressAt(east), 14);
+    expect(deal.movesLeft, 0);
+    expect(deal.lost, isTrue);
+  });
+
   test('an ordinary miss spends the last turn of a link', () {
     final deal = PuzzleDeal(mooring);
     List<int> route(String trace) => cells(trace, size: dockSize);
@@ -335,36 +563,47 @@ void main() {
     final route = PuzzleDeal(lamplighter);
     final repeat = PuzzleDeal(lamplighter);
     final unlit = PuzzleDeal(lamplighter);
-    expect(foolsStep.scoringSuit, Suit.wand);
-    expect(lamplighter.scoringSuit, Suit.cup);
+    expect(foolsStep.scoringSuits.single, Suit.wand);
+    expect(lamplighter.scoringSuits.single, Suit.cup);
     expect(route.board[cells('A3', size: lampSize).single], Suit.cup);
-    expect(route.inspect(cells('A3 B3', size: lampSize))?.light, 2);
-    expect(route.inspect(cells('B3 A3', size: lampSize))?.light, 0);
+    expect(route.inspect(cells('A3 B3', size: lampSize))?.totalGain, 2);
+    expect(route.inspect(cells('B3 A3', size: lampSize))?.totalGain, 0);
     final enclosure = route.inspect(
       cells(lampReplay.first.$1, size: lampSize),
     )!;
-    expect(enclosure.light, 4);
+    expect(enclosure.totalGain, 4);
     expect(
       enclosure.cleared.map((cell) => route.board[cell]).toSet(),
       unorderedEquals(Suit.values),
     );
     expect(unlit.play(cells('D1 D2', size: lampSize)), isNotNull);
-    expect(unlit.light, 0);
-    expect(unlit.faded, 0);
+    expect(unlit.progressAt(unlit.puzzle.targets.keys.single), 0);
+    expect(unlit.faded, isEmpty);
     expect(route.guide, isNull);
     for (final (trace, light) in lampReplay) {
-      final before = route.light;
+      final before = route.progressAt(route.puzzle.targets.keys.single);
       final turn = route.play(cells(trace, size: lampSize));
       expect(turn, isNotNull, reason: trace);
-      expect(route.light, light, reason: trace);
-      expect(route.faded, before > light ? 1 : 0, reason: trace);
-      if (!turn!.stroke.isRectangle && turn.stroke.light > 0) {
-        expect(turn.stroke.light, turn.stroke.path.length);
+      expect(
+        route.progressAt(route.puzzle.targets.keys.single),
+        light,
+        reason: trace,
+      );
+      expect(
+        route.faded[lamplighter.targets.keys.single] ?? 0,
+        before > light ? 1 : 0,
+        reason: trace,
+      );
+      if (!turn!.stroke.isRectangle && turn.stroke.totalGain > 0) {
+        expect(turn.stroke.totalGain, turn.stroke.path.length);
       }
-      expect(route.board[lamplighter.marker], isNull);
+      expect(route.board[lamplighter.targets.keys.single], isNull);
       expect(repeat.play(cells(trace, size: lampSize)), isNotNull);
       expect(repeat.board, route.board);
-      expect(repeat.light, route.light);
+      expect(
+        repeat.progressAt(repeat.puzzle.targets.keys.single),
+        route.progressAt(route.puzzle.targets.keys.single),
+      );
     }
     expect(route.won, isTrue);
     expect(route.stars, 3);
@@ -373,16 +612,16 @@ void main() {
 
   test('keeps E4 fixed from the start and matches the authored handoff', () {
     final deal = PuzzleDeal(foolsStep);
-    expect(deal.board[foolsStep.marker], isNull);
-    expect(deal.light, 0);
+    expect(deal.board[foolsStep.targets.keys.single], isNull);
+    expect(deal.progressAt(deal.puzzle.targets.keys.single), 0);
     expect(deal.play(cells('D1 C1')), isNull);
     expect(deal.movesLeft, 25);
     expect(deal.play(cells('C2 C1')), isNotNull);
     final square = deal.play(cells(guidedRoutes[1]))!.stroke;
     expect(square.isRectangle, isTrue);
-    expect(square.light, 0);
+    expect(square.totalGain, 0);
     expect(square.cleared, hasLength(9));
-    expect(deal.board[foolsStep.marker], isNull);
+    expect(deal.board[foolsStep.targets.keys.single], isNull);
     final cup = cells('C3').single;
     expect(deal.board[cup], Suit.cup);
     final cupTurn = deal.play(cells('B2 A2 A3 A4 D4 D2 C2 B2'))!;
@@ -397,7 +636,7 @@ void main() {
       clear.cleared.map((cell) => cupTurn.before[cell]).toSet(),
       unorderedEquals(Suit.values),
     );
-    expect(deal.board[foolsStep.marker], isNull);
+    expect(deal.board[foolsStep.targets.keys.single], isNull);
     expect(
       layout(deal),
       'WWWWWO CCWWWW SCWSWO SSSSLO WSSWWW WWSSCC'.replaceAll(' ', ''),
@@ -410,20 +649,20 @@ void main() {
     expect(enclosure.before[cells('F3').single], Suit.coin);
     expect(enclosure.before[cells('D4').single], Suit.sword);
     expect(enclosure.falls.where((tile) => tile.fromRow < 0), hasLength(11));
-    expect(enclosure.stroke.light, 4);
-    expect(deal.light, 4);
+    expect(enclosure.stroke.totalGain, 4);
+    expect(deal.progressAt(deal.puzzle.targets.keys.single), 4);
     expect(deal.play(cells('E3 E2')), isNull);
-    expect(deal.play(cells(guidedRoutes[4]))?.stroke.light, 2);
-    expect(deal.light, 6);
+    expect(deal.play(cells(guidedRoutes[4]))?.stroke.totalGain, 2);
+    expect(deal.progressAt(deal.puzzle.targets.keys.single), 6);
     expect(deal.guide?.cue, GuideCue.wildcard);
     final wildcard = deal.play(cells(guidedRoutes[5]))!.stroke;
     expect(wildcard.isRectangle, isTrue);
-    expect(wildcard.path, contains(foolsStep.marker));
+    expect(wildcard.path, contains(foolsStep.targets.keys.single));
     expect(wildcard.cleared, unorderedEquals(cells('E3 F3 F4')));
-    expect(wildcard.light, 0);
+    expect(wildcard.totalGain, 0);
     expect(deal.guide, isNull);
     expect(deal.movesLeft, 19);
-    expect(deal.light, 6);
+    expect(deal.progressAt(deal.puzzle.targets.keys.single), 6);
     expect(
       layout(deal),
       'WWWWW OCCWWWO SCWWWO SSSWLO WSSWWO WWSSCC'.replaceAll(' ', ''),
@@ -453,8 +692,12 @@ void main() {
       for (final (deal, replay) in [(par, parReplay), (other, otherReplay)]) {
         for (final (route, light) in replay) {
           expect(deal.play(cells(route)), isNotNull, reason: route);
-          expect(deal.light, light, reason: route);
-          expect(deal.board[foolsStep.marker], isNull);
+          expect(
+            deal.progressAt(deal.puzzle.targets.keys.single),
+            light,
+            reason: route,
+          );
+          expect(deal.board[foolsStep.targets.keys.single], isNull);
         }
         expect(deal.won, isTrue);
         expect(deal.demonstration, isNull);
@@ -474,17 +717,17 @@ void main() {
     final wandSquare = deal.inspect(cells('C1 D1 E1 E2 E3 D3 C3 C2 C1'))!;
     expect(wandSquare.isRectangle, isTrue);
     expect(wandSquare.cleared, hasLength(9));
-    expect(wandSquare.light, 0);
+    expect(wandSquare.totalGain, 0);
     final edge = deal.inspect(cells('D1 E1 E5 D5 D1'))!;
-    expect(edge.light, 4);
+    expect(edge.totalGain, 4);
     final corner = deal.inspect(cells('D1 E1 E4 D4 D1'))!;
-    expect(corner.light, 7);
-    expect(corner.cleared, isNot(contains(foolsStep.marker)));
+    expect(corner.totalGain, 7);
+    expect(corner.cleared, isNot(contains(foolsStep.targets.keys.single)));
     expect(deal.play(cells('D1 E1')), isNotNull);
     final coin = deal.inspect(cells('E1 F1 F4 E4 E1'))!;
-    expect(coin.light, 0);
+    expect(coin.totalGain, 0);
     expect(coin.cleared, containsAll(cells('F3 F4')));
-    expect(coin.cleared, isNot(contains(foolsStep.marker)));
+    expect(coin.cleared, isNot(contains(foolsStep.targets.keys.single)));
     expect(deal.inspect(cells('C1 E3 C5 A3 C1')), isNull);
     expect(deal.inspect(cells('E4 F3 F5 E4')), isNull);
     expect(deal.inspect(cells('E1 F1 E2 F2 E1')), isNull);

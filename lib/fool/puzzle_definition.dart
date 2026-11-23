@@ -15,11 +15,35 @@ enum Suit {
       _named(values, symbol, (suit) => suit.symbol, 'suit');
 }
 
-enum PuzzleScene { ridge, quay, mill, dock }
+enum PuzzleScene { ridge, quay, mill, dock, market }
 
-enum PuzzleTextKey { foolsStep, lamplighter, highWater, mooring }
+enum PuzzleTextKey {
+  foolsStep,
+  lamplighter,
+  highWater,
+  mooring,
+  ferrymansFare,
+  marketDay,
+}
 
-enum TargetLabel { trailMarker, quayLamp, millInlet, bowCord, sternCord }
+enum TargetKind { marker, lantern, inlet, cord, pan }
+
+enum TargetLabel {
+  trailMarker(TargetKind.marker),
+  quayLamp(TargetKind.lantern),
+  millInlet(TargetKind.inlet),
+  bowCord(TargetKind.cord),
+  sternCord(TargetKind.cord),
+  westPan(TargetKind.pan),
+  eastPan(TargetKind.pan),
+  marketLamp(TargetKind.lantern),
+  marketInlet(TargetKind.inlet),
+  farePan(TargetKind.pan);
+
+  const TargetLabel(this.defaultKind);
+
+  final TargetKind defaultKind;
+}
 
 enum PuzzleDifficulty { normal, hard, superHard }
 
@@ -189,11 +213,13 @@ class PuzzleRules {
 }
 
 class PuzzleTarget {
-  const PuzzleTarget(this.quota, this.fading, this.label);
+  const PuzzleTarget(this.suit, this.quota, this.fading, this.label, this.kind);
 
+  final Suit suit;
   final int quota;
   final int fading;
   final TargetLabel label;
+  final TargetKind kind;
 }
 
 class PuzzleDefinition {
@@ -206,7 +232,7 @@ class PuzzleDefinition {
     required this.targets,
     required this.masked,
     required this.linksTargets,
-    required this.scoringSuit,
+    required this.scoringSuits,
     required this.limit,
     required this.difficulty,
     required this.par,
@@ -223,17 +249,13 @@ class PuzzleDefinition {
   final Map<int, PuzzleTarget> targets;
   final Set<int> masked;
   final bool linksTargets;
-  final Suit scoringSuit;
+  final Set<Suit> scoringSuits;
   final int limit;
   final PuzzleDifficulty difficulty;
   final int par;
   final Refill refill;
   final List<GuideMove> guide;
   final PuzzleRules rules;
-
-  int get marker => targets.keys.first;
-  int get target => targets.values.first.quota;
-  int get fading => targets.values.first.fading;
 
   bool holdsPiece(int cell) =>
       !targets.containsKey(cell) && !masked.contains(cell);
@@ -262,29 +284,33 @@ class PuzzleDefinition {
           ).map((value) => _object(value, 'target'))
         : [_field<Map<String, Object?>>(data, 'target')];
     final targets = <int, PuzzleTarget>{};
-    Suit? scoringSuit;
     for (final entry in entries) {
       final cell = size.parseCell(_field<String>(entry, 'cell'));
       if (symbols[cell] != 'L' || targets.containsKey(cell)) {
         throw const FormatException('Each L needs exactly one target.');
       }
-      final suit = Suit.read(_field<String>(entry, 'suit'));
-      if (scoringSuit != null && scoringSuit != suit) {
-        throw const FormatException('Targets must share a scoring suit.');
-      }
-      scoringSuit = suit;
+      final label = _named(
+        TargetLabel.values,
+        _field<String>(entry, 'label'),
+        (value) => value.name,
+        'target label',
+      );
       targets[cell] = PuzzleTarget(
-        _boundedInt(entry['light'], 1, 999, 'target.light'),
+        Suit.read(_field<String>(entry, 'suit')),
+        _boundedInt(entry['quota'] ?? entry['light'], 1, 999, 'target.quota'),
         _boundedInt(entry['fade'] ?? 0, 0, 999, 'target.fade'),
-        _named(
-          TargetLabel.values,
-          _field<String>(entry, 'label'),
-          (value) => value.name,
-          'target label',
-        ),
+        label,
+        entry.containsKey('kind')
+            ? _named(
+                TargetKind.values,
+                _field<String>(entry, 'kind'),
+                (value) => value.name,
+                'target kind',
+              )
+            : label.defaultKind,
       );
     }
-    if (scoringSuit == null ||
+    if (targets.isEmpty ||
         symbols.where((value) => value == 'L').length != targets.length) {
       throw const FormatException(
         'The board needs at least one target and one L per target.',
@@ -328,7 +354,9 @@ class PuzzleDefinition {
       linksTargets:
           data.containsKey('linksTargets') &&
           _field<bool>(data, 'linksTargets'),
-      scoringSuit: scoringSuit,
+      scoringSuits: Set.unmodifiable(
+        targets.values.map((target) => target.suit),
+      ),
       limit: moveLimit,
       difficulty: _named(
         PuzzleDifficulty.values,

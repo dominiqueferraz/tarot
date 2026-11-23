@@ -7,6 +7,7 @@ export 'puzzle_definition.dart';
 
 class Stroke {
   const Stroke(
+    this.suit,
     this.path,
     this.cleared,
     this.gains, {
@@ -14,10 +15,11 @@ class Stroke {
     this.linkedTargets = const {},
   });
 
+  final Suit suit;
   final List<int> path;
   final Set<int> cleared;
   final Map<int, int> gains;
-  int get light => gains.values.fold(0, (total, value) => total + value);
+  int get totalGain => gains.values.fold(0, (total, value) => total + value);
   final bool isRectangle;
   final Set<int> linkedTargets;
 }
@@ -75,9 +77,7 @@ class PuzzleDeal {
   int get moves => _moves;
   int get movesLeft => puzzle.limit - moves;
   int progressAt(int cell) => _progress[cell] ?? 0;
-  int fadedAt(int cell) => _faded[cell] ?? 0;
-  int get light => progressAt(puzzle.marker);
-  int get faded => fadedAt(puzzle.marker);
+  Map<int, int> get faded => _faded;
   bool get won => puzzle.targets.entries.every(
     (target) => progressAt(target.key) >= target.value.quota,
   );
@@ -109,13 +109,13 @@ class PuzzleDeal {
       }
     }
     final aim = _size.aimOf(path);
-    final targets =
-        suit != puzzle.scoringSuit || !puzzle.targets.containsKey(aim)
+    final targets = puzzle.targets[aim]?.suit != suit
         ? const <int>{}
         : (_link?.cells.contains(aim) ?? false)
         ? _link!.cells
         : {aim!};
     return Stroke(
+      suit,
       List.unmodifiable(path),
       path.toSet(),
       Map.unmodifiable({for (final cell in targets) cell: path.length}),
@@ -135,21 +135,19 @@ class PuzzleDeal {
       for (var cell = 0; cell < _size.cellCount; cell++)
         if (board[cell] != null && _size.coversCell(corners, cell)) cell,
     };
-    final gains = <int, int>{};
-    if (cornerSuit == puzzle.scoringSuit) {
-      final cornerGain = math.max(
-        puzzle.rules.cornerProgressPerPiece,
-        cleared.where((cell) => board[cell] == cornerSuit).length *
-            puzzle.rules.cornerProgressPerPiece,
-      );
-      for (final cell in puzzle.targets.keys) {
-        if (_size.coversCell(corners, cell)) {
-          gains[cell] = corners.contains(cell)
+    final cornerGain = math.max(
+      puzzle.rules.cornerProgressPerPiece,
+      cleared.where((cell) => board[cell] == cornerSuit).length *
+          puzzle.rules.cornerProgressPerPiece,
+    );
+    final gains = {
+      for (final entry in puzzle.targets.entries)
+        if (entry.value.suit == cornerSuit &&
+            _size.coversCell(corners, entry.key))
+          entry.key: corners.contains(entry.key)
               ? cornerGain
-              : puzzle.rules.shapeProgress;
-        }
-      }
-    }
+              : puzzle.rules.shapeProgress,
+    };
     final a = corners[0];
     final b = corners[2];
     final square =
@@ -159,6 +157,7 @@ class PuzzleDeal {
         ? corners.where(gains.containsKey).toSet()
         : const <int>{};
     return Stroke(
+      cornerSuit,
       [...corners, corners.first],
       cleared,
       Map.unmodifiable(gains),
@@ -228,18 +227,20 @@ class PuzzleDeal {
           ? TargetLink(linkBefore.cells, linkBefore.movesLeft - 1)
           : null;
     }
-    _faded = {
+    _faded = Map.unmodifiable({
       for (final entry in puzzle.targets.entries)
-        if (!stroke.gains.containsKey(entry.key) && entry.value.fading > 0)
+        if (!stroke.gains.containsKey(entry.key) &&
+            entry.value.fading > 0 &&
+            progressAt(entry.key) > 0)
           entry.key: math.min(progressAt(entry.key), entry.value.fading),
-    };
+    });
     _progress = Map.unmodifiable({
       for (final entry in puzzle.targets.entries)
         entry.key: math.min(
           entry.value.quota,
           progressAt(entry.key) +
               (stroke.gains[entry.key] ?? 0) -
-              fadedAt(entry.key),
+              (_faded[entry.key] ?? 0),
         ),
     });
     _board = List.unmodifiable(next);
@@ -315,8 +316,7 @@ class PuzzleDeal {
               ? rules.refillLowerPairWeight
               : rules.refillOtherPairWeight;
         }
-        if (suit == puzzle.scoringSuit &&
-            puzzle.targets.containsKey(_size.aimOf([cell, neighbour]))) {
+        if (puzzle.targets[_size.aimOf([cell, neighbour])]?.suit == suit) {
           score += rules.refillAimWeight;
         }
       }

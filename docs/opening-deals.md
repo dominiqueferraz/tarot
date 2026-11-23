@@ -212,6 +212,30 @@ Try G5 → F5 after the handoff to use the last linked move from the stern side.
 
 Guided refill weights Swords three times as heavily as each other suit. The boat leaves once both counters reach 24. Clearing High Water unlocks The Mooring.
 
+## Level 005 · The Ferryman’s Fare
+
+Clearing The Mooring unlocks the market landing. Fill the west pan at C4 and the east pan at F4 with 24 Coins each in 25 moves, with a par of 15. B1 and G1 are masked on the 8 × 8 board. Guided refill uses seed 571 and gives all four suits equal weight. The illustrated scale tips toward the fuller pan and balances when both are paid.
+
+The last step of a Coin trace sets its direction. E4 → D4 deposits two Coins in the west pan, and D4 → E4 deposits two in the east pan. Either opening removes the same pair and leaves the same pieces after the fall. A rectangle or square with Coin corners can feed either or both pans under the shared scoring rules. The pans keep independent counters for subsequent moves, and each pan caps at 24.
+
+| Reference approach | Result |
+|---|---|
+| E4 → D4, then build toward the west pan | West fills first. Both pans are paid in 14 moves. |
+| D4 → E4, then build toward the east pan | East fills first. Both pans are paid in 14 moves. |
+| A2 → A3 spends two Coins without a deposit | Switch to the west opening after the fall. Both pans are paid in 18 moves. |
+| Fill the west pan, then spend the remaining moves without feeding the east | The deal fails at 24 west and 14 east. |
+| Open east and build a sequence of Coin squares and rectangles | Both pans are paid in six moves. The C1–F4 square pays seven Coins into each pan. |
+
+[Puzzle catalog](../assets/puzzles/fool.json) · [Reference replays](../test/fool_deal_test.dart)
+
+## Market Day preparation board
+
+The 7 × 7 test board uses the market scenery with three independent fixtures. The lamp at C3 accepts Wands, the inlet at F3 accepts Cups, and the pan at C6 accepts Coins. Each needs 6 within 18 moves. The campaign still ends at The Ferryman’s Fare while Market Day is being authored.
+
+Trace E3 → D3 to give the lamp 2 light. The same move drops two Cups into D3 and E3. Trace D3 → E3 to pour 2 into the inlet. Closing C3 → F3 → F6 → C6 → C3 on the opening grid makes a Wand square with all three fixtures as wildcard corners. Only the lamp scores, because it is the Wand target. The lamp, inlet and pan each have their own progress display and suit marker.
+
+[Test board and clear replay](../test/fool_deal_test.dart)
+
 ## Lozenge playtest routes
 
 Read columns left to right and rows top to bottom. A closed route can be drawn in either direction and started between any of its corners. For a route with a setup stroke, start on a fresh deal and play the steps in order.

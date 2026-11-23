@@ -25,6 +25,14 @@ import 'tableau_art.dart';
     title: strings.mooringTitle,
     objective: strings.mooringObjective,
   ),
+  PuzzleTextKey.ferrymansFare => (
+    title: strings.ferrymansFareTitle,
+    objective: strings.ferrymansFareObjective,
+  ),
+  PuzzleTextKey.marketDay => (
+    title: strings.marketDayTitle,
+    objective: strings.marketDayObjective,
+  ),
 };
 
 String targetName(AppLocalizations strings, TargetLabel label) =>
@@ -34,7 +42,34 @@ String targetName(AppLocalizations strings, TargetLabel label) =>
       TargetLabel.millInlet => strings.millInlet,
       TargetLabel.bowCord => strings.bowCord,
       TargetLabel.sternCord => strings.sternCord,
+      TargetLabel.westPan => strings.westPan,
+      TargetLabel.eastPan => strings.eastPan,
+      TargetLabel.marketLamp => strings.marketLamp,
+      TargetLabel.marketInlet => strings.marketInlet,
+      TargetLabel.farePan => strings.farePan,
     };
+
+String targetAmount(AppLocalizations strings, TargetKind kind, int amount) =>
+    switch (kind) {
+      TargetKind.marker || TargetKind.lantern => strings.lightGoal(amount),
+      TargetKind.inlet => strings.waterGoal(amount),
+      TargetKind.cord => strings.strandAmount(amount),
+      TargetKind.pan => strings.coinAmount(amount),
+    };
+
+String targetQuota(
+  AppLocalizations strings,
+  PuzzleTarget target,
+  bool repeated,
+) {
+  if (repeated && target.kind == TargetKind.cord) {
+    return strings.cordGoal(target.quota);
+  }
+  if (repeated && target.kind == TargetKind.pan) {
+    return strings.coinGoal(target.quota);
+  }
+  return targetAmount(strings, target.kind, target.quota);
+}
 
 String suitName(AppLocalizations strings, Suit suit) => switch (suit) {
   Suit.wand => strings.wands,
@@ -42,6 +77,10 @@ String suitName(AppLocalizations strings, Suit suit) => switch (suit) {
   Suit.sword => strings.swords,
   Suit.coin => strings.coins,
 };
+
+String suitNames(AppLocalizations strings, Iterable<Suit> suits) => suits
+    .map((suit) => suitName(strings, suit))
+    .reduce(strings.labelWithDetail);
 
 String difficultyName(AppLocalizations strings, PuzzleDifficulty difficulty) =>
     switch (difficulty) {
@@ -53,40 +92,62 @@ String difficultyName(AppLocalizations strings, PuzzleDifficulty difficulty) =>
 class PuzzleIllustration extends StatelessWidget {
   const PuzzleIllustration({
     required this.artwork,
-    required this.scene,
-    this.progress = const [],
+    required this.puzzle,
+    this.progress = const {},
     this.motion = 0,
     super.key,
   });
 
   final Artwork artwork;
-  final PuzzleScene scene;
-  final List<double> progress;
+  final PuzzleDefinition puzzle;
+  final Map<int, double> progress;
   final double motion;
 
   @override
-  Widget build(BuildContext context) => CustomPaint(
-    painter: switch (scene) {
-      PuzzleScene.ridge => RidgePainter(
-        artwork: artwork,
-        light: progress.firstOrNull ?? 0,
-        walk: motion,
-      ),
-      PuzzleScene.quay => QuayPainter(
-        artwork: artwork,
-        light: progress.firstOrNull ?? 0,
-      ),
-      PuzzleScene.mill => MillPainter(
-        artwork: artwork,
-        water: progress.firstOrNull ?? 0,
-        motion: motion,
-      ),
-      PuzzleScene.dock => DockPainter(
-        artwork: artwork,
-        bow: progress.elementAtOrNull(0) ?? 0,
-        stern: progress.elementAtOrNull(1) ?? 0,
-        motion: motion,
-      ),
-    },
-  );
+  Widget build(BuildContext context) {
+    final targets = [
+      for (final entry in puzzle.targets.entries)
+        (target: entry.value, progress: progress[entry.key] ?? 0.0),
+    ];
+    double progressOf(TargetKind kind, {TargetLabel? label}) =>
+        targets
+            .where(
+              (entry) =>
+                  entry.target.kind == kind &&
+                  (label == null || entry.target.label == label),
+            )
+            .firstOrNull
+            ?.progress ??
+        0;
+
+    return CustomPaint(
+      painter: switch (puzzle.scene) {
+        PuzzleScene.ridge => RidgePainter(
+          artwork: artwork,
+          light: progressOf(TargetKind.marker),
+          walk: motion,
+        ),
+        PuzzleScene.quay => QuayPainter(
+          artwork: artwork,
+          light: progressOf(TargetKind.lantern),
+        ),
+        PuzzleScene.mill => MillPainter(
+          artwork: artwork,
+          water: progressOf(TargetKind.inlet),
+          motion: motion,
+        ),
+        PuzzleScene.dock => DockPainter(
+          artwork: artwork,
+          bow: progressOf(TargetKind.cord, label: TargetLabel.bowCord),
+          stern: progressOf(TargetKind.cord, label: TargetLabel.sternCord),
+          motion: motion,
+        ),
+        PuzzleScene.market => MarketPainter(
+          artwork: artwork,
+          targets: targets,
+          motion: motion,
+        ),
+      },
+    );
+  }
 }

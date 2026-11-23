@@ -15,7 +15,7 @@
       "scene": "ridge",
       "textKey": "foolsStep",
       "board": ["SSWWOW", "CSWWCO", "SOCWWW", "CSSCLO", "WSSWWW", "WWSSCC"],
-      "target": {"cell": "E4", "suit": "W", "light": 30, "label": "trailMarker"},
+      "target": {"cell": "E4", "suit": "W", "quota": 30, "kind": "marker", "label": "trailMarker"},
       "moves": 25,
       "difficulty": "normal",
       "par": 14,
@@ -34,7 +34,7 @@
       "scene": "quay",
       "textKey": "lamplighter",
       "board": ["WSOCS", "CCWCC", "CCLSC", "OCOCS", "CWCWO", "SCCOW"],
-      "target": {"cell": "C3", "suit": "C", "light": 44, "label": "quayLamp", "fade": 1},
+      "target": {"cell": "C3", "suit": "C", "quota": 44, "kind": "lantern", "label": "quayLamp", "fade": 1},
       "moves": 22,
       "difficulty": "normal",
       "par": 15,
@@ -45,7 +45,7 @@
       "scene": "mill",
       "textKey": "highWater",
       "board": ["WSOWSC", "SCCOWO", "OWSWCS", "COOCWO", "OLCCSW", "CCWWOC", "CCWOOS"],
-      "target": {"cell": "B5", "suit": "C", "light": 32, "label": "millInlet"},
+      "target": {"cell": "B5", "suit": "C", "quota": 32, "kind": "inlet", "label": "millInlet"},
       "moves": 18,
       "difficulty": "normal",
       "par": 15,
@@ -57,8 +57,8 @@
       "textKey": "mooring",
       "board": [".WSSCO.", "WSSCSSO", "OSLSSWC", "SSWOSSS", "CSSSLSS", "OWSSOSW"],
       "targets": [
-        {"cell": "C3", "suit": "S", "light": 24, "label": "bowCord"},
-        {"cell": "E5", "suit": "S", "light": 24, "label": "sternCord"}
+        {"cell": "C3", "suit": "S", "quota": 24, "kind": "cord", "label": "bowCord"},
+        {"cell": "E5", "suit": "S", "quota": 24, "kind": "cord", "label": "sternCord"}
       ],
       "linksTargets": true,
       "moves": 26,
@@ -69,6 +69,20 @@
         {"cue": "linkSquare", "path": "C3 E3 E5 C5 C3", "hint": [3.7, 2.24, "bottom"], "arrivals": ["", "", "SS", "SCS", "SO", "", ""]},
         {"cue": "linkedAim", "path": "C1 C2", "hint": [2.17, 1.34, "right"], "arrivals": ["", "", "OS", "", "", "", ""]}
       ]
+    },
+    {
+      "id": "005",
+      "scene": "market",
+      "textKey": "ferrymansFare",
+      "board": ["W.OCSC.S", "OCSSOWCO", "OOOSCCCO", "SOLOOLOW", "WOCWSOOS", "CCSOSOWC", "OWCWSCOO", "SCOCOWWO"],
+      "targets": [
+        {"cell": "C4", "suit": "O", "quota": 24, "kind": "pan", "label": "westPan"},
+        {"cell": "F4", "suit": "O", "quota": 24, "kind": "pan", "label": "eastPan"}
+      ],
+      "moves": 25,
+      "difficulty": "normal",
+      "par": 15,
+      "refill": {"type": "guided", "seed": 571, "weights": {"O": 1, "W": 1, "C": 1, "S": 1}}
     }
   ]
 }
