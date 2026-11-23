@@ -259,6 +259,20 @@ Build the two water levels with aimed Cup traces and Cup rectangles. A float tha
 
 [Puzzle catalog](../assets/puzzles/fool.json) · [Reference replays](../test/fool_deal_test.dart)
 
+## Level 008 · From Behind
+
+The west-facing lamp at D4 needs 32 light. A Wand trace scores one light per Wand when its last step is B4 → C4, aimed east into the lamp. A westbound trace from F4 → E4 still clears both Wands. A rectangle can clear around the lamp and use it as a wildcard corner. The arrow on the lamp marks the scoring side.
+
+The 6 × 6 deal has an 18-move limit and a par of 14. Each column repeats its authored ribbon. The strip shows its next three arrivals, from left to right, with the first landing in the lowest vacancy. The lamp opens at 0/32 and the path lights up as the player feeds it. [Board and ribbons](../assets/puzzles/fool.json)
+
+| Approach | Opening decision and payoff | Clear |
+|---|---|---|
+| Drop Wands from above | Clear B5 → B6. Trace F3 → F4 → E4 → E3 → D3 → C3 → B3 → B4 → C4 for 9 light. | 14 moves |
+| Rebuild the approach with a rectangle | Clear D3 → E3 → E4. Close A2 → E2 → E5 → A5 → A2, then aim B4 → C4 for the first 2 light. | 13 moves |
+| Recover from the wrong side | Spend F4 → E4. Clear D3 → C3 → C4 and a rectangle to set up C6 → B6 → B5 → B4 → C4 for 5 light. | 18 moves |
+
+The [deal tests](../test/fool_deal_test.dart) replay all three routes and a loss that spends every move without setting up an eastbound hit.
+
 ## Lozenge playtest routes
 
 Read columns left to right and rows top to bottom. A closed route can be drawn in either direction and started between any of its corners. For a route with a setup stroke, start on a fresh deal and play the steps in order.
@@ -290,7 +304,7 @@ An opening Hint on a replay can restart the guide. Once its four steps are finis
 
 ## Fool 013 · One impossible step
 
-**Raise the drawbridge by pouring two units into its inlet.** The inlet starts empty. Deal one charge of Leap, three moves and a 6 × 6 field. The only Cups are in column D. A Wand sits between them. There is a second Wand across the gap. Both Cups and Wands can make use of the same card.
+**Raise the drawbridge by pouring two units into its inlet.** The legacy deal below starts with an empty inlet, one charge of Leap, three moves and a 6 × 6 field. The only Cups are in column D. A Wand sits between them. There is a second Wand across the gap. Both Cups and Wands can make use of the same card. The mobile training brief is a 10-move candidate, pending a rebuilt layout, a new card certificate and playtesting. [Campaign brief](campaign-001-220.md#0--the-fool--prologue-001020)
 
 ```
       A B C D E F
@@ -484,7 +498,8 @@ WWCC
 
 **Dead opening**  D3·D1. Restart restores the opportunity.
 
-Every board shows a move limit (the PRD's tier policy):
+These studies used their own move limits. The mobile campaign uses the [current PRD](product-requirements.md#challenge-hints-and-fairness).
+
 - **Main route** in the first chapter: par + 3.
 - **Mastery leaves:** par + 1 on 008, par on 009.
 - **Stars** stay optional on the required route.

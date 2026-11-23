@@ -5,6 +5,7 @@ import 'package:flutter/widgets.dart';
 import '../artwork.dart';
 import '../l10n/generated/app_localizations.dart';
 import 'puzzle_definition.dart';
+import 'stroke.dart';
 import 'tableau_art.dart';
 
 ({String title, String objective}) puzzleWords(
@@ -39,6 +40,10 @@ import 'tableau_art.dart';
     title: strings.fairSplitTitle,
     objective: strings.fairSplitObjective,
   ),
+  PuzzleTextKey.fromBehind => (
+    title: strings.fromBehindTitle,
+    objective: strings.fromBehindObjective,
+  ),
 };
 
 ({String opening, String ending})? puzzleStory(
@@ -62,6 +67,15 @@ String targetName(AppLocalizations strings, TargetLabel label) =>
       TargetLabel.paymentPan => strings.paymentPan,
       TargetLabel.westFloat => strings.westFloat,
       TargetLabel.eastFloat => strings.eastFloat,
+      TargetLabel.westFacingLamp => strings.westFacingLamp,
+    };
+
+String aimDirectionName(AppLocalizations strings, BoardDirection direction) =>
+    switch (direction) {
+      BoardDirection.north => strings.aimUp,
+      BoardDirection.east => strings.aimRight,
+      BoardDirection.south => strings.aimDown,
+      BoardDirection.west => strings.aimLeft,
     };
 
 String targetAmount(AppLocalizations strings, TargetKind kind, int amount) =>
@@ -166,6 +180,11 @@ class PuzzleIllustration extends StatelessWidget {
           west: progressOf(TargetKind.inlet, label: TargetLabel.westFloat),
           east: progressOf(TargetKind.inlet, label: TargetLabel.eastFloat),
           motion: motion,
+        ),
+        PuzzleScene.lampPath => LampPathPainter(
+          artwork: artwork,
+          light: progressOf(TargetKind.lantern),
+          walk: motion,
         ),
       },
     );

@@ -134,6 +134,8 @@ A deal can ask the player to deliver, release, balance, illuminate or restore so
 
 **Simultaneous fills.** A deal can require two fixtures to reach their quotas on the same paid stroke. Each keeps partial progress. If only one reaches its mark, it spills and settles one unit below the mark as part of that move. Show a brief hint near that fixture when it spills. In The Fair Split, a Cup rectangle can feed both in one stroke, and a Cup square can link them for an aimed pour using the shared linking rules. [Authored deal](opening-deals.md#level-007--the-fair-split)
 
+**Directional fixtures.** A fixture can require the trace's final step to point in a specific direction. Mark the accepted approach with an arrow entering that side of the fixture. A matching trace that aims in from another side still clears its pieces. Rectangles clear normally around the fixture, whose progress comes from correctly aimed traces. From Behind asks for eastbound Wand hits at a west-facing lamp. [Authored deal](opening-deals.md#level-008--from-behind)
+
 For each suit-based objective, show its scoring suit or suits next to its name and progress in the goal tracker. Keep a single framed square beside the illustration. Center one scoring suit symbol. When there are multiple suits, place the first symbol at the top and space the others evenly around a visible ring. Give each symbol an accessible name. Mark each target on mixed-suit boards with the suit that earns its progress, including targets that match other suits as wildcard corners.
 
 ### Every board refills
@@ -147,11 +149,11 @@ What gives a board its character is how its ribbons are written. The two ends of
 | Contents | Every suit, in generous amounts | Limited stock shared by several useful actions. A target suit may run out. |
 | Placement | Even across columns | Deliberate: a run with no Wands in one column, a key arrival in another |
 | Visibility | New pieces are revealed after release | Every arrival that matters is on view, because the arrivals are part of the puzzle |
-| Moves | Par about 15, limit about 25 | Par about 15 with less slack, or a short teaching hook |
+| Moves | Par about 15, limit about 25 | Par about 15 with less slack. The same 10-move minimum applies. |
 | Feel | Rhythm: many satisfying strokes building toward a quota | Choosing which use of a scarce piece to commit to, with the arrivals in view |
 
 **Rules for every board**
-- **Measured ribbons.** Each column has its own authored sequence. Ribbons loop unless the column is marked dry. The next arrivals can be shown before a stroke.
+- **Measured ribbons.** Each column has its own authored sequence. Ribbons loop unless the column is marked dry. From Behind shows the next three arrivals above each column, with the first arrival on the left.
 - **Guided supply.** Settle the entire board after each paid stroke and evaluate seeded candidate fills against that position. Favour lower rows and columns with legal pairs, suit variety and several ways to aim at targets. Also project the fall after a visible legal pair clears to see which isolated lower cells would gain a partner. Evaluate these possibilities without playing turns on the player's behalf.
 - **Rectangles.** Weight compatible arrivals toward available corners. Reward a ready rectangle and moves that can assemble one from pieces already visible. A player can build the shape by lowering one column or shifting several together. Keep ordinary pairs available alongside those opportunities.
 - **Fair arrivals.** Weights govern the suits available to fill an empty cell. Starting pieces and surviving pieces keep their printed suits. Restart repeats the deal and the same choices repeat the same draws. A drag spends no moves and draws no pieces until it is committed.
@@ -336,7 +338,7 @@ Use Normal, Hard and Super Hard as player-facing predictions, judged against eve
 
 More colours, hidden refills, bigger boards and very low move limits do not, on their own, earn a higher rating.
 
-**Move limits and stars.** Every board shows a move limit. Set the clear limit by replaying the approaches the board invites, including a recovery on the main route. Set par separately as an optional efficiency target that has been achieved on the same deal. The difference between them is the slack. **Board length.** A board is a phase of play, not a single trick. The best solves take **about 15 moves**, the limit tops out at **about 25**, and running past the limit loses the board. Quotas, fading fixtures and the supply are tuned together to hit that range. Use the ranges below as authoring defaults. Where an atlas brief proposes a tighter limit, record the intended pressure and test its losing line before accepting the exception.
+**Move limits and stars.** Every board shows a move limit. Every level starts with **at least 10 moves**. The same minimum applies to any encounter phase with its own move limit. Set the clear limit by replaying the approaches the board invites, including a recovery on the main route. Set par separately as an optional efficiency target that has been achieved on the same deal. The difference between them is the slack. **Board length.** Most boards aim for a par of **about 15 moves** and a limit of **about 25**. Tune quotas, fading fixtures and supply together to support a full board's worth of decisions. Use the ranges below as authoring defaults.
 
 | Tier | Typical par | Limit |
 |---|---|---|
@@ -344,11 +346,11 @@ More colours, hidden refills, bigger boards and very low move limits do not, on 
 | Hard | 15–18 | Par + 5 to 7 |
 | Super Hard | 18–20 | Par + 3 to 5, never above 25 |
 
-- **Short hooks are rare exceptions.** A teaching board can be short on purpose. On 001 par is 14, as demonstrated by a clear that includes the six guided strokes. Name intentional short boards in the atlas.
+- **Exactly 10 moves is a rare exception.** Reserve it for a named training level with a focused lesson or a particularly demanding Hard or Super Hard challenge. Record why that limit serves the specific board in the atlas. Verify its intended clears, a plausible weak move and its losing line on the authored layout before accepting the limit. A training level must leave room to practise the lesson and recover from a plausible mistake.
 - **Archived web playtest.** All eight archived deals have reproducible clears at their recorded seeds. Automated checks exercise rules, falls and authored routes. Use human play to judge time to the first useful trace, recovery in lower rows, variety of approaches and how often players intentionally build a lozenge. Pay particular attention to The Mooring, The Ferryman's Fare and Twin Wreath. [Run the archived checks](opening-deals.md#replaying-the-archived-prototypes)
 
 - **Stars.** Any clear earns one star. A clear within par plus half the slack (rounded up) earns two. A clear at or under par earns three. A clear under par also earns a distinct mark, so a shorter line rewards the player instead of exposing a defect.
-- **The main route never needs more than one star.** Tight limits belong to Hard and optional boards.
+- **The main route never needs more than one star.**
 - **Keep the restart cheap.**
   - When supply is tight, keep attempts short and leave enough moves for the slower viable approach.
   - On open boards, a loss says how close it came, and main-route slack is generous.
@@ -495,7 +497,7 @@ Proposed launch model: a free chapter through the first encounter, followed by a
 | Does the grid retain its feel? | Inspect 001, a moving-target deal, an 8 × 9 open-supply board and a two-phase encounter on a narrow phone. Every cell stays visible during tracing. Players can find an alternate group, turn a trace, backtrack, aim its endpoint and commit without shifting to a separate control surface. |
 | Is acquisition legible? | After Fool 013, ask what the player now owns. On 014, observe whether they use Leap independently, then restart and ask how many charges are available. Verify that replaying 013 awards the card exactly once. |
 | Do players see choices? | Observe unprompted first attempts. Record how each player used the key resource, whether they changed plans after a fall, and where they felt forced to restart. If everyone repeats one combination, show a fresh group the same board after making the alternative easier to see. |
-| Is difficulty genuine? | For each candidate tier log unhinted first-attempt clears, restarts and the stroke each failed attempt ended on, moves used against the limit, stars earned, hint depth, solve-time distribution (an internal playtest measure, never shown to players), abandonment and players’ explanations. Compare experienced players separately. Fool 008 currently proposes three strokes against a four-stroke Hard requirement. Review its witness and retune the layout or tier, then compare observed results. |
+| Is difficulty genuine? | For each candidate tier log unhinted first-attempt clears, restarts and the stroke each failed attempt ended on, moves used against the limit, stars earned, hint depth, solve-time distribution (an internal playtest measure, never shown to players), abandonment and players’ explanations. Compare experienced players separately. For Fool 008, observe whether players notice the lamp's approach, use the ribbon to plan a setup and recover after a wrong-way hit. |
 | Can production scale? | Test the Fool’s 20-board prologue and three later greyboxes covering a moving target, opposing gravity and a combination of powers. Measure hours per accepted puzzle, review backlog, and number of genuinely distinct interactions per new rule. Expand to the next batch only after certificate review, the heuristics verifier and human review work reliably. |
 | Can the campaign ship? | Each release board has reproducible, meaningfully different clears with its dealt hand; every card-required board has a written certificate that survived a verifier pass; every acquisition has a permanent award; the main route clears from a fresh profile without side content. Restore mid-puzzle, replay old saves and preserve accessibility across all mechanics. |
 

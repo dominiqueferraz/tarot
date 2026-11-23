@@ -127,6 +127,55 @@ class QuayPainter extends CustomPainter {
       oldDelegate.artwork != artwork || oldDelegate.light != light;
 }
 
+class LampPathPainter extends CustomPainter {
+  const LampPathPainter({
+    required this.artwork,
+    required this.light,
+    required this.walk,
+  });
+
+  final Artwork artwork;
+  final double light;
+  final double walk;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    canvas.save();
+    canvas.scale(
+      size.width / SceneLayout.width,
+      size.height / SceneLayout.height,
+    );
+    canvas.clipRect(
+      const Rect.fromLTWH(0, 0, SceneLayout.width, SceneLayout.height),
+    );
+    artwork.paint(canvas, Art.ridge);
+    const trail = SceneLayout.ridgeTrail;
+    const lamp = Offset(397, 34);
+    final route = _path(trail);
+    canvas.drawPath(route, _pen(mutedInk.withValues(alpha: .65), 2));
+    if (light > 0) {
+      final metric = route.computeMetrics().single;
+      canvas.drawPath(
+        metric.extractPath(0, light * metric.length),
+        _pen(paleGold, 3),
+      );
+      _sceneGlow(canvas, lamp - const Offset(13, 0), 66, light);
+    }
+    _lantern(canvas, artwork, lamp, .92, light);
+    final steps = walk * (trail.length - 1);
+    final index = math.min(steps.floor(), trail.length - 2);
+    final feet = Offset.lerp(trail[index], trail[index + 1], steps - index)!;
+    artwork.paint(canvas, Art.fool, origin: feet);
+    canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(LampPathPainter oldDelegate) =>
+      oldDelegate.artwork != artwork ||
+      oldDelegate.light != light ||
+      oldDelegate.walk != walk;
+}
+
 class MillPainter extends CustomPainter {
   const MillPainter({
     required this.artwork,
@@ -991,7 +1040,16 @@ class TableauPainter extends CustomPainter {
   void _paintAim(Canvas canvas, Stroke stroke, Color color) {
     final aim = _size.aimOf(stroke.path);
     if (aim != null) {
-      _arrow(canvas, _center(stroke.path.last), _center(aim), color, .68);
+      final blocked =
+          puzzle.targets[aim]?.aimDirection != null &&
+          !stroke.gains.containsKey(aim);
+      _arrow(
+        canvas,
+        _center(stroke.path.last),
+        _center(aim),
+        blocked ? rust : color,
+        .68,
+      );
     }
   }
 
@@ -1045,7 +1103,13 @@ void _paintFixture(
     case TargetKind.marker:
       _marker(canvas, artwork, center, 24, amount);
     case TargetKind.lantern:
-      _lantern(canvas, artwork, center, 1, amount);
+      _lantern(
+        canvas,
+        artwork,
+        center,
+        target.aimDirection == null ? 1 : .85,
+        amount,
+      );
     case TargetKind.inlet:
       _inlet(canvas, center, 1, amount, marked: marked);
     case TargetKind.cord:
@@ -1057,6 +1121,18 @@ void _paintFixture(
       );
     case TargetKind.pan:
       _scalePan(canvas, center, amount);
+  }
+  final aim = target.aimDirection;
+  if (aim != null) {
+    final direction = Offset(aim.dx.toDouble(), aim.dy.toDouble());
+    _arrow(
+      canvas,
+      center - direction * 40,
+      center - direction * 24,
+      blue,
+      1,
+      scale: .65,
+    );
   }
 }
 
@@ -1237,22 +1313,27 @@ void _scalePan(Canvas canvas, Offset center, double fill) {
   canvas.restore();
 }
 
-void _arrow(Canvas canvas, Offset a, Offset b, Color color, double fraction) {
+void _arrow(
+  Canvas canvas,
+  Offset a,
+  Offset b,
+  Color color,
+  double fraction, {
+  double scale = 1,
+}) {
   final direction = (b - a) / (b - a).distance;
   final normal = Offset(-direction.dy, direction.dx);
   final tip = Offset.lerp(a, b, fraction)!;
-  final stem = tip - direction * 21;
-  final back = tip - direction * 10;
-  canvas.drawPath(_path([stem, tip]), _pen(paper, 12));
-  canvas.drawPath(
-    _path([back + normal * 8, tip, back - normal * 8]),
-    _pen(paper, 12),
-  );
-  canvas.drawPath(_path([stem, tip]), _pen(color, 5));
-  canvas.drawPath(
-    _path([back + normal * 8, tip, back - normal * 8]),
-    _pen(color, 5),
-  );
+  final back = tip - direction * (10 * scale);
+  final wing = normal * (8 * scale);
+  final stem = _path([tip - direction * (21 * scale), tip]);
+  final head = _path([back + wing, tip, back - wing]);
+  final outline = _pen(paper, 12 * scale);
+  final fill = _pen(color, 5 * scale);
+  canvas.drawPath(stem, outline);
+  canvas.drawPath(head, outline);
+  canvas.drawPath(stem, fill);
+  canvas.drawPath(head, fill);
 }
 
 Paint _pen(Color color, double width) => Paint()

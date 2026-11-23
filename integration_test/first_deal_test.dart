@@ -16,6 +16,7 @@ import '../test/fool_deal_test.dart'
         dockReplay,
         dockSize,
         fairSplitReplay,
+        fromBehindReplay,
         guidedRoutes,
         highWaterSize,
         lampReplay,
@@ -469,7 +470,9 @@ void main() {
     },
   );
 
-  testWidgets('clears Market Day and The Fair Split', (tester) async {
+  testWidgets('clears Market Day, The Fair Split and From Behind', (
+    tester,
+  ) async {
     final source = await rootBundle.loadString(PuzzleCatalog.assetPath);
     final catalog = PuzzleCatalog.parse(source);
     final split = catalog.puzzles.singleWhere((puzzle) => puzzle.id == '007');
@@ -576,5 +579,41 @@ void main() {
     expect(find.text(portuguese.fillTogetherHint), findsNothing);
     expect(find.bySemanticsLabel(portuguese.starRating(3)), findsOneWidget);
     await screenshot(tester, 'tarot-squared-fair-split-complete');
+
+    await tester.tap(find.text(portuguese.nextPuzzle));
+    await tester.pumpAndSettle();
+    expect(find.text(portuguese.fromBehindTitle), findsOneWidget);
+    expect(find.text(portuguese.moveLimit(18)), findsOneWidget);
+    await tester.ensureVisible(play);
+    await tester.tap(play);
+    await tester.pumpAndSettle();
+    final lamp = find.byKey(const Key('target-value-D4'));
+    expect(find.byKey(const Key('arrival-ribbons')), findsOneWidget);
+    expect(find.text(portuguese.fromBehindObjective), findsOneWidget);
+    expect(
+      find.bySemanticsLabel(
+        portuguese.labelWithDetail(
+          'D4',
+          portuguese.labelWithDetail(
+            portuguese.namedTargetProgress(
+              portuguese.westFacingLamp,
+              portuguese.targetProgress(0, 32),
+            ),
+            portuguese.aimRight,
+          ),
+        ),
+      ),
+      findsOneWidget,
+    );
+    await screenshot(tester, 'tarot-squared-from-behind-board');
+    for (final (trace, light) in fromBehindReplay) {
+      await dragStroke(tester, trace);
+      expect(
+        tester.widget<Text>(lamp).data,
+        portuguese.targetProgress(light, 32),
+      );
+    }
+    expect(find.bySemanticsLabel(portuguese.starRating(3)), findsOneWidget);
+    await screenshot(tester, 'tarot-squared-from-behind-complete');
   });
 }

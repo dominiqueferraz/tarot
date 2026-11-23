@@ -15,7 +15,16 @@ enum Suit {
       _named(values, symbol, (suit) => suit.symbol, 'suit');
 }
 
-enum PuzzleScene { ridge, quay, mill, dock, market, breadStall, sluice }
+enum PuzzleScene {
+  ridge,
+  quay,
+  mill,
+  dock,
+  market,
+  breadStall,
+  sluice,
+  lampPath,
+}
 
 enum PuzzleTextKey {
   foolsStep,
@@ -25,6 +34,7 @@ enum PuzzleTextKey {
   ferrymansFare,
   marketDay,
   fairSplit,
+  fromBehind,
 }
 
 enum TargetKind { marker, lantern, inlet, cord, pan }
@@ -41,7 +51,8 @@ enum TargetLabel {
   marketInlet(TargetKind.inlet),
   paymentPan(TargetKind.pan),
   westFloat(TargetKind.inlet),
-  eastFloat(TargetKind.inlet);
+  eastFloat(TargetKind.inlet),
+  westFacingLamp(TargetKind.lantern);
 
   const TargetLabel(this.defaultKind);
 
@@ -122,6 +133,9 @@ sealed class Refill {
     return switch (_field<String>(data, 'type')) {
       'ribbons' => RibbonRefill(
         _columns(_field<List<Object?>>(data, 'columns'), width),
+        showArrivals:
+            data.containsKey('showArrivals') &&
+            _field<bool>(data, 'showArrivals'),
       ),
       'guided' => GuidedRefill(
         _field<int>(data, 'seed'),
@@ -142,8 +156,9 @@ sealed class Refill {
 }
 
 class RibbonRefill extends Refill {
-  const RibbonRefill(this.columns);
+  const RibbonRefill(this.columns, {this.showArrivals = false});
   final List<List<Suit>> columns;
+  final bool showArrivals;
 }
 
 class GuidedRefill extends Refill {
@@ -216,13 +231,21 @@ class PuzzleRules {
 }
 
 class PuzzleTarget {
-  const PuzzleTarget(this.suit, this.quota, this.fading, this.label, this.kind);
+  const PuzzleTarget(
+    this.suit,
+    this.quota,
+    this.fading,
+    this.label,
+    this.kind, {
+    this.aimDirection,
+  });
 
   final Suit suit;
   final int quota;
   final int fading;
   final TargetLabel label;
   final TargetKind kind;
+  final BoardDirection? aimDirection;
 }
 
 class PuzzleDefinition {
@@ -313,6 +336,14 @@ class PuzzleDefinition {
                 'target kind',
               )
             : label.defaultKind,
+        aimDirection: entry.containsKey('aimDirection')
+            ? _named<BoardDirection>(
+                BoardDirection.values,
+                _field<String>(entry, 'aimDirection'),
+                (value) => value.name,
+                'target aim direction',
+              )
+            : null,
       );
     }
     if (targets.isEmpty ||

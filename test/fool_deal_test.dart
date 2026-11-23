@@ -15,11 +15,66 @@ final mooring = catalog.puzzles[3];
 final ferrymansFare = catalog.puzzles[4];
 final marketDay = catalog.puzzles[5];
 final fairSplit = catalog.puzzles[6];
+final fromBehind = catalog.puzzles[7];
 const openingSize = BoardSize(6, 6);
 const lampSize = BoardSize(5, 6);
 const highWaterSize = BoardSize(6, 7);
 const dockSize = BoardSize(7, 6);
 const marketSize = BoardSize(8, 8);
+
+const fromBehindReplay = [
+  ('B5 B6', 0),
+  ('F3 F4 E4 E3 D3 C3 B3 B4 C4', 9),
+  ('C4 C5', 9),
+  ('B4 C4', 11),
+  ('A4 D4 D6 A6 A4', 11),
+  ('C3 B3 B4 C4', 15),
+  ('B2 F2 F5 B5 B2', 15),
+  ('C5 C6 B6 B5 B4 C4', 21),
+  ('B5 C5', 21),
+  ('D3 C3 B3 B4 C4', 26),
+  ('B4 E4 E6 B6 B4', 26),
+  ('C3 B3 B4 C4', 30),
+  ('B6 C6', 30),
+  ('B4 C4', 32),
+];
+
+const _fromBehindRectangleSetup = [
+  ('D3 E3 E4', 0),
+  ('A2 E2 E5 A5 A2', 0),
+  ('B4 C4', 2),
+  ('B4 E4 E6 B6 B4', 2),
+  ('F4 F3 E3 D3 C3 B3 B4 C4', 10),
+  ('B2 F2 F5 B5 B2', 10),
+  ('C5 C6 B6 B5 B4 C4', 16),
+  ('A5 D5 D6 A6 A5', 16),
+  ('E5 D5 C5 B5 B4 C4', 22),
+  ('A4 F4 F6 A6 A4', 22),
+  ('C5 B5 B4 C4', 26),
+  ('A3 B3', 26),
+  ('C1 C2 B2 B3 B4 C4', 32),
+];
+
+const _fromBehindRecovery = [
+  ('F4 E4', 0),
+  ('D3 C3 C4', 0),
+  ('B3 E3 E6 B6 B3', 0),
+  ('C6 B6 B5 B4 C4', 5),
+  ('A4 B4', 5),
+  ('C3 B3 B4 C4', 9),
+  ('B4 D4 D6 B6 B4', 9),
+  ('D3 C3 B3 B4 C4', 14),
+  ('B3 C3 C6 B6 B3', 14),
+  ('C5 B5 B4 C4', 18),
+  ('B4 C4', 20),
+  ('A2 E2 E6 A6 A2', 20),
+  ('A1 D1 D4 A4 A1', 20),
+  ('C5 B5 B4 C4', 24),
+  ('B3 B4 C4', 27),
+  ('A3 C3 C6 A6 A3', 27),
+  ('B5 B4 C4', 30),
+  ('B4 C4', 32),
+];
 
 const westFareReplay = [
   ('E4 D4', 2, 0),
@@ -389,13 +444,16 @@ void main() {
     final config = jsonDecode(
       File(PuzzleCatalog.assetPath).readAsStringSync(),
     ) as Map<String, Object?>;
-    final entry = (config['puzzles'] as List).last as Map;
+    final entry = (config['puzzles'] as List).cast<Map>().singleWhere(
+      (puzzle) => puzzle['id'] == fairSplit.id,
+    );
     for (final target in entry['targets'] as List) {
       (target as Map)['quota'] = 2;
     }
     entry['moves'] = 2;
     entry['par'] = 2;
-    final puzzle = PuzzleCatalog.parse(jsonEncode(config)).puzzles.last;
+    final puzzle = PuzzleCatalog.parse(jsonEncode(config)).puzzles
+        .singleWhere((definition) => definition.id == fairSplit.id);
     final deal = PuzzleDeal(puzzle);
     final west = puzzle.size.parseCell('B3');
     final east = puzzle.size.parseCell('E6');
@@ -548,6 +606,73 @@ void main() {
     expect(() => rectangularCatalog(['LC'], 'C1'), throwsFormatException);
   });
 
+  test('From Behind only scores eastbound hits and advances each ribbon', () {
+    final deal = PuzzleDeal(fromBehind);
+    final lamp = openingSize.parseCell('D4');
+    final wrongWay = deal.inspect(cells('F4 E4'))!;
+    expect(wrongWay.suit, Suit.wand);
+    expect(openingSize.aimOf(wrongWay.path), lamp);
+    expect(wrongWay.totalGain, 0);
+    final rectangle = deal.inspect(cells('C3 E3 E4 C4 C3'))!;
+    expect(rectangle.isRectangle, isTrue);
+    expect(rectangle.totalGain, 0);
+    expect(deal.upcomingArrivals(1).take(3), [
+      Suit.wand,
+      Suit.sword,
+      Suit.wand,
+    ]);
+    expect(deal.play(cells('B5 B6')), isNotNull);
+    expect(deal.upcomingArrivals(1).take(3), [Suit.wand, Suit.cup, Suit.wand]);
+    expect(deal.upcomingArrivals(0).take(3), [Suit.coin, Suit.cup, Suit.coin]);
+    expect(deal.inspect(cells(fromBehindReplay[1].$1))?.gains, {lamp: 9});
+  });
+
+  test('From Behind clears by two setups and recovers on the last move', () {
+    final lamp = openingSize.parseCell('D4');
+    for (final route in [
+      fromBehindReplay,
+      _fromBehindRectangleSetup,
+      _fromBehindRecovery,
+    ]) {
+      final deal = PuzzleDeal(fromBehind);
+      for (final (trace, light) in route) {
+        expect(deal.play(cells(trace)), isNotNull, reason: trace);
+        expect(deal.progressAt(lamp), light, reason: trace);
+      }
+      expect(deal.won, isTrue);
+      expect(deal.movesLeft, fromBehind.limit - route.length);
+    }
+  });
+
+  test('From Behind loses after spending all moves on poor setup', () {
+    final deal = PuzzleDeal(fromBehind);
+    const route = [
+      'B1 B2',
+      'A3 B3',
+      'B3 C3',
+      'C2 D2',
+      'C1 D1',
+      'C1 C2',
+      'D1 E1',
+      'D1 D2',
+      'E1 F1',
+      'F1 F2',
+      'D2 D3',
+      'E2 F2',
+      'E2 E3',
+      'E1 F1',
+      'C3 D3',
+      'C1 C2',
+      'D2 E2',
+      'C1 D1',
+    ];
+    for (final trace in route) {
+      expect(deal.play(cells(trace))?.stroke.totalGain, 0, reason: trace);
+    }
+    expect(deal.movesLeft, 0);
+    expect(deal.lost, isTrue);
+  });
+
   test('validates and replays every authored guide', () {
     expect(catalog.next(foolsStep), lamplighter);
     expect(catalog.next(lamplighter), highWater);
@@ -555,13 +680,15 @@ void main() {
     expect(catalog.next(mooring), ferrymansFare);
     expect(catalog.next(ferrymansFare), marketDay);
     expect(catalog.next(marketDay), fairSplit);
-    expect(catalog.next(fairSplit), isNull);
+    expect(catalog.next(fairSplit), fromBehind);
+    expect(catalog.next(fromBehind), isNull);
     expect(catalog.unlockedIndex('002'), 1);
     expect(catalog.unlockedIndex('003'), 2);
     expect(catalog.unlockedIndex('004'), 3);
     expect(catalog.unlockedIndex('005'), 4);
     expect(catalog.unlockedIndex('006'), 5);
     expect(catalog.unlockedIndex('007'), 6);
+    expect(catalog.unlockedIndex('008'), 7);
     expect(catalog.puzzles.map((puzzle) => puzzle.limit), [
       25,
       22,
@@ -570,10 +697,11 @@ void main() {
       25,
       18,
       24,
+      18,
     ]);
     expect(
       catalog.puzzles.map((puzzle) => (puzzle.size.columns, puzzle.size.rows)),
-      [(6, 6), (5, 6), (6, 7), (7, 6), (8, 8), (7, 7), (7, 7)],
+      [(6, 6), (5, 6), (6, 7), (7, 6), (8, 8), (7, 7), (7, 7), (6, 6)],
     );
     expect(catalog.unlockedIndex('missing'), 0);
     for (final puzzle in catalog.puzzles) {

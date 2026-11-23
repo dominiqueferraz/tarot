@@ -96,6 +96,18 @@ class PuzzleDeal {
             ? 3
             : (moves <= (puzzle.par + puzzle.limit + 1) ~/ 2 ? 2 : 1));
 
+  Iterable<Suit> upcomingArrivals(int column) sync* {
+    final refill = puzzle.refill;
+    if (refill is! RibbonRefill || !refill.showArrivals || guide != null) {
+      return;
+    }
+    final ribbon = refill.columns[column];
+    final cursor = _ribbonCursors[column];
+    for (var index = 0; index < ribbon.length; index++) {
+      yield ribbon[(cursor + index) % ribbon.length];
+    }
+  }
+
   Stroke? inspect(List<int> path) {
     if (path.length < 2 ||
         path.any((cell) => cell < 0 || cell >= _size.cellCount)) {
@@ -114,7 +126,7 @@ class PuzzleDeal {
       }
     }
     final aim = _size.aimOf(path);
-    final targets = puzzle.targets[aim]?.suit != suit
+    final targets = !_acceptsAim(aim, suit, path[path.length - 2], path.last)
         ? const <int>{}
         : (_link?.cells.contains(aim) ?? false)
         ? _link!.cells
@@ -125,6 +137,13 @@ class PuzzleDeal {
       path.toSet(),
       Map.unmodifiable({for (final cell in targets) cell: path.length}),
     );
+  }
+
+  bool _acceptsAim(int? cell, Suit suit, int previous, int end) {
+    final target = puzzle.targets[cell];
+    if (target == null || target.suit != suit) return false;
+    final direction = target.aimDirection;
+    return direction == null || _size.aimsAlong(previous, end, direction);
   }
 
   Suit? _cornerSuit(List<Suit?> layout, List<int> corners) {
@@ -148,6 +167,7 @@ class PuzzleDeal {
     final gains = {
       for (final entry in puzzle.targets.entries)
         if (entry.value.suit == cornerSuit &&
+            entry.value.aimDirection == null &&
             _size.coversCell(corners, entry.key))
           entry.key: corners.contains(entry.key)
               ? cornerGain
@@ -348,7 +368,12 @@ class PuzzleDeal {
               ? rules.refillLowerPairWeight
               : rules.refillOtherPairWeight;
         }
-        if (puzzle.targets[_size.aimOf([cell, neighbour])]?.suit == suit) {
+        if (_acceptsAim(
+          _size.aimOf([cell, neighbour]),
+          suit,
+          cell,
+          neighbour,
+        )) {
           score += rules.refillAimWeight;
         }
       }

@@ -1,3 +1,15 @@
+enum BoardDirection {
+  north(0, -1),
+  east(1, 0),
+  south(0, 1),
+  west(-1, 0);
+
+  const BoardDirection(this.dx, this.dy);
+
+  final int dx;
+  final int dy;
+}
+
 class BoardSize {
   const BoardSize(this.columns, this.rows);
 
@@ -63,6 +75,10 @@ class BoardSize {
       2 * rowOf(end) - rowOf(previous),
     );
   }
+
+  bool aimsAlong(int previous, int end, BoardDirection direction) =>
+      columnOf(end) - columnOf(previous) == direction.dx &&
+      rowOf(end) - rowOf(previous) == direction.dy;
 
   bool coversCell(List<int> corners, int cell) {
     final a = corners[0];

@@ -41,10 +41,14 @@ class PuzzlePage extends StatefulWidget {
 }
 
 class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
+  static const _arrivalHeight = 22.0;
+  static const _visibleArrivals = 3;
+
   late var _deal = PuzzleDeal(widget.puzzle);
   PuzzleDefinition get _puzzle => widget.puzzle;
   BoardSize get _size => _puzzle.size;
   bool get _animatesClear => _puzzle.scene != PuzzleScene.quay;
+  bool get _showsArrivals => _deal.upcomingArrivals(0).isNotEmpty;
   Turn? _turn;
   Stroke? _demonstration;
   List<int> _path = [];
@@ -431,6 +435,9 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
                   : math.min(BoardStyle.maxWidth, contentWidth);
               final tableauRatio =
                   1 / _size.aspectRatio + 1 / SceneLayout.ratio;
+              final arrivalSpace = _showsArrivals
+                  ? _arrivalHeight + BoardStyle.spacing
+                  : 0.0;
               double widthFor(double height) => math
                   .min(maxWidth, height / tableauRatio)
                   .clamp(128.0, contentWidth)
@@ -439,7 +446,10 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
                   (width - BoardStyle.spacing - BoardStyle.frameWidth * 4) /
                   (SceneLayout.ratio + 1);
               final nominalHeight =
-                  box.maxHeight - headerSpace - BoardStyle.spacing;
+                  box.maxHeight -
+                  headerSpace -
+                  BoardStyle.spacing -
+                  arrivalSpace;
               final headingWidth = widthFor(nominalHeight);
               final suitWidth =
                   panelHeightFor(headingWidth) + BoardStyle.frameWidth * 2;
@@ -453,6 +463,7 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
                           10 -
                           BoardStyle.spacing * 2 -
                           BoardStyle.frameWidth * 4 -
+                          arrivalSpace -
                           _headingHeight(
                             context,
                             words,
@@ -807,6 +818,7 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
                       PuzzleScene.market => const Key('market-scene'),
                       PuzzleScene.breadStall => const Key('bread-stall-scene'),
                       PuzzleScene.sluice => const Key('sluice-scene'),
+                      PuzzleScene.lampPath => const Key('lamp-path-scene'),
                     },
                     height: panelHeight,
                     child: AnimatedBuilder(
@@ -834,6 +846,10 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
             ],
           ),
           const SizedBox(height: BoardStyle.spacing),
+          if (_showsArrivals) ...[
+            _arrivalStrip(strings, boardWidth),
+            const SizedBox(height: BoardStyle.spacing),
+          ],
           _frame(
             SizedBox(
               width: boardWidth,
@@ -926,6 +942,57 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _arrivalStrip(AppLocalizations strings, double boardWidth) {
+    return _frame(
+      SizedBox(
+        key: const Key('arrival-ribbons'),
+        width: boardWidth,
+        height: _arrivalHeight,
+        child: Row(
+          children: [
+            for (var column = 0; column < _size.columns; column++)
+              Expanded(child: _columnArrivals(strings, column)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _columnArrivals(AppLocalizations strings, int column) {
+    final arrivals = _deal
+        .upcomingArrivals(column)
+        .take(_visibleArrivals)
+        .toList();
+    return Semantics(
+      label: strings.incomingSuits(
+        _size.cellLabel(column),
+        suitNames(strings, arrivals),
+      ),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: parchment,
+          border: column == 0
+              ? null
+              : const Border(left: BorderSide(color: rule)),
+        ),
+        child: Row(
+          children: [
+            for (final (index, suit) in arrivals.indexed)
+              Expanded(
+                child: Opacity(
+                  opacity: index == 0 ? 1 : .72,
+                  child: CustomPaint(
+                    painter: SuitPainter(widget.artwork, {suit}),
+                    child: const SizedBox(height: _arrivalHeight - 5),
+                  ),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -1115,6 +1182,8 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
     return [
       label,
       if (_puzzle.scoringSuits.length > 1) suitName(strings, target.suit),
+      if (target.aimDirection case final direction?)
+        aimDirectionName(strings, direction),
       if (loss != null)
         strings.targetLostProgress(targetAmount(strings, target.kind, loss)),
     ].reduce(strings.labelWithDetail);
