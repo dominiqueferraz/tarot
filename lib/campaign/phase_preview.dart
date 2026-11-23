@@ -27,7 +27,7 @@ class PhasePreview extends StatelessWidget {
   Widget build(BuildContext context) {
     final strings = AppLocalizations.of(context)!;
     final words = puzzleWords(strings, puzzle.textKey);
-    final story = puzzleStory(strings, puzzle.textKey);
+    final story = puzzleOpeningStory(strings, puzzle.textKey);
     return Scaffold(
       key: const Key('phase-preview'),
       body: PaperSurface(
@@ -93,7 +93,7 @@ class PhasePreview extends StatelessWidget {
                             if (story != null) ...[
                               const SizedBox(height: 14),
                               Text(
-                                story.opening,
+                                story,
                                 textAlign: TextAlign.center,
                                 style: displayType(19),
                               ),

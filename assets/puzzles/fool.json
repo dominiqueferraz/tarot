@@ -125,6 +125,31 @@
       "difficulty": "normal",
       "par": 14,
       "refill": {"type": "ribbons", "showArrivals": true, "columns": ["OCOSC", "WSWCW", "WOWSW", "OCSWC", "OWSCW", "CSOWS"]}
+    },
+    {
+      "id": "009",
+      "scene": "fishingLanding",
+      "textKey": "keepMeAPartner",
+      "board": ["OOOWOCO", "OOOCCCC", "WOSSCSW", "SOSCSSW", "OCCCOCC", "OWWWCCC", "CSSLSSS"],
+      "target": {"cell": "D7", "suit": "C", "quota": 30, "label": "landingBasin"},
+      "moves": 14,
+      "difficulty": "normal",
+      "par": 9,
+      "refill": {"type": "guided", "seed": 913, "weights": {"C": 2, "W": 1, "S": 1, "O": 1}}
+    },
+    {
+      "id": "010",
+      "scene": "nightFishing",
+      "textKey": "nightFishing",
+      "board": ["SCCOCWSS", "OCCOOWOO", "WOCOOSCC", "OCOSSWCW", "SCLWWLSS", "WCWSOWSC", "SWWWCCCC", "WWWSSSWO"],
+      "targets": [
+        {"cell": "C5", "suit": "W", "quota": 6, "label": "harbourLamp"},
+        {"cell": "F5", "suit": "S", "quota": 6, "label": "mooringCord"}
+      ],
+      "moves": 20,
+      "difficulty": "normal",
+      "par": 9,
+      "refill": {"type": "guided", "seed": 1021, "weights": {"W": 2, "S": 2, "C": 1, "O": 1}}
     }
   ]
 }

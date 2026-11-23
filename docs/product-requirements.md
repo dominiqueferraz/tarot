@@ -84,6 +84,8 @@ Use visible text for labels, controls, titles, values, a short puzzle objective 
 
 Use the same compact paper panel and spacing for dialogs and deal results. Fill the primary action with ink, outline the secondary action, and use rust for a confirmation that spends a life. Keep action targets at least 48 logical pixels high and let them stack when the available width requires it.
 
+A clear shows the earned stars and one action. **Next puzzle** opens the next available preview. **Continue your journey** brings the player back to the campaign path when the next puzzle is unavailable.
+
 **Board sizes.** The reference board is **six columns by six rows**. Each board fixes its own footprint from the start of the board to the end.
 - **Footprint.** Each deal can choose its width and height independently. For portrait play, use 4 × 4 through 8 × 9 as reference sizes for legibility checks. A board may mask out cells to make an irregular outline, such as a quay, tower or riverbank.
 - **Which boards use which sizes.** Measured boards default to 6 × 6 or smaller, so every piece can matter. Open boards and encounters may use the larger footprints for room to breathe.
@@ -131,6 +133,10 @@ On a phone, the goal, every row, the illustration and the active power must be r
 - **Boards.** In the playtest, 002, R2 and R3 fade by 1. 001 doesn't fade, so the first board stays forgiving.
 
 A deal can ask the player to deliver, release, balance, illuminate or restore something. It can ask for a quota of suit actions, or for every piece of one suit, or for every ordinary piece. Show the goal and tracked quantities when the board is dealt. When a guided lesson reveals a target later, show its goal and tracker at the reveal.
+
+**Opening objectives.** Each of the first ten puzzles uses one or more fixed markers. Name the object, make its goal clear on the board and show what filling, lighting or releasing it does for the scene. Keep Me a Partner fills the landing basin so the night fishing crew has fresh water. Night Fishing lights their lamp and frees the boat from its mooring.
+
+**New mechanics come from cards.** Build individual deals from shared traces, rectangles, markers, refill and the effects players already know. When a design needs a new rule of play, give it to a card. Introduce it through a loaned or owned card, or through that card's trump on the board.
 
 **Simultaneous fills.** A deal can require two fixtures to reach their quotas on the same paid stroke. Each keeps partial progress. If only one reaches its mark, it spills and settles one unit below the mark as part of that move. Show a brief hint near that fixture when it spills. In The Fair Split, a Cup rectangle can feed both in one stroke, and a Cup square can link them for an aimed pour using the shared linking rules. [Authored deal](opening-deals.md#level-007--the-fair-split)
 

@@ -819,6 +819,12 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
                       PuzzleScene.breadStall => const Key('bread-stall-scene'),
                       PuzzleScene.sluice => const Key('sluice-scene'),
                       PuzzleScene.lampPath => const Key('lamp-path-scene'),
+                      PuzzleScene.fishingLanding => const Key(
+                        'fishing-landing-scene',
+                      ),
+                      PuzzleScene.nightFishing => const Key(
+                        'night-fishing-scene',
+                      ),
                     },
                     height: panelHeight,
                     child: AnimatedBuilder(
@@ -1189,10 +1195,7 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
     ].reduce(strings.labelWithDetail);
   }
 
-  String _resultText(AppLocalizations strings) {
-    if (_deal.won) {
-      return puzzleStory(strings, _puzzle.textKey)?.ending ?? strings.clear;
-    }
+  String _lossProgress(AppLocalizations strings) {
     final nameTargets = _puzzle.scoringSuits.length > 1 || _puzzle.fillTogether;
     return _puzzle.targets.entries
         .map((entry) {
@@ -1217,16 +1220,12 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
         child: Padding(
           padding: const EdgeInsets.all(12),
           child: DialogPanel(
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              spacing: 8,
-              children: [
-                if (_deal.won)
-                  Semantics(
+            content: _deal.won
+                ? Semantics(
                     label: strings.starRating(_deal.stars),
                     excludeSemantics: true,
                     child: Row(
-                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         for (var i = 0; i < 3; i++)
                           Icon(
@@ -1239,22 +1238,24 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
                       ],
                     ),
                   )
-                else
-                  Text(strings.movesRemaining(0), style: _objectiveStyle),
-                Text(
-                  _resultText(strings),
-                  style: displayType(27),
-                  textAlign: TextAlign.center,
-                ),
-                if (_deal.lost)
-                  LifeStatus(lives: widget.lives, showDepletedLabel: true),
-              ],
-            ),
+                : Column(
+                    mainAxisSize: MainAxisSize.min,
+                    spacing: 8,
+                    children: [
+                      Text(strings.movesRemaining(0), style: _objectiveStyle),
+                      Text(
+                        _lossProgress(strings),
+                        style: displayType(27),
+                        textAlign: TextAlign.center,
+                      ),
+                      LifeStatus(lives: widget.lives, showDepletedLabel: true),
+                    ],
+                  ),
             actions: [
               if (_deal.won)
                 DialogAction(
                   label: widget.onContinue == null
-                      ? strings.campaignPath
+                      ? strings.continueJourney
                       : strings.nextPuzzle,
                   onPressed: () {
                     final continuePuzzle = widget.onContinue;

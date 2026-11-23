@@ -44,14 +44,23 @@ import 'tableau_art.dart';
     title: strings.fromBehindTitle,
     objective: strings.fromBehindObjective,
   ),
+  PuzzleTextKey.keepMeAPartner => (
+    title: strings.keepMeAPartnerTitle,
+    objective: strings.keepMeAPartnerObjective,
+  ),
+  PuzzleTextKey.nightFishing => (
+    title: strings.nightFishingTitle,
+    objective: strings.nightFishingObjective,
+  ),
 };
 
-({String opening, String ending})? puzzleStory(
-  AppLocalizations strings,
-  PuzzleTextKey key,
-) => key == PuzzleTextKey.marketDay
-    ? (opening: strings.marketDayStory, ending: strings.marketDayClear)
-    : null;
+String? puzzleOpeningStory(AppLocalizations strings, PuzzleTextKey key) =>
+    switch (key) {
+      PuzzleTextKey.marketDay => strings.marketDayStory,
+      PuzzleTextKey.keepMeAPartner => strings.keepMeAPartnerStory,
+      PuzzleTextKey.nightFishing => strings.nightFishingStory,
+      _ => null,
+    };
 
 String targetName(AppLocalizations strings, TargetLabel label) =>
     switch (label) {
@@ -68,6 +77,9 @@ String targetName(AppLocalizations strings, TargetLabel label) =>
       TargetLabel.westFloat => strings.westFloat,
       TargetLabel.eastFloat => strings.eastFloat,
       TargetLabel.westFacingLamp => strings.westFacingLamp,
+      TargetLabel.landingBasin => strings.landingBasin,
+      TargetLabel.harbourLamp => strings.harbourLamp,
+      TargetLabel.mooringCord => strings.mooringCord,
     };
 
 String aimDirectionName(AppLocalizations strings, BoardDirection direction) =>
@@ -185,6 +197,17 @@ class PuzzleIllustration extends StatelessWidget {
           artwork: artwork,
           light: progressOf(TargetKind.lantern),
           walk: motion,
+        ),
+        PuzzleScene.fishingLanding => FishingLandingPainter(
+          artwork: artwork,
+          water: progressOf(TargetKind.inlet),
+          walk: motion,
+        ),
+        PuzzleScene.nightFishing => NightFishingPainter(
+          artwork: artwork,
+          light: progressOf(TargetKind.lantern),
+          cut: progressOf(TargetKind.cord),
+          sail: motion,
         ),
       },
     );

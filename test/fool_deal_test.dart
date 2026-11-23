@@ -16,11 +16,35 @@ final ferrymansFare = catalog.puzzles[4];
 final marketDay = catalog.puzzles[5];
 final fairSplit = catalog.puzzles[6];
 final fromBehind = catalog.puzzles[7];
+final keepMeAPartner = catalog.puzzles[8];
+final nightFishing = catalog.puzzles[9];
 const openingSize = BoardSize(6, 6);
 const lampSize = BoardSize(5, 6);
 const highWaterSize = BoardSize(6, 7);
 const dockSize = BoardSize(7, 6);
 const marketSize = BoardSize(8, 8);
+
+const nightFishingReplay = [
+  ('E5 D5', 2, 0),
+  ('D5 E5', 2, 2),
+  ('H5 G5', 2, 4),
+  ('B8 C8 C7 C6', 6, 4),
+  ('G7 F7', 6, 4),
+  ('G6 G5', 6, 4),
+  ('C6 B6', 6, 4),
+  ('F3 F2 G2 G1 F1 E1', 6, 4),
+  ('F1 F2 F3 F4', 6, 6),
+];
+
+const partnerReplay = [
+  ('B6 C6', 0),
+  ('B7 C7', 0),
+  ('A7 B7 C7', 3),
+  ('F7 G7', 3),
+  ('D2 F2 F7 D7 D2', 13),
+  ('D1 F1 F7 D7 D1', 26),
+  ('G6 G7 F7 E7', 30),
+];
 
 const fromBehindReplay = [
   ('B5 B6', 0),
@@ -673,6 +697,162 @@ void main() {
     expect(deal.lost, isTrue);
   });
 
+  test(
+    'Keep Me a Partner fills the basin from either side and after a miss',
+    () {
+      final size = keepMeAPartner.size;
+      final basin = size.parseCell('D7');
+      for (final route in [
+        partnerReplay,
+        const [
+          ('E7 F7', 0),
+          ('F7 E7', 2),
+          ('D4 F4 F7 D7 D4', 8),
+          ('D3 F3 F7 D7 D3', 13),
+          ('B5 C5 D5 D6', 17),
+          ('D1 E1 E7 D7 D1', 27),
+          ('D4 D5 D6', 30),
+        ],
+        const [
+          ('A1 B1', 0),
+          ('B6 C6', 0),
+          ('B7 C7', 0),
+          ('A7 B7 C7', 3),
+          ('E7 F7 G7', 3),
+          ('D2 F2 F7 D7 D2', 13),
+          ('D2 F2 F7 D7 D2', 21),
+          ('D3 F3 F7 D7 D3', 29),
+          ('E6 E5 D5 D6', 30),
+        ],
+      ]) {
+        final deal = PuzzleDeal(keepMeAPartner);
+        var receivedCups = false;
+        for (final (path, water) in route) {
+          final turn = deal.play(cells(path, size: size));
+          expect(turn, isNotNull, reason: path);
+          expect(deal.progressAt(basin), water, reason: path);
+          receivedCups |= turn!.falls.any(
+            (fall) => fall.suit == Suit.cup && fall.fromRow < 0,
+          );
+        }
+        expect(receivedCups, isTrue);
+        expect(deal.won, isTrue);
+        expect(deal.board[basin], isNull);
+        expect(deal.board, contains(Suit.cup));
+      }
+    },
+  );
+
+  test('Keep Me a Partner loses when the basin is short at the limit', () {
+    final deal = PuzzleDeal(keepMeAPartner);
+    final size = keepMeAPartner.size;
+    const route = [
+      'E7 F7',
+      'F7 E7',
+      'A1 B1',
+      'B1 C1',
+      'A1 B1',
+      'A1 B1',
+      'A1 B1',
+      'A1 B1',
+      'A1 A2',
+      'A1 B1',
+      'A1 B1',
+      'A1 A2',
+      'A1 B1',
+      'A1 A2',
+    ];
+    for (final trace in route) {
+      expect(deal.play(cells(trace, size: size)), isNotNull, reason: trace);
+    }
+    expect(deal.progressAt(size.parseCell('D7')), 2);
+    expect(deal.movesLeft, 0);
+    expect(deal.lost, isTrue);
+  });
+
+  test('Night Fishing drops Swords into the Wand line', () {
+    final deal = PuzzleDeal(nightFishing);
+    final size = nightFishing.size;
+    final lamp = size.parseCell('C5');
+    final cord = size.parseCell('F5');
+    final cuttingLine = cells('D5 E5', size: size);
+    expect(deal.inspect(cuttingLine)?.suit, Suit.wand);
+    expect(deal.inspect(cuttingLine)?.gains, isEmpty);
+    expect(deal.play(cells('E5 D5', size: size))?.stroke.gains, {lamp: 2});
+    expect(cuttingLine.map((cell) => deal.board[cell]), [
+      Suit.sword,
+      Suit.sword,
+    ]);
+    expect(deal.play(cuttingLine)?.stroke.gains, {cord: 2});
+    expect(deal.won, isFalse);
+  });
+
+  test('Night Fishing clears from either opening and after a missed spark', () {
+    final size = nightFishing.size;
+    final lamp = size.parseCell('C5');
+    final cord = size.parseCell('F5');
+    for (final route in [
+      nightFishingReplay,
+      const [
+        ('H5 G5', 0, 2),
+        ('C7 C6', 2, 2),
+        ('C1 G1 G8 C8 C1', 6, 2),
+        ('G8 F8 F7 F6', 6, 6),
+      ],
+      const [
+        ('D5 E5', 0, 0),
+        ('D5 E5', 0, 2),
+        ('F8 E8 D8', 0, 2),
+        ('D8 C8 B8 B7 C7 C6', 6, 2),
+        ('H5 G5', 6, 4),
+        ('F3 F2 F1 E1', 6, 4),
+        ('F3 F4', 6, 6),
+      ],
+    ]) {
+      final deal = PuzzleDeal(nightFishing);
+      for (final (path, light, cut) in route) {
+        expect(deal.play(cells(path, size: size)), isNotNull, reason: path);
+        expect(deal.progressAt(lamp), light, reason: path);
+        expect(deal.progressAt(cord), cut, reason: path);
+        expect(deal.won, light == 6 && cut == 6);
+      }
+      expect(deal.won, isTrue);
+    }
+  });
+
+  test('Night Fishing loses at the move limit with the mooring still tied', () {
+    final deal = PuzzleDeal(nightFishing);
+    final size = nightFishing.size;
+    const route = [
+      'E5 D5',
+      'B8 C8 C7 C6',
+      'F1 E1',
+      'B8 A8',
+      'B1 A1',
+      'B1 A1',
+      'B2 B1',
+      'A2 A1',
+      'B1 A1',
+      'A2 A1',
+      'B1 A1',
+      'A2 A1',
+      'B1 A1',
+      'B1 A1',
+      'A2 A1',
+      'B1 A1',
+      'B1 A1',
+      'C1 B1',
+      'C1 B1',
+      'B1 A1',
+    ];
+    for (final (index, path) in route.indexed) {
+      expect(deal.play(cells(path, size: size)), isNotNull, reason: path);
+      expect(deal.lost, index == route.length - 1);
+    }
+    expect(deal.progressAt(size.parseCell('C5')), 6);
+    expect(deal.progressAt(size.parseCell('F5')), 0);
+  });
+
   test('validates and replays every authored guide', () {
     expect(catalog.next(foolsStep), lamplighter);
     expect(catalog.next(lamplighter), highWater);
@@ -681,7 +861,9 @@ void main() {
     expect(catalog.next(ferrymansFare), marketDay);
     expect(catalog.next(marketDay), fairSplit);
     expect(catalog.next(fairSplit), fromBehind);
-    expect(catalog.next(fromBehind), isNull);
+    expect(catalog.next(fromBehind), keepMeAPartner);
+    expect(catalog.next(keepMeAPartner), nightFishing);
+    expect(catalog.next(nightFishing), isNull);
     expect(catalog.unlockedIndex('002'), 1);
     expect(catalog.unlockedIndex('003'), 2);
     expect(catalog.unlockedIndex('004'), 3);
@@ -689,6 +871,8 @@ void main() {
     expect(catalog.unlockedIndex('006'), 5);
     expect(catalog.unlockedIndex('007'), 6);
     expect(catalog.unlockedIndex('008'), 7);
+    expect(catalog.unlockedIndex('009'), 8);
+    expect(catalog.unlockedIndex('010'), 9);
     expect(catalog.puzzles.map((puzzle) => puzzle.limit), [
       25,
       22,
@@ -698,10 +882,23 @@ void main() {
       18,
       24,
       18,
+      14,
+      20,
     ]);
     expect(
       catalog.puzzles.map((puzzle) => (puzzle.size.columns, puzzle.size.rows)),
-      [(6, 6), (5, 6), (6, 7), (7, 6), (8, 8), (7, 7), (7, 7), (6, 6)],
+      [
+        (6, 6),
+        (5, 6),
+        (6, 7),
+        (7, 6),
+        (8, 8),
+        (7, 7),
+        (7, 7),
+        (6, 6),
+        (7, 7),
+        (8, 8),
+      ],
     );
     expect(catalog.unlockedIndex('missing'), 0);
     for (final puzzle in catalog.puzzles) {

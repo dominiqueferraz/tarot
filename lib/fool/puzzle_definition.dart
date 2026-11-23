@@ -24,6 +24,8 @@ enum PuzzleScene {
   breadStall,
   sluice,
   lampPath,
+  fishingLanding,
+  nightFishing,
 }
 
 enum PuzzleTextKey {
@@ -35,6 +37,8 @@ enum PuzzleTextKey {
   marketDay,
   fairSplit,
   fromBehind,
+  keepMeAPartner,
+  nightFishing,
 }
 
 enum TargetKind { marker, lantern, inlet, cord, pan }
@@ -52,7 +56,10 @@ enum TargetLabel {
   paymentPan(TargetKind.pan),
   westFloat(TargetKind.inlet),
   eastFloat(TargetKind.inlet),
-  westFacingLamp(TargetKind.lantern);
+  westFacingLamp(TargetKind.lantern),
+  landingBasin(TargetKind.inlet),
+  harbourLamp(TargetKind.lantern),
+  mooringCord(TargetKind.cord);
 
   const TargetLabel(this.defaultKind);
 

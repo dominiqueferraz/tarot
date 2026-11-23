@@ -25,7 +25,9 @@ import '../test/fool_deal_test.dart'
         marketDaySize,
         marketSize,
         millReplay,
+        nightFishingReplay,
         parReplay,
+        partnerReplay,
         westFareReplay;
 
 void main() {
@@ -125,7 +127,7 @@ void main() {
       for (final (route, _) in parReplay) {
         await dragStroke(tester, route);
       }
-      expect(find.text(english.clear), findsOneWidget);
+      expect(find.text(english.nextPuzzle), findsOneWidget);
       expect(
         tester.widget<Text>(markerValue).data,
         english.targetProgress(30, 30),
@@ -193,7 +195,7 @@ void main() {
           await tester.pumpAndSettle();
         }
       }
-      expect(find.text(english.clear), findsOneWidget);
+      expect(find.text(english.nextPuzzle), findsOneWidget);
       await screenshot(tester, 'tarot-squared-lamplighter-complete');
       expect(await preferences.getString('unlockedPuzzle'), '003');
       await tester.tap(find.text(english.nextPuzzle));
@@ -229,7 +231,7 @@ void main() {
           await screenshot(tester, 'tarot-squared-mill-first-water');
         }
       }
-      expect(find.text(english.clear), findsOneWidget);
+      expect(find.text(english.nextPuzzle), findsOneWidget);
       await screenshot(tester, 'tarot-squared-high-water-complete');
       expect(await preferences.getString('unlockedPuzzle'), '004');
       await tester.tap(find.text(english.nextPuzzle));
@@ -265,7 +267,7 @@ void main() {
       final bow = find.byKey(const Key('target-value-C3'));
       final stern = find.byKey(const Key('target-value-E5'));
       for (final (step, (trace, bowCut, sternCut)) in dockReplay.indexed) {
-        expect(find.text(english.clear), findsNothing);
+        expect(find.text(english.nextPuzzle), findsNothing);
         await dragStroke(tester, trace, size: dockSize);
         expect(
           tester.widget<Text>(bow).data,
@@ -292,7 +294,7 @@ void main() {
           expect(find.text(english.linkMovesRemaining(1)), findsNothing);
         }
       }
-      expect(find.text(english.clear), findsOneWidget);
+      expect(find.text(english.nextPuzzle), findsOneWidget);
       await screenshot(tester, 'tarot-squared-the-mooring-complete');
       expect(await preferences.getString('unlockedPuzzle'), '005');
       await tester.tap(find.text(english.nextPuzzle));
@@ -325,7 +327,7 @@ void main() {
       final east = find.byKey(const Key('target-value-F4'));
       for (final (step, (trace, westCoins, eastCoins))
           in westFareReplay.indexed) {
-        expect(find.text(english.clear), findsNothing);
+        expect(find.text(english.nextPuzzle), findsNothing);
         await dragStroke(tester, trace, size: marketSize);
         expect(
           tester.widget<Text>(west).data,
@@ -341,7 +343,7 @@ void main() {
           await screenshot(tester, 'tarot-squared-ferrymans-fare-tipped');
         }
       }
-      expect(find.text(english.clear), findsOneWidget);
+      expect(find.text(english.nextPuzzle), findsOneWidget);
       await screenshot(tester, 'tarot-squared-ferrymans-fare-complete');
       expect(await preferences.getString('unlockedPuzzle'), '006');
       await tester.tap(find.text(english.nextPuzzle));
@@ -470,9 +472,7 @@ void main() {
     },
   );
 
-  testWidgets('clears Market Day, The Fair Split and From Behind', (
-    tester,
-  ) async {
+  testWidgets('clears levels 006 through 010', (tester) async {
     final source = await rootBundle.loadString(PuzzleCatalog.assetPath);
     final catalog = PuzzleCatalog.parse(source);
     final split = catalog.puzzles.singleWhere((puzzle) => puzzle.id == '007');
@@ -536,7 +536,7 @@ void main() {
       }
       if (step == 1) await screenshot(tester, 'tarot-squared-market-day-work');
     }
-    expect(find.text(portuguese.marketDayClear), findsOneWidget);
+    expect(find.text(portuguese.nextPuzzle), findsOneWidget);
     await screenshot(tester, 'tarot-squared-market-day-complete');
 
     await tester.tap(find.text(portuguese.nextPuzzle));
@@ -615,5 +615,82 @@ void main() {
     }
     expect(find.bySemanticsLabel(portuguese.starRating(3)), findsOneWidget);
     await screenshot(tester, 'tarot-squared-from-behind-complete');
+
+    await tester.tap(find.text(portuguese.nextPuzzle));
+    await tester.pumpAndSettle();
+    expect(find.text(portuguese.keepMeAPartnerTitle), findsOneWidget);
+    expect(find.text(portuguese.keepMeAPartnerStory), findsOneWidget);
+    expect(
+      previewTarget(portuguese, portuguese.landingBasin, portuguese.cups, 30),
+      findsOneWidget,
+    );
+    await tester.ensureVisible(play);
+    await tester.tap(play);
+    await tester.pumpAndSettle();
+    final partner = catalog.puzzles.singleWhere((puzzle) => puzzle.id == '009');
+    final basin = find.byKey(const Key('target-value-D7'));
+    expect(find.text(portuguese.keepMeAPartnerObjective), findsOneWidget);
+    expect(
+      find.bySemanticsLabel(
+        targetSemantics(portuguese, 'D7', portuguese.landingBasin, 0, 30),
+      ),
+      findsOneWidget,
+    );
+    await screenshot(tester, 'tarot-squared-landing-basin-opening');
+    for (final (trace, water) in partnerReplay) {
+      await dragStroke(tester, trace, size: partner.size);
+      expect(
+        tester.widget<Text>(basin).data,
+        portuguese.targetProgress(water, 30),
+        reason: trace,
+      );
+    }
+    expect(find.text(portuguese.nextPuzzle), findsOneWidget);
+    expect(find.bySemanticsLabel(portuguese.starRating(3)), findsOneWidget);
+    await screenshot(tester, 'tarot-squared-landing-basin-complete');
+
+    await tester.tap(find.text(portuguese.nextPuzzle));
+    await tester.pumpAndSettle();
+    expect(find.text(portuguese.nightFishingTitle), findsOneWidget);
+    expect(find.text(portuguese.nightFishingStory), findsOneWidget);
+    expect(
+      previewTarget(portuguese, portuguese.harbourLamp, portuguese.wands, 6),
+      findsOneWidget,
+    );
+    expect(
+      previewTarget(portuguese, portuguese.mooringCord, portuguese.swords, 6),
+      findsOneWidget,
+    );
+    await screenshot(tester, 'tarot-squared-night-fishing-preview');
+    await tester.ensureVisible(play);
+    await tester.tap(play);
+    await tester.pumpAndSettle();
+    final night = catalog.puzzles.singleWhere((puzzle) => puzzle.id == '010');
+    final harbour = find.byKey(const Key('target-value-C5'));
+    final mooring = find.byKey(const Key('target-value-F5'));
+    expect(find.text(portuguese.nightFishingObjective), findsOneWidget);
+    await screenshot(tester, 'tarot-squared-night-fishing-opening');
+    for (final (index, (trace, light, cut)) in nightFishingReplay.indexed) {
+      await dragStroke(tester, trace, size: night.size);
+      expect(
+        tester.widget<Text>(harbour).data,
+        portuguese.targetProgress(light, 6),
+        reason: trace,
+      );
+      expect(
+        tester.widget<Text>(mooring).data,
+        portuguese.targetProgress(cut, 6),
+        reason: trace,
+      );
+      if (index == 0) {
+        await screenshot(tester, 'tarot-squared-night-fishing-setup');
+      }
+    }
+    expect(find.text(portuguese.continueJourney), findsOneWidget);
+    expect(find.bySemanticsLabel(portuguese.starRating(3)), findsOneWidget);
+    await screenshot(tester, 'tarot-squared-night-fishing-complete');
+    await tester.tap(find.text(portuguese.continueJourney));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('campaign-path')), findsOneWidget);
   });
 }

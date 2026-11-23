@@ -609,7 +609,7 @@ void main() {
         await dragStroke(tester, trace, size: marketDaySize);
       }
       expect(painter().motion, 1);
-      expect(find.text(spanish.marketDayClear), findsOneWidget);
+      expect(find.text(spanish.nextPuzzle), findsOneWidget);
       await tester.tap(find.text(spanish.nextPuzzle));
       await tester.pumpAndSettle();
       expect(find.text(spanish.fairSplitTitle), findsOneWidget);
@@ -1070,7 +1070,14 @@ void main() {
     await tester.tap(play);
     await tester.pumpAndSettle();
     await dragStroke(tester, 'A3 B3', size: lampSize);
-    expect(find.text(english.clear), findsWidgets);
+    expect(find.bySemanticsLabel(english.starRating(3)), findsOneWidget);
+    final resultText = find.descendant(
+      of: find.byType(DialogPanel),
+      matching: find.byType(Text),
+    );
+    expect(tester.widgetList<Text>(resultText).map((text) => text.data), [
+      english.continueJourney,
+    ]);
     expect(saves, 5);
 
     await tester.pumpWidget(const SizedBox.shrink());

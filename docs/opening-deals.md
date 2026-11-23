@@ -232,7 +232,7 @@ The last step of a Coin trace sets its direction. E4 → D4 deposits two Coins i
 
 The ferry has crossed. On the far bank, the Fool stops at a baker’s shuttered stall before the market opens. Light the stall lantern at C3 with Wands so the baker can see, fill the water trough at F3 with Cups for the dough, and pay for a loaf by aiming Coins at C6. Each target needs 6 on the 7 × 7 board. The turn limit is 18, with a par of 12.
 
-The lamp brightens, the water rises, and Coins stack in the pan as the player works. On a clear, the shutter opens and a loaf passes across the counter to the Fool. The result reads “Bread for the road.”
+The lamp brightens, the water rises, and Coins stack in the pan as the player works. On a clear, the shutter opens and a loaf passes across the counter to the Fool.
 
 | Opening | What follows |
 |---|---|
@@ -272,6 +272,34 @@ The 6 × 6 deal has an 18-move limit and a par of 14. Each column repeats its au
 | Recover from the wrong side | Spend F4 → E4. Clear D3 → C3 → C4 and a rectangle to set up C6 → B6 → B5 → B4 → C4 for 5 light. | 18 moves |
 
 The [deal tests](../test/fool_deal_test.dart) replay all three routes and a loss that spends every move without setting up an eastbound hit.
+
+## Level 009 · Keep Me a Partner
+
+The night fishing crew stops at the landing to fill their flasks before going out. Fill the basin at D7 with 30 units of water. Its wide rim and curved sides appear in both the scene and on the board marker. The water spreads inside the rim while the boat waits at the landing.
+
+The 7 × 7 board gives 14 moves and a par of 9. Cups refill through the usual guided supply. Aim Cup traces at the basin or use a Cup rectangle under the shared scoring rules.
+
+| Approach | Opening decision and payoff | Clear |
+|---|---|---|
+| Bring partners down on the left | Clear the Wands at B6 → C6 and then the Swords at B7 → C7. Aim A7 → B7 → C7 into the basin for 3 water. | 7 moves |
+| Open the right approach | Clear E7 → F7. The two Cups fall together. Trace F7 → E7 to pour 2 water. | 7 moves |
+| Recover from a missed opening | Spend A1 → B1 away from the basin. The left setup still works, and a Cup trace from above fills the basin on move 9. | 9 moves |
+
+A losing route makes the first pour from the right and spends the remaining moves away from the basin. The board ends with 2 of 30 water. [Board and refill](../assets/puzzles/fool.json) · [Reference replays](../test/fool_deal_test.dart)
+
+## Level 010 · Night Fishing
+
+The full basin from 009 sits on the same pier. The fishing crew have their water and can set out once the harbour lamp at C5 has 6 light and the mooring cord at F5 has 6 cuts. Wands light the lamp and Swords cut the cord through shared aimed strokes and rectangles. The illustration shows the lamp brightening and the line thinning as their counters rise. The boat leaves the pier when both markers are complete.
+
+The 8 × 8 board has 20 moves and a par of 9. Guided refill gives Wands and Swords twice the weight of Cups or Coins. The two pieces between the markers can serve each goal on successive strokes.
+
+| Approach | Opening decision and payoff | Clear |
+|---|---|---|
+| Light the lamp and reverse direction | Aim E5 → D5 for 2 light. Swords fall from D4 and E4 into the emptied cells. Aim D5 → E5 for 2 cuts. Finish both markers with traces. | 9 moves |
+| Cut from the far side | Aim H5 → G5 for 2 cuts and C7 → C6 for 2 light. A Wand rectangle fills the lamp and opens a Sword approach from below. | 4 moves |
+| Recover from a missed spark | Aim D5 → E5 with Wands. The stroke still drops the Sword pair. Cut with that pair and find a longer Wand approach from below. | 7 moves |
+
+A losing route fills the lamp and spends the remaining strokes away from the mooring. At the move limit the crew are still tied to the pier. [Board and refill](../assets/puzzles/fool.json) · [Reference replays](../test/fool_deal_test.dart)
 
 ## Lozenge playtest routes
 

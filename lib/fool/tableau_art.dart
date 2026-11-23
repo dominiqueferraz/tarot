@@ -176,6 +176,141 @@ class LampPathPainter extends CustomPainter {
       oldDelegate.walk != walk;
 }
 
+class FishingLandingPainter extends CustomPainter {
+  const FishingLandingPainter({
+    required this.artwork,
+    required this.water,
+    required this.walk,
+  });
+
+  final Artwork artwork;
+  final double water;
+  final double walk;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    canvas.save();
+    canvas.scale(
+      size.width / SceneLayout.width,
+      size.height / SceneLayout.height,
+    );
+    _fishingPier(canvas, artwork);
+    _lantern(canvas, artwork, const Offset(118, 57), .53, 1);
+    _landingBasin(canvas, const Offset(321, 64), 1.65, water);
+    artwork.paint(
+      canvas,
+      Art.fool,
+      origin: Offset(185 + 48 * walk, 91),
+      scale: .92,
+    );
+    artwork.paint(
+      canvas,
+      Art.mooredBoat,
+      origin: const Offset(445, 89),
+      scale: .76,
+    );
+    canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(FishingLandingPainter oldDelegate) =>
+      oldDelegate.artwork != artwork ||
+      oldDelegate.water != water ||
+      oldDelegate.walk != walk;
+}
+
+class NightFishingPainter extends CustomPainter {
+  const NightFishingPainter({
+    required this.artwork,
+    required this.light,
+    required this.cut,
+    required this.sail,
+  });
+
+  final Artwork artwork;
+  final double light;
+  final double cut;
+  final double sail;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    canvas.save();
+    canvas.scale(
+      size.width / SceneLayout.width,
+      size.height / SceneLayout.height,
+    );
+    _fishingPier(canvas, artwork);
+    _landingBasin(canvas, const Offset(307, 64), 1.65, 1);
+    artwork.paint(canvas, Art.fool, origin: const Offset(157, 90), scale: .92);
+
+    const lamp = Offset(219, 54);
+    _sceneGlow(canvas, lamp, 55, light);
+    canvas.drawLine(lamp, const Offset(219, 84), _pen(ink, 4));
+    _lantern(canvas, artwork, lamp, .83, light);
+
+    const post = Offset(366, 79);
+    final boat = Offset(381 + 118 * Curves.easeInOut.transform(sail), 91);
+    canvas.drawLine(
+      post - const Offset(0, 7),
+      post + const Offset(0, 16),
+      _pen(ink, 5),
+    );
+    final rope = Path()..moveTo(post.dx, post.dy);
+    if (cut >= 1) {
+      rope.quadraticBezierTo(
+        post.dx + 7,
+        post.dy + 6,
+        post.dx + 4,
+        post.dy + 12,
+      );
+    } else {
+      rope.quadraticBezierTo(post.dx + 8, boat.dy + 3, boat.dx + 3, boat.dy);
+    }
+    canvas.drawPath(rope, _pen(paleGold, 2.9 - 1.5 * cut));
+
+    canvas.translate(boat.dx, boat.dy);
+    for (final (x, coat) in [(24.0, rust), (53.0, _water)]) {
+      canvas.drawCircle(Offset(x, -21), 4, Paint()..color = paleGold);
+      _polygon(canvas, [x - 5, 2, x - 3, -16, x + 4, -16, x + 8, 2], coat);
+    }
+    _polygon(canvas, [0, -4, 21, 1, 68, 0, 86, -8, 74, 11, 21, 13, 9, 8], ink);
+    _polygon(canvas, [
+      8,
+      0,
+      22,
+      4,
+      67,
+      3,
+      78,
+      -2,
+      69,
+      8,
+      23,
+      10,
+    ], const Color(0xFF947255));
+    canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(NightFishingPainter oldDelegate) =>
+      oldDelegate.artwork != artwork ||
+      oldDelegate.light != light ||
+      oldDelegate.cut != cut ||
+      oldDelegate.sail != sail;
+}
+
+void _fishingPier(Canvas canvas, Artwork artwork) {
+  artwork.paint(canvas, Art.quaySky);
+  _polygon(canvas, [0, 78, 362, 76, 445, 110, 0, 110], const Color(0xFF877257));
+  for (final y in [86.0, 96.0, 106.0]) {
+    canvas.drawLine(
+      Offset(0, y),
+      Offset(359 + (y - 76) * 2.35, y),
+      _pen(ink, 1.5),
+    );
+  }
+}
+
 class MillPainter extends CustomPainter {
   const MillPainter({
     required this.artwork,
@@ -1110,6 +1245,8 @@ void _paintFixture(
         target.aimDirection == null ? 1 : .85,
         amount,
       );
+    case TargetKind.inlet when target.label == TargetLabel.landingBasin:
+      _landingBasin(canvas, center, 1, amount);
     case TargetKind.inlet:
       _inlet(canvas, center, 1, amount, marked: marked);
     case TargetKind.cord:
@@ -1202,6 +1339,44 @@ void _lantern(
     13,
   ], paleGold);
   canvas.drawLine(const Offset(0, -8), const Offset(0, 14), _pen(ink, 2));
+  canvas.restore();
+}
+
+void _landingBasin(Canvas canvas, Offset center, double scale, double water) {
+  canvas.save();
+  canvas.translate(center.dx, center.dy);
+  canvas.scale(scale);
+
+  final bowl = Path()
+    ..moveTo(-33, -11)
+    ..cubicTo(-30, 5, -23, 15, -13, 18)
+    ..quadraticBezierTo(0, 21, 13, 18)
+    ..cubicTo(23, 15, 30, 5, 33, -11)
+    ..close();
+  canvas.drawPath(bowl, Paint()..color = const Color(0xFFA97850));
+  canvas.drawPath(bowl, _pen(ink, 2.5));
+
+  const rim = Rect.fromLTRB(-33, -23, 33, 1);
+  const opening = Rect.fromLTRB(-27, -18, 27, -4);
+  canvas.drawOval(rim, Paint()..color = const Color(0xFFE1BD83));
+  canvas.drawOval(opening, Paint()..color = const Color(0xFF4F4338));
+  if (water > 0) {
+    final spread = math.sqrt(water);
+    final surface = Rect.fromCenter(
+      center: Offset(0, -8 - 3 * water),
+      width: 53 * spread,
+      height: 13 * spread,
+    );
+    canvas.drawOval(surface, Paint()..color = _water);
+    canvas.drawArc(
+      surface,
+      math.pi * 1.13,
+      math.pi * .49,
+      false,
+      _pen(_waterline, 1.4),
+    );
+  }
+  canvas.drawOval(rim, _pen(ink, 2.5));
   canvas.restore();
 }
 
