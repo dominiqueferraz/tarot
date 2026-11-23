@@ -91,14 +91,16 @@ class PhasePreview extends StatelessWidget {
                                 textAlign: TextAlign.center,
                                 style: displayType(19),
                               ),
+                              const SizedBox(height: 18),
+                            ] else ...[
+                              const SizedBox(height: 22),
+                              Text(
+                                words.objective,
+                                textAlign: TextAlign.center,
+                                style: displayType(23),
+                              ),
+                              const SizedBox(height: 10),
                             ],
-                            const SizedBox(height: 22),
-                            Text(
-                              words.objective,
-                              textAlign: TextAlign.center,
-                              style: displayType(23),
-                            ),
-                            const SizedBox(height: 10),
                             _PhaseTargets(artwork: artwork, puzzle: puzzle),
                             const SizedBox(height: 17),
                             _PhaseStats(

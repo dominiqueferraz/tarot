@@ -297,7 +297,7 @@ A card has one charge per attempt unless an encounter explicitly says otherwise.
 
 ### Progression
 
-**Campaign path.** Play opens a vertical route that starts at the bottom and winds upward around fragments of the deck. Use the same size and overlap with the numbered marker for every circular scoring-suit badge. Space multiple suit badges at equal angles around the marker. The marker and its badges open a closable preview with the puzzle illustration, goal, move limit, difficulty and Play control. Show the targets side by side, with the scoring suit symbol, required count and target name for each. The number from the path stays visible beside the back button during play. Locked phases are available to preview. Clearing a puzzle unlocks the next phase, and the completion action opens its preview.
+**Campaign path.** Play opens a vertical route that starts at the bottom and winds upward around fragments of the deck. Use the same size and overlap with the numbered marker for every circular scoring-suit badge. Space multiple suit badges at equal angles around the marker. The marker and its badges open a closable preview with the puzzle illustration, story or goal, move limit, difficulty and Play control. Show the targets side by side, with the scoring suit symbol, required count and target name for each. The number from the path stays visible beside the back button during play. Locked phases are available to preview. Clearing a puzzle unlocks the next phase, and the completion action opens its preview.
 
 **Three acts.** The Major Arcana follow the traditional Fool's journey, laid out in three rows of seven cards. Each act is one volume.
 

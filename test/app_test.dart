@@ -489,7 +489,7 @@ void main() {
       await tester.tapAt(tester.getCenter(pathBadges.last));
       await tester.pumpAndSettle();
       expect(find.text(spanish.marketDayStory), findsOneWidget);
-      expect(find.text(spanish.marketDayObjective), findsOneWidget);
+      expect(find.text(spanish.marketDayObjective), findsNothing);
       final counts = <Offset>[];
       for (final (suit, name, target) in [
         (Suit.wand, spanish.wands, spanish.marketLamp),
