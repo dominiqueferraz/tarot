@@ -43,6 +43,8 @@ On iOS, run `bin/test integration_test/first_deal_test.dart --flavor 'Tarot Squa
 
 ## Archive for iOS
 
+The Xcode scheme uses the project’s Flutter launcher to rewrite sibling header imports in the generated `Flutter.framework` to `<Flutter/Header.h>` before signing. The launcher can drop this patch once Flutter ships [framework-style imports](https://github.com/flutter/flutter/issues/60025).
+
 Run `bin/flutter build ios --release --config-only --flavor 'Tarot Squared'` to prepare the workspace, then open `ios/Tarot Squared.xcworkspace` in Xcode and select the **Tarot Squared** scheme. Device builds and archives use automatic Apple Development signing with the team in `ios/Flutter/Signing.xcconfig`. Sign in to that team’s Apple developer account in Xcode. To select a different team locally, set `DEVELOPMENT_TEAM` in the ignored `ios/Flutter/Signing.local.xcconfig` file.
 
 ```xcconfig

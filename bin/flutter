@@ -26,6 +26,35 @@ APP_REGISTRAR_HOST = REGISTRAR_HOST.replace(
     }
     return isModule""",
 )
+UNPACK_BEFORE_SIGNING = "    await thinFramework(environment, frameworkBinaryPath, archs);\n"
+UNPACK_FRAMEWORK_INPUT = (
+    "    Source.artifact(Artifact.flutterXcframework, platform: TargetPlatform.ios, mode: buildMode),\n"
+)
+UNPACK_FRAMEWORK_OUTPUT = "  List<Source> get outputs => const <Source>[kFlutterIOSFrameworkBinarySource];"
+NORMALIZE_FRAMEWORK_IMPORTS = r"""    final Directory headers = frameworkBinary.parent.childDirectory('Headers');
+    if (headers.existsSync()) {
+      final List<File> publicHeaders = headers.listSync(followLinks: false)
+          .whereType<File>()
+          .where((File header) => header.basename.endsWith('.h'))
+          .toList();
+      final Set<String> names = publicHeaders.map((File header) => header.basename).toSet();
+      final RegExp quotedImport = RegExp(
+        r'^([ \t]*#[ \t]*(?:include|import)[ \t]+)"([^"/\r\n]+)"',
+        multiLine: true,
+      );
+      for (final header in publicHeaders) {
+        final String contents = header.readAsStringSync();
+        final String normalized = contents.replaceAllMapped(quotedImport, (Match match) {
+          final String name = match[2]!;
+          return names.contains(name) ? '${match[1]}<Flutter/$name>' : match[0]!;
+        });
+        if (normalized != contents) {
+          header.writeAsStringSync(normalized);
+        }
+      }
+    }
+"""
+BACKEND_FLUTTER = "    '${environmentEnsure('FLUTTER_ROOT')}/bin/flutter',"
 
 
 def flutter_root():
@@ -48,6 +77,23 @@ def prepare_tool(sdk, dart):
     if xcode_project.count(REGISTRAR_HOST) != 1:
         raise ValueError("The Flutter SDK changed its iOS plugin registrar layout. Use Flutter 3.50.")
 
+    relative_ios = Path("lib/src/build_system/targets/ios.dart")
+    ios_target = (source / relative_ios).read_text(encoding="utf-8")
+    xcode_backend = (source / "bin/xcode_backend.dart").read_text(encoding="utf-8")
+    unpack_anchors = (UNPACK_BEFORE_SIGNING, UNPACK_FRAMEWORK_INPUT, UNPACK_FRAMEWORK_OUTPUT)
+    if any(ios_target.count(anchor) != 1 for anchor in unpack_anchors) or xcode_backend.count(BACKEND_FLUTTER) != 2:
+        raise ValueError("The Flutter SDK changed how Xcode unpacks Flutter.framework. Use Flutter 3.50.")
+    patched_ios_target = ios_target.replace(
+        UNPACK_FRAMEWORK_INPUT,
+        UNPACK_FRAMEWORK_INPUT + "    const Source.pattern('{PROJECT_DIR}/bin/flutter'),\n",
+    ).replace(
+        UNPACK_FRAMEWORK_OUTPUT,
+        """  List<Source> get outputs => const <Source>[
+    kFlutterIOSFrameworkBinarySource,
+    Source.pattern('{OUTPUT_DIR}/Flutter.framework/Headers/*.h'),
+  ];""",
+    ).replace(UNPACK_BEFORE_SIGNING, UNPACK_BEFORE_SIGNING + NORMALIZE_FRAMEWORK_IMPORTS)
+
     fingerprint = hashlib.sha256()
     for data in (
         Path(__file__).read_bytes(),
@@ -55,16 +101,19 @@ def prepare_tool(sdk, dart):
         (sdk / "bin/cache/flutter_tools.stamp").read_bytes(),
         sdk_config.read_bytes(),
         xcode_project.encode(),
+        ios_target.encode(),
+        xcode_backend.encode(),
     ):
         fingerprint.update(data)
 
     cache = ROOT / ".dart_tool/flutter-tool"
     cache.mkdir(parents=True, exist_ok=True)
     snapshot = cache / f"{fingerprint.hexdigest()}.dill"
+    backend = snapshot.with_suffix(".dart")
     with (cache / "build.lock").open("a") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)
-        if snapshot.is_file():
-            return snapshot
+        if snapshot.is_file() and backend.is_file():
+            return snapshot, backend
 
         with tempfile.TemporaryDirectory(dir=cache) as scratch:
             overlay = Path(scratch)
@@ -72,6 +121,7 @@ def prepare_tool(sdk, dart):
             (overlay / relative_project).write_text(
                 xcode_project.replace(REGISTRAR_HOST, APP_REGISTRAR_HOST), encoding="utf-8",
             )
+            (overlay / relative_ios).write_text(patched_ios_target, encoding="utf-8")
             entrypoint = overlay / "flutter_tools.dart"
             shutil.copy2(source / "bin/flutter_tools.dart", entrypoint)
 
@@ -88,19 +138,27 @@ def prepare_tool(sdk, dart):
                 [dart, "compile", "kernel", f"--packages={config_path}", "-o", pending, entrypoint],
                 check=True,
             )
+            pending_backend = overlay / "xcode_backend.dart"
+            pending_backend.write_text(
+                xcode_backend.replace(BACKEND_FLUTTER, "    environmentEnsure('TAROT_FLUTTER'),"),
+                encoding="utf-8",
+            )
+            pending_backend.replace(backend)
             pending.replace(snapshot)
-    return snapshot
+    return snapshot, backend
 
 
 if __name__ == "__main__":
     try:
         sdk = flutter_root()
         dart = sdk / "bin/cache/dart-sdk/bin/dart"
-        snapshot = prepare_tool(sdk, dart)
-        os.execve(
-            dart, [str(dart), str(snapshot), *sys.argv[1:]],
-            {**os.environ, "FLUTTER_ROOT": str(sdk)},
-        )
+        snapshot, backend = prepare_tool(sdk, dart)
+        args = sys.argv[1:]
+        env = {**os.environ, "FLUTTER_ROOT": str(sdk)}
+        if args[:1] == ["xcode-backend"]:
+            env["TAROT_FLUTTER"] = str(ROOT / "bin/flutter")
+            os.execve(dart, [str(dart), str(backend), *args[1:], "ios"], env)
+        os.execve(dart, [str(dart), str(snapshot), *args], env)
     except subprocess.CalledProcessError as error:
         sys.exit(error.returncode)
     except (OSError, ValueError) as error:
