@@ -35,17 +35,19 @@ abstract final class BoardStyle {
 abstract final class CampaignStyle {
   static const maxWidth = 460.0;
   static const sideInset = 22.0;
-  static const phaseSpacing = 64.0;
+  static const phaseSpacing = 80.0;
   static const phaseLaneOffset = 9.0;
   static const lowerMargin = 106.0;
   static const upperMargin = 110.0;
   static const trailEndInset = 24.0;
-  static const medallion = 42.0;
-  static const phaseNumberSize = 20.0;
+  static const medallion = 46.0;
+  static const phaseNumberSize = 24.0;
   static const phaseTapHeight = 48.0;
   static const lockBadge = 18.0;
   static const suitBadge = 24.0;
   static const suitBadgeOverhang = 13.0;
+  static const suitBadgeRadius =
+      (medallion - suitBadge) / 2 + suitBadgeOverhang;
   static const fragmentWidthFraction = .21;
   static const fragmentMaxWidth = 90.0;
   static const fragmentDrop = 5.0;

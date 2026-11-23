@@ -182,9 +182,15 @@ const marketDayReplay = [
   ('B3 G3 G6 B6 B3', 6, 6, 6),
 ];
 
-PuzzleCatalog marketDayCatalog(String source, {bool links = false}) {
+PuzzleCatalog marketDayCatalog(
+  String source, {
+  bool links = false,
+  int suitCount = 3,
+  bool includeOpeningDeals = false,
+}) {
   final data = jsonDecode(source) as Map<String, Object?>;
   data['puzzles'] = [
+    if (includeOpeningDeals) ...(data['puzzles'] as List<Object?>),
     {
       'id': '006',
       'scene': 'market',
@@ -194,8 +200,8 @@ PuzzleCatalog marketDayCatalog(String source, {bool links = false}) {
         'OCSCCOW',
         'SOLWWLC',
         'COSOWOC',
-        'WCOCSOW',
-        'OWLOOWC',
+        suitCount == 4 ? 'WCOCSOL' : 'WCOCSOW',
+        suitCount >= 3 ? 'OWLOOWC' : 'OWCOOWC',
         'CWSOOCS',
       ],
       'targets': [
@@ -213,13 +219,22 @@ PuzzleCatalog marketDayCatalog(String source, {bool links = false}) {
           'label': 'marketInlet',
           'kind': 'inlet',
         },
-        {
-          'cell': 'C6',
-          'suit': 'O',
-          'quota': 6,
-          'label': 'farePan',
-          'kind': 'pan',
-        },
+        if (suitCount >= 3)
+          {
+            'cell': 'C6',
+            'suit': 'O',
+            'quota': 6,
+            'label': 'farePan',
+            'kind': 'pan',
+          },
+        if (suitCount == 4)
+          {
+            'cell': 'G5',
+            'suit': 'S',
+            'quota': 6,
+            'label': 'bowCord',
+            'kind': 'cord',
+          },
       ],
       'linksTargets': links,
       'moves': 18,

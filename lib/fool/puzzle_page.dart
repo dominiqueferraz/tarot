@@ -764,29 +764,7 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
                 ),
               ),
               const SizedBox(width: BoardStyle.spacing),
-              Semantics(
-                label: suitNames(strings, _puzzle.scoringSuits),
-                image: true,
-                child: _frame(
-                  SizedBox.square(
-                    key: const Key('fool-suit-panel'),
-                    dimension: panelHeight,
-                    child: ColoredBox(
-                      color: parchment,
-                      child: FractionallySizedBox(
-                        widthFactor: .82,
-                        heightFactor: .82,
-                        child: CustomPaint(
-                          painter: SuitPainter(
-                            widget.artwork,
-                            _puzzle.scoringSuits,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
+              _suitPanel(strings, panelHeight),
             ],
           ),
           const SizedBox(height: BoardStyle.spacing),
@@ -888,6 +866,78 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _suitPanel(AppLocalizations strings, double size) {
+    final suits = _puzzle.scoringSuits.toList();
+    final mixed = suits.length > 1;
+    final radius = mixed ? size * .28 : 0.0;
+    final positions = suitOffsets(suits.length, radius, start: -math.pi / 2);
+    final symbolSize = size * (mixed ? .42 : .82);
+
+    return _frame(
+      SizedBox.square(
+        key: const Key('fool-suit-panel'),
+        dimension: size,
+        child: ColoredBox(
+          color: parchment,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              if (mixed)
+                SizedBox.square(
+                  key: const Key('puzzle-suit-ring'),
+                  dimension: 2 * radius,
+                  child: const DecoratedBox(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.fromBorderSide(
+                        BorderSide(
+                          color: mutedInk,
+                          width: 1.25,
+                          strokeAlign: BorderSide.strokeAlignCenter,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              for (final (index, suit) in suits.indexed)
+                Transform.translate(
+                  offset: positions[index],
+                  child: Semantics(
+                    key: Key('puzzle-suit-${suit.name}'),
+                    label: suitName(strings, suit),
+                    image: true,
+                    child: SizedBox.square(
+                      dimension: symbolSize,
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          if (mixed)
+                            SizedBox.square(
+                              dimension: symbolSize * .72,
+                              child: const DecoratedBox(
+                                decoration: BoxDecoration(
+                                  color: parchment,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                            ),
+                          Positioned.fill(
+                            child: CustomPaint(
+                              painter: SuitPainter(widget.artwork, {suit}),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
       ),
     );
   }

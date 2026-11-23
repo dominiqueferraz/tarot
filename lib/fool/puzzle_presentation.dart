@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/widgets.dart';
 
 import '../artwork.dart';
@@ -81,6 +83,12 @@ String suitName(AppLocalizations strings, Suit suit) => switch (suit) {
 String suitNames(AppLocalizations strings, Iterable<Suit> suits) => suits
     .map((suit) => suitName(strings, suit))
     .reduce(strings.labelWithDetail);
+
+List<Offset> suitOffsets(int count, double radius, {required double start}) =>
+    List.generate(count, (index) {
+      final angle = start + index * 2 * math.pi / count;
+      return Offset(math.cos(angle) * radius, math.sin(angle) * radius);
+    });
 
 String difficultyName(AppLocalizations strings, PuzzleDifficulty difficulty) =>
     switch (difficulty) {

@@ -8,7 +8,7 @@ import 'package:tarot_squared/fool/puzzle_definition.dart';
 import 'package:tarot_squared/main.dart' as app;
 
 import '../test/app_test.dart'
-    show dragStroke, english, openPhase, portuguese, targetSemantics;
+    show dragStroke, english, portuguese, targetSemantics;
 import '../test/fool_deal_test.dart'
     show
         cells,
@@ -349,13 +349,45 @@ void main() {
     final source = await rootBundle.loadString(PuzzleCatalog.assetPath);
     await tester.pumpWidget(
       app.TarotSquaredApp(
-        catalog: marketDayCatalog(source),
+        catalog: marketDayCatalog(source, includeOpeningDeals: true),
         artwork: await Artwork.load(),
         initialLanguage: 'pt',
+        unlockedPuzzle: '006',
       ),
     );
     await tester.pumpAndSettle();
-    await openPhase(tester, '006', strings: portuguese);
+    final play = find.text(portuguese.play);
+    await tester.tap(play);
+    await tester.pumpAndSettle();
+    final coinBadge = find.byKey(const Key('phase-suit-006-coin'));
+    await tester.ensureVisible(coinBadge);
+    final singleBadge = find.byKey(const Key('phase-suit-005-coin'));
+    expect(tester.getSize(coinBadge), tester.getSize(singleBadge));
+    expect(find.byKey(const Key('phase-suit-006-wand')), findsOneWidget);
+    expect(find.byKey(const Key('phase-suit-006-cup')), findsOneWidget);
+    await screenshot(tester, 'tarot-squared-market-day-path');
+    await tester.tapAt(tester.getCenter(coinBadge));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(play);
+    await tester.tap(play);
+    await tester.pumpAndSettle();
+    final panel = find.byKey(const Key('fool-suit-panel'));
+    expect(find.byKey(const Key('puzzle-suit-ring')), findsOneWidget);
+    for (final (suit, name) in [
+      ('wand', portuguese.wands),
+      ('cup', portuguese.cups),
+      ('coin', portuguese.coins),
+    ]) {
+      expect(
+        find.descendant(
+          of: panel,
+          matching: find.byKey(Key('puzzle-suit-$suit')),
+        ),
+        findsOneWidget,
+      );
+      expect(find.bySemanticsLabel(name), findsOneWidget);
+    }
+    await screenshot(tester, 'tarot-squared-market-day-board');
     for (final (trace, light, water, coins) in marketDayReplay) {
       await dragStroke(tester, trace, size: marketDaySize);
       for (final (cell, progress) in [

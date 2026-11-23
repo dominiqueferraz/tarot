@@ -251,17 +251,38 @@ class _CampaignPageState extends State<CampaignPage> {
     int unlocked,
   ) {
     final title = puzzleWords(strings, puzzle.textKey).title;
-    const tapWidth =
-        CampaignStyle.medallion + CampaignStyle.suitBadgeOverhang * 2;
+    final count = puzzle.scoringSuits.length;
+    final positions = suitOffsets(
+      count,
+      CampaignStyle.suitBadgeRadius,
+      start: count.isEven ? -math.pi / 4 : 0,
+    );
+    const lockRadius = CampaignStyle.lockBadge / 2;
+    const medallionRadius = CampaignStyle.medallion / 2;
+    final lockOffset = count == 1
+        ? medallionRadius + CampaignStyle.suitBadgeOverhang - lockRadius
+        : medallionRadius + lockRadius + 1.0;
+    final tapWidth =
+        2.0 *
+        math.max(
+          lockOffset + lockRadius,
+          positions.map((offset) => offset.dx.abs()).reduce(math.max) +
+              CampaignStyle.suitBadge / 2,
+        );
+    final tapHeight = math.max(
+      CampaignStyle.phaseTapHeight,
+      2 * positions.map((offset) => offset.dy.abs()).reduce(math.max) +
+          CampaignStyle.suitBadge,
+    );
     final locked = index > unlocked;
     final current = index == unlocked;
     void open() => Navigator.of(context).push(_previewRoute(index));
 
     return Positioned(
       left: stop.dx - tapWidth / 2,
-      top: stop.dy - CampaignStyle.phaseTapHeight / 2,
+      top: stop.dy - tapHeight / 2,
       width: tapWidth,
-      height: CampaignStyle.phaseTapHeight,
+      height: tapHeight,
       child: Semantics(
         sortKey: OrdinalSortKey(index.toDouble()),
         label: strings.labelWithDetail(
@@ -276,17 +297,15 @@ class _CampaignPageState extends State<CampaignPage> {
             type: MaterialType.transparency,
             child: InkWell(
               key: Key('phase-${puzzle.id}'),
-              borderRadius: BorderRadius.circular(
-                CampaignStyle.phaseTapHeight / 2,
-              ),
+              borderRadius: BorderRadius.circular(tapHeight / 2),
               onTap: open,
-              child: Center(
-                child: _medallion(
-                  puzzle: puzzle,
-                  number: index + 1,
-                  locked: locked,
-                  border: current ? rust : rule,
-                ),
+              child: _medallion(
+                puzzle: puzzle,
+                number: index + 1,
+                locked: locked,
+                border: current ? rust : rule,
+                badgePositions: positions,
+                lockOffset: lockOffset,
               ),
             ),
           ),
@@ -300,71 +319,74 @@ class _CampaignPageState extends State<CampaignPage> {
     required int number,
     required bool locked,
     required Color border,
-  }) => Stack(
-    clipBehavior: Clip.none,
-    children: [
-      Container(
-        key: Key('phase-medallion-${puzzle.id}'),
-        width: CampaignStyle.medallion,
-        height: CampaignStyle.medallion,
-        padding: const EdgeInsets.all(3),
-        decoration: BoxDecoration(
-          color: paper,
-          shape: BoxShape.circle,
-          border: Border.all(color: border, width: 1.6),
-        ),
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            color: locked ? parchment : ink,
-            shape: BoxShape.circle,
-          ),
-          child: Center(
-            child: FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Text(
-                AppLocalizations.of(context)!.puzzleIndex(number),
-                style: displayType(CampaignStyle.phaseNumberSize)
-                    .copyWith(color: locked ? mutedInk : paleGold),
-              ),
-            ),
-          ),
-        ),
-      ),
-      if (locked)
-        Positioned(
-          left: -CampaignStyle.suitBadgeOverhang,
-          top: (CampaignStyle.medallion - CampaignStyle.lockBadge) / 2,
-          child: Container(
-            width: CampaignStyle.lockBadge,
-            height: CampaignStyle.lockBadge,
-            decoration: BoxDecoration(
-              color: paper,
-              shape: BoxShape.circle,
-              border: Border.all(color: border),
-            ),
-            child: const Icon(Icons.lock_outline, size: 11, color: mutedInk),
-          ),
-        ),
-      Positioned(
-        right: -CampaignStyle.suitBadgeOverhang,
-        top: (CampaignStyle.medallion - CampaignStyle.suitBadge) / 2,
-        child: Container(
-          key: Key('phase-suit-${puzzle.id}'),
-          width: CampaignStyle.suitBadge,
-          height: CampaignStyle.suitBadge,
+    required List<Offset> badgePositions,
+    required double lockOffset,
+  }) {
+    final suits = puzzle.scoringSuits.toList();
+
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        Container(
+          key: Key('phase-medallion-${puzzle.id}'),
+          width: CampaignStyle.medallion,
+          height: CampaignStyle.medallion,
           padding: const EdgeInsets.all(3),
           decoration: BoxDecoration(
             color: paper,
             shape: BoxShape.circle,
-            border: Border.all(color: border),
+            border: Border.all(color: border, width: 1.6),
           ),
-          child: CustomPaint(
-            painter: SuitPainter(widget.artwork, puzzle.scoringSuits),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: locked ? parchment : ink,
+              shape: BoxShape.circle,
+            ),
+            child: Center(
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  AppLocalizations.of(context)!.puzzleIndex(number),
+                  style: displayType(CampaignStyle.phaseNumberSize)
+                      .copyWith(color: locked ? mutedInk : paleGold),
+                ),
+              ),
+            ),
           ),
         ),
-      ),
-    ],
-  );
+        if (locked)
+          Transform.translate(
+            offset: Offset(-lockOffset, 0),
+            child: Container(
+              width: CampaignStyle.lockBadge,
+              height: CampaignStyle.lockBadge,
+              decoration: BoxDecoration(
+                color: paper,
+                shape: BoxShape.circle,
+                border: Border.all(color: border),
+              ),
+              child: const Icon(Icons.lock_outline, size: 11, color: mutedInk),
+            ),
+          ),
+        for (final (index, suit) in suits.indexed)
+          Transform.translate(
+            offset: badgePositions[index],
+            child: Container(
+              key: Key('phase-suit-${puzzle.id}-${suit.name}'),
+              width: CampaignStyle.suitBadge,
+              height: CampaignStyle.suitBadge,
+              padding: const EdgeInsets.all(3),
+              decoration: BoxDecoration(
+                color: paper,
+                shape: BoxShape.circle,
+                border: Border.all(color: border),
+              ),
+              child: CustomPaint(painter: SuitPainter(widget.artwork, {suit})),
+            ),
+          ),
+      ],
+    );
+  }
 }
 
 class _DeckFragment extends CustomPainter {

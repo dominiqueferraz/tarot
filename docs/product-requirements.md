@@ -129,7 +129,7 @@ On a phone, the goal, every row, the illustration and the active power must be r
 
 A deal can ask the player to deliver, release, balance, illuminate or restore something. It can ask for a quota of suit actions, or for every piece of one suit, or for every ordinary piece. Show the goal and tracked quantities when the board is dealt. When a guided lesson reveals a target later, show its goal and tracker at the reveal.
 
-For each suit-based objective, show its scoring suit or suits next to its name and progress in the goal tracker. Pair each suit's familiar piece symbol with its name and keep it visible during the attempt. On a board with multiple targets, show which suit belongs to each target. For a wildcard corner, display the suit that earns progress regardless of which suit completes the shape.
+For each suit-based objective, show its scoring suit or suits next to its name and progress in the goal tracker. Keep a single framed square beside the illustration. Center one scoring suit symbol. When there are multiple suits, place the first symbol at the top and space the others evenly around a visible ring. Give each symbol an accessible name. Mark each target on mixed-suit boards with the suit that earns its progress, including targets that match other suits as wildcard corners.
 
 ### Every board refills
 
@@ -297,7 +297,7 @@ A card has one charge per attempt unless an encounter explicitly says otherwise.
 
 ### Progression
 
-**Campaign path.** Play opens a vertical route that starts at the bottom and winds upward around fragments of the deck. Each numbered marker carries its scoring-suit badge and opens a closable preview with its puzzle illustration, scoring suit, goal, move limit, difficulty and Play control. The number from the path stays visible beside the back button during play. Locked phases are available to preview. Clearing a puzzle unlocks the next phase, and the completion action opens its preview.
+**Campaign path.** Play opens a vertical route that starts at the bottom and winds upward around fragments of the deck. Use the same size and overlap with the numbered marker for every circular scoring-suit badge. Space multiple suit badges at equal angles around the marker. The marker and its badges open a closable preview with the puzzle illustration, scoring suits, goal, move limit, difficulty and Play control. The number from the path stays visible beside the back button during play. Locked phases are available to preview. Clearing a puzzle unlocks the next phase, and the completion action opens its preview.
 
 **Three acts.** The Major Arcana follow the traditional Fool's journey, laid out in three rows of seven cards. Each act is one volume.
 
