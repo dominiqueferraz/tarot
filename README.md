@@ -49,4 +49,6 @@ Run `bin/flutter build ios --release --config-only --flavor 'Tarot Squared'` to 
 DEVELOPMENT_TEAM = YOUR_TEAM_ID
 ```
 
-Run `bin/archive` with Python 3 and Xcode installed. Xcode can update the development provisioning profile during the archive. The command checks the embedded profile and verifies the code signature before reporting success. Add `--open` to open the result in Organizer for distribution. Run `bin/archive --no-codesign` to verify the release archive locally without signing. Archives are written to `build/ios/archives/`. Update the version or build number in `pubspec.yaml` before archiving a new distribution build.
+Run `bin/archive` with Python 3 and Xcode installed. Xcode can update the development provisioning profile during the archive. The command checks the embedded profile and verifies the code signature before reporting success. Add `--open` to open the result in Organizer for distribution. Archives are written to `build/ios/archives/`.
+
+Use `bin/archive --patch`, `bin/archive --minor`, or `bin/archive --major` to bump the release version and increment the build number. Minor and major bumps ask for confirmation. The command saves the new version to `pubspec.yaml` after verifying the signed archive. With no bump option, it builds the version and build number already in `pubspec.yaml`. Add `--no-codesign` to verify a release archive locally without signing or saving a version bump.
