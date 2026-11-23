@@ -377,7 +377,7 @@ void main() {
     expect(deal.light, 0);
     expect(deal.play(cells('D1 C1')), isNull);
     expect(deal.movesLeft, 25);
-    expect(deal.play(cells('C2 C1')), isNotNull); // Reverse the pair.
+    expect(deal.play(cells('C2 C1')), isNotNull);
     final square = deal.play(cells(guidedRoutes[1]))!.stroke;
     expect(square.isRectangle, isTrue);
     expect(square.light, 0);
@@ -412,7 +412,7 @@ void main() {
     expect(enclosure.falls.where((tile) => tile.fromRow < 0), hasLength(11));
     expect(enclosure.stroke.light, 4);
     expect(deal.light, 4);
-    expect(deal.play(cells('E3 E2')), isNull); // This stroke must face E4.
+    expect(deal.play(cells('E3 E2')), isNull);
     expect(deal.play(cells(guidedRoutes[4]))?.stroke.light, 2);
     expect(deal.light, 6);
     expect(deal.guide?.cue, GuideCue.wildcard);

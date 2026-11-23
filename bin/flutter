@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-"""Run Flutter with the iOS plugin registrar in the Tarot Squared target."""
 
 import fcntl
 import hashlib

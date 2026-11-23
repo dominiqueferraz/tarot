@@ -466,7 +466,6 @@ class TableauPainter extends CustomPainter {
     } else {
       _paintFall(canvas, activeTurn);
     }
-    // Fixtures sit in front of the pieces that fall through their rows.
     for (final (index, cell) in puzzle.targets.keys.indexed) {
       final fixtureCenter = _center(cell) - const Offset(0, 7);
       final amount = progress[cell]!;
@@ -652,7 +651,6 @@ class TableauPainter extends CustomPainter {
   }
 
   void _paintHand(Canvas canvas, Offset tip) {
-    // Keep the pointer inside the frame at bottom-edge and right-edge cells.
     canvas.save();
     canvas.translate(tip.dx, tip.dy);
     if (tip.dx > _tile * _size.columns - 60) canvas.scale(-1, 1);

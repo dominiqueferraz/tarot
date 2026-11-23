@@ -257,7 +257,6 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
     if (event.pointer != _activePointer || _lastPoint == null) return;
     final start = _lastPoint!;
     final end = event.localPosition;
-    // Sample the intervening cells so fast swipes behave like slow ones.
     final steps = ((end - start).distance / (pitch / 6)).ceil().clamp(
       1,
       math.max(128, 6 * math.max(_size.columns, _size.rows)),

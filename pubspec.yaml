@@ -25,7 +25,6 @@ dev_dependencies:
 
 flutter:
   config:
-    # The iOS host already uses UIScene with its own Info.plist location.
     enable-uiscene-migration: false
   generate: true
   uses-material-design: true

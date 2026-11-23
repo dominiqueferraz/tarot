@@ -379,7 +379,7 @@ void main() {
     await dragStroke(
       tester,
       'C1 D1 C1 C2',
-    ); // Return to the origin and switch direction.
+    );
     for (var step = 1; step < guidedRoutes.length; step++) {
       expect(helpBubble, findsOneWidget);
       if (step == 1) {
