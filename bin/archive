@@ -32,12 +32,15 @@ def main():
         raise ValueError("Set version: MAJOR.MINOR.PATCH+BUILD in pubspec.yaml.")
     build_name, build_number = version.groups()
 
-    run(
+    flutter_command = [
         ROOT / "bin/flutter", "build", "ios", "--release",
-        "--flavor", APP_NAME,
-        "--config-only", "--no-codesign", f"--build-name={build_name}",
+        "--flavor", APP_NAME, "--config-only", f"--build-name={build_name}",
         f"--build-number={build_number}",
-    )
+    ]
+    if args.no_codesign:
+        flutter_command.append("--no-codesign")
+    print(f"Preparing Flutter release {build_name} ({build_number})", flush=True)
+    run(*flutter_command)
 
     archives = ROOT / "build/ios/archives"
     archives.mkdir(parents=True, exist_ok=True)
@@ -51,9 +54,21 @@ def main():
     ]
     if args.no_codesign:
         command.append("CODE_SIGNING_ALLOWED=NO")
+        print(f"Archiving {APP_NAME} without signing", flush=True)
+    else:
+        command.append("-allowProvisioningUpdates")
+        print(f"Archiving {APP_NAME} with automatic development signing", flush=True)
     run(*command, "archive")
 
-    app = archive / "Products/Applications" / f"{APP_NAME}.app"
+    with (archive / "Info.plist").open("rb") as metadata:
+        archive_info = plistlib.load(metadata)
+    for key in ("Name", "SchemeName"):
+        if archive_info.get(key) != APP_NAME:
+            raise ValueError(f"Expected archive {key}={APP_NAME}, found {archive_info.get(key)!r}.")
+    app_path = archive_info.get("ApplicationProperties", {}).get("ApplicationPath")
+    if app_path != f"Applications/{APP_NAME}.app":
+        raise ValueError(f"Unexpected archived product: {app_path!r}.")
+    app = archive / "Products" / app_path
     with (app / "Info.plist").open("rb") as metadata:
         info = plistlib.load(metadata)
     for key, expected in {
@@ -63,6 +78,8 @@ def main():
     }.items():
         if info.get(key) != expected:
             raise ValueError(f"Expected {key}={expected}, found {info.get(key)!r} in {app}.")
+    if info.get("ITSAppUsesNonExemptEncryption") is not False:
+        raise ValueError(f"Expected ITSAppUsesNonExemptEncryption=false in {app}.")
 
     if not args.no_codesign:
         if not (app / "embedded.mobileprovision").is_file():

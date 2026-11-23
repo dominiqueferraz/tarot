@@ -1,3 +1,4 @@
+DEVELOPMENT_TEAM = BW2XD82X2R
 CODE_SIGN_STYLE = Automatic
 CODE_SIGN_IDENTITY[sdk=iphoneos*] = Apple Development
 

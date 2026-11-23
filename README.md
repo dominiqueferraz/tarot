@@ -43,10 +43,10 @@ On iOS, run `bin/test integration_test/first_deal_test.dart --flavor 'Tarot Squa
 
 ## Archive for iOS
 
-Run `bin/flutter build ios --config-only --no-codesign --flavor 'Tarot Squared'` to prepare the workspace, then open `ios/Tarot Squared.xcworkspace` in Xcode and select the **Tarot Squared** scheme. For device builds and signed archives, sign in to the Apple developer account in Xcode and add your development team ID to the ignored `ios/Flutter/Signing.local.xcconfig` file.
+Run `bin/flutter build ios --release --config-only --flavor 'Tarot Squared'` to prepare the workspace, then open `ios/Tarot Squared.xcworkspace` in Xcode and select the **Tarot Squared** scheme. Device builds and archives use automatic Apple Development signing with the team in `ios/Flutter/Signing.xcconfig`. Sign in to that team’s Apple developer account in Xcode. To select a different team locally, set `DEVELOPMENT_TEAM` in the ignored `ios/Flutter/Signing.local.xcconfig` file.
 
 ```xcconfig
 DEVELOPMENT_TEAM = YOUR_TEAM_ID
 ```
 
-With the development provisioning profile available in Xcode, run `bin/archive` with Python 3 and Xcode installed. Add `--open` to open the result in Organizer. Run `bin/archive --no-codesign` to verify the release archive locally without signing. Archives are written to `build/ios/archives/`. Update the version or build number in `pubspec.yaml` before archiving a new distribution build.
+Run `bin/archive` with Python 3 and Xcode installed. Xcode can update the development provisioning profile during the archive. The command checks the embedded profile and verifies the code signature before reporting success. Add `--open` to open the result in Organizer for distribution. Run `bin/archive --no-codesign` to verify the release archive locally without signing. Archives are written to `build/ios/archives/`. Update the version or build number in `pubspec.yaml` before archiving a new distribution build.
