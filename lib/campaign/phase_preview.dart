@@ -24,10 +24,6 @@ class PhasePreview extends StatelessWidget {
     final strings = AppLocalizations.of(context)!;
     final words = puzzleWords(strings, puzzle.textKey);
     final story = puzzleStory(strings, puzzle.textKey);
-    final quotas = <(Suit, TargetKind, int), List<PuzzleTarget>>{};
-    for (final target in puzzle.targets.values) {
-      (quotas[(target.suit, target.kind, target.quota)] ??= []).add(target);
-    }
     return Scaffold(
       key: const Key('phase-preview'),
       body: PaperSurface(
@@ -97,53 +93,13 @@ class PhasePreview extends StatelessWidget {
                               ),
                             ],
                             const SizedBox(height: 22),
-                            Row(
-                              children: [
-                                Container(
-                                  width: 54,
-                                  height: 54,
-                                  padding: const EdgeInsets.all(5),
-                                  decoration: BoxDecoration(
-                                    color: parchment,
-                                    border: Border.all(color: ink),
-                                  ),
-                                  child: CustomPaint(
-                                    painter: SuitPainter(
-                                      artwork,
-                                      puzzle.scoringSuits,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 14),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        words.objective,
-                                        style: displayType(23),
-                                      ),
-                                      const SizedBox(height: 7),
-                                      for (final group in quotas.values)
-                                        Text(
-                                          strings.suitAndQuota(
-                                            suitName(strings, group.first.suit),
-                                            targetQuota(
-                                              strings,
-                                              group.first,
-                                              group.length > 1,
-                                            ),
-                                          ),
-                                          style: labelType.copyWith(
-                                            color: mutedInk,
-                                          ),
-                                        ),
-                                    ],
-                                  ),
-                                ),
-                              ],
+                            Text(
+                              words.objective,
+                              textAlign: TextAlign.center,
+                              style: displayType(23),
                             ),
+                            const SizedBox(height: 10),
+                            _PhaseTargets(artwork: artwork, puzzle: puzzle),
                             const SizedBox(height: 17),
                             _PhaseStats(
                               moves: strings.moveLimit(puzzle.limit),
@@ -170,6 +126,92 @@ class PhasePreview extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _PhaseTargets extends StatelessWidget {
+  const _PhaseTargets({required this.artwork, required this.puzzle});
+
+  final Artwork artwork;
+  final PuzzleDefinition puzzle;
+
+  @override
+  Widget build(BuildContext context) {
+    final strings = AppLocalizations.of(context)!;
+    final numbers = MaterialLocalizations.of(context);
+    const gap = 8.0;
+    final columns = puzzle.targets.length.clamp(1, 4);
+    return LayoutBuilder(
+      builder: (context, box) {
+        final width = ((box.maxWidth - gap * (columns - 1)) / columns)
+            .clamp(64.0, 94.0)
+            .toDouble();
+        return Wrap(
+          alignment: WrapAlignment.center,
+          spacing: gap,
+          runSpacing: 12,
+          children: [
+            for (final target in puzzle.targets.values)
+              Semantics(
+                label: strings.labelWithDetail(
+                  targetName(strings, target.label),
+                  strings.suitAndQuota(
+                    suitName(strings, target.suit),
+                    target.quota,
+                  ),
+                ),
+                excludeSemantics: true,
+                child: SizedBox(
+                  width: width,
+                  child: Column(
+                    children: [
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 5,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: parchment,
+                          border: Border.all(color: rule),
+                          borderRadius: BorderRadius.circular(24),
+                        ),
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Row(
+                            children: [
+                              SizedBox.square(
+                                dimension: 28,
+                                child: CustomPaint(
+                                  painter: SuitPainter(artwork, {target.suit}),
+                                ),
+                              ),
+                              const SizedBox(width: 5),
+                              Text(
+                                numbers.formatDecimal(target.quota),
+                                style: displayType(25),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 5),
+                      Text(
+                        targetName(strings, target.label),
+                        textAlign: TextAlign.center,
+                        style: labelType.copyWith(
+                          fontSize: 12,
+                          color: mutedInk,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+          ],
+        );
+      },
     );
   }
 }

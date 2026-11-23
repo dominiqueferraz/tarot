@@ -66,20 +66,6 @@ String targetAmount(AppLocalizations strings, TargetKind kind, int amount) =>
       TargetKind.pan => strings.coinAmount(amount),
     };
 
-String targetQuota(
-  AppLocalizations strings,
-  PuzzleTarget target,
-  bool repeated,
-) {
-  if (repeated && target.kind == TargetKind.cord) {
-    return strings.cordGoal(target.quota);
-  }
-  if (repeated && target.kind == TargetKind.pan) {
-    return strings.coinGoal(target.quota);
-  }
-  return targetAmount(strings, target.kind, target.quota);
-}
-
 String suitName(AppLocalizations strings, Suit suit) => switch (suit) {
   Suit.wand => strings.wands,
   Suit.cup => strings.cups,

@@ -8,7 +8,7 @@ import 'package:tarot_squared/fool/puzzle_definition.dart';
 import 'package:tarot_squared/main.dart' as app;
 
 import '../test/app_test.dart'
-    show dragStroke, english, portuguese, targetSemantics;
+    show dragStroke, english, portuguese, previewTarget, targetSemantics;
 import '../test/fool_deal_test.dart'
     show
         cells,
@@ -84,7 +84,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.byKey(const Key('phase-preview')), findsOneWidget);
       expect(
-        find.text(english.suitAndQuota(english.wands, english.lightGoal(30))),
+        previewTarget(english, english.trailMarker, english.wands, 30),
         findsOneWidget,
       );
       await screenshot(tester, 'tarot-squared-phase-fools-step');
@@ -122,7 +122,7 @@ void main() {
       await tester.tap(find.text(english.nextPuzzle));
       await tester.pumpAndSettle();
       expect(
-        find.text(english.suitAndQuota(english.cups, english.lightGoal(44))),
+        previewTarget(english, english.quayLamp, english.cups, 44),
         findsOneWidget,
       );
       await screenshot(tester, 'tarot-squared-phase-lamplighter');
@@ -187,7 +187,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text(english.highWaterTitle), findsOneWidget);
       expect(
-        find.text(english.suitAndQuota(english.cups, english.waterGoal(32))),
+        previewTarget(english, english.millInlet, english.cups, 32),
         findsOneWidget,
       );
       await tester.tap(find.text(english.play));
@@ -222,10 +222,13 @@ void main() {
       await tester.tap(find.text(english.nextPuzzle));
       await tester.pumpAndSettle();
       expect(find.text(english.mooringTitle), findsOneWidget);
-      expect(
-        find.text(english.suitAndQuota(english.swords, english.cordGoal(24))),
-        findsOneWidget,
-      );
+      for (final cord in [english.bowCord, english.sternCord]) {
+        expect(
+          previewTarget(english, cord, english.swords, 24),
+          findsOneWidget,
+        );
+      }
+      await screenshot(tester, 'tarot-squared-phase-the-mooring');
       expect(find.text(english.moveLimit(26)), findsOneWidget);
       await tester.tap(find.text(english.play));
       await tester.pumpAndSettle();
@@ -282,10 +285,9 @@ void main() {
       await tester.tap(find.text(english.nextPuzzle));
       await tester.pumpAndSettle();
       expect(find.text(english.ferrymansFareTitle), findsOneWidget);
-      expect(
-        find.text(english.suitAndQuota(english.coins, english.coinGoal(24))),
-        findsOneWidget,
-      );
+      for (final pan in [english.westPan, english.eastPan]) {
+        expect(previewTarget(english, pan, english.coins, 24), findsOneWidget);
+      }
       expect(find.text(english.moveLimit(25)), findsOneWidget);
       await tester.tap(find.text(english.play));
       await tester.pumpAndSettle();

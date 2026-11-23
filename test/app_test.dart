@@ -32,6 +32,15 @@ final english = lookupAppLocalizations(const Locale('en'));
 final portuguese = lookupAppLocalizations(const Locale('pt'));
 final spanish = lookupAppLocalizations(const Locale('es'));
 
+Finder previewTarget(
+  AppLocalizations strings,
+  String target,
+  String suit,
+  int quota,
+) => find.bySemanticsLabel(
+  strings.labelWithDetail(target, strings.suitAndQuota(suit, quota)),
+);
+
 String targetSemantics(
   AppLocalizations strings,
   String cell,
@@ -215,7 +224,7 @@ void main() {
     expect(find.byKey(const Key('phase-illustration')), findsOneWidget);
     expect(find.text(english.lamplighterObjective), findsOneWidget);
     expect(
-      find.text(english.suitAndQuota(english.cups, english.lightGoal(44))),
+      previewTarget(english, english.quayLamp, english.cups, 44),
       findsOneWidget,
     );
     expect(find.text(english.moveLimit(22)), findsOneWidget);
@@ -231,7 +240,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text(english.highWaterTitle), findsOneWidget);
     expect(
-      find.text(english.suitAndQuota(english.cups, english.waterGoal(32))),
+      previewTarget(english, english.millInlet, english.cups, 32),
       findsOneWidget,
     );
     expect(
@@ -249,7 +258,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text(english.foolsStepTitle), findsOneWidget);
     expect(
-      find.text(english.suitAndQuota(english.wands, english.lightGoal(30))),
+      previewTarget(english, english.trailMarker, english.wands, 30),
       findsOneWidget,
     );
     await tester.tap(find.text(english.play));
@@ -481,18 +490,34 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text(spanish.marketDayStory), findsOneWidget);
       expect(find.text(spanish.marketDayObjective), findsOneWidget);
-      expect(
-        find.text(spanish.suitAndQuota(spanish.wands, spanish.lightGoal(6))),
-        findsOneWidget,
-      );
-      expect(
-        find.text(spanish.suitAndQuota(spanish.cups, spanish.waterGoal(6))),
-        findsOneWidget,
-      );
-      expect(
-        find.text(spanish.suitAndQuota(spanish.coins, spanish.coinAmount(6))),
-        findsOneWidget,
-      );
+      final counts = <Offset>[];
+      for (final (suit, name, target) in [
+        (Suit.wand, spanish.wands, spanish.marketLamp),
+        (Suit.cup, spanish.cups, spanish.marketInlet),
+        (Suit.coin, spanish.coins, spanish.paymentPan),
+      ]) {
+        final tile = previewTarget(spanish, target, name, 6);
+        final count = find.descendant(of: tile, matching: find.text('6'));
+        final symbol = find.descendant(
+          of: tile,
+          matching: find.byWidgetPredicate(
+            (widget) => widget is CustomPaint && widget.painter is SuitPainter,
+          ),
+        );
+        expect(tile, findsOneWidget);
+        expect(count, findsOneWidget);
+        expect(
+          tester.widget<CustomPaint>(symbol).painter,
+          isA<SuitPainter>().having((painter) => painter.suits, 'suits', {
+            suit,
+          }),
+        );
+        counts.add(tester.getCenter(count));
+      }
+      expect(counts.map((count) => count.dy).toSet(), hasLength(1));
+      expect(counts[0].dx, lessThan(counts[1].dx));
+      expect(counts[1].dx, lessThan(counts[2].dx));
+      expect(find.textContaining(spanish.waterGoal(6)), findsNothing);
       await tester.ensureVisible(play);
       await tester.tap(play);
       await tester.pumpAndSettle();
