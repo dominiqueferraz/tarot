@@ -5,18 +5,22 @@ import '../fool/puzzle_definition.dart';
 import '../fool/puzzle_presentation.dart';
 import '../fool/tableau_art.dart';
 import '../l10n/generated/app_localizations.dart';
+import '../lives.dart';
+import '../lives_indicator.dart';
 import '../visuals.dart';
 
 class PhasePreview extends StatelessWidget {
   const PhasePreview({
     required this.puzzle,
     required this.artwork,
+    required this.lives,
     required this.onPlay,
     super.key,
   });
 
   final PuzzleDefinition puzzle;
   final Artwork artwork;
+  final LifePool lives;
   final VoidCallback? onPlay;
 
   @override
@@ -38,6 +42,8 @@ class PhasePreview extends StatelessWidget {
                 child: Row(
                   children: [
                     const Expanded(child: Divider(color: rule)),
+                    const SizedBox(width: 6),
+                    LivesIndicator(lives: lives),
                     const SizedBox(width: 12),
                     IconButton.outlined(
                       tooltip: strings.close,
@@ -111,11 +117,20 @@ class PhasePreview extends StatelessWidget {
                               ),
                             ),
                             const SizedBox(height: 20),
-                            PlayAction(
-                              label: onPlay == null
-                                  ? strings.lockedPhase
-                                  : strings.play,
-                              onPressed: onPlay,
+                            ListenableBuilder(
+                              listenable: lives,
+                              builder: (context, child) {
+                                final waiting =
+                                    onPlay != null && lives.remaining == 0;
+                                return PlayAction(
+                                  label: waiting
+                                      ? strings.noLivesLeft
+                                      : onPlay == null
+                                      ? strings.lockedPhase
+                                      : strings.play,
+                                  onPressed: waiting ? null : onPlay,
+                                );
+                              },
                             ),
                           ],
                         ),

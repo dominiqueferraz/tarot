@@ -58,7 +58,11 @@ class Turn {
 
 class PuzzleDeal {
   PuzzleDeal(this.puzzle) : _board = puzzle.opening {
-    _jammed = puzzle.guide.isEmpty && !_hasLegalStroke(_board);
+    if (!_hasLegalStroke(_board)) {
+      throw FormatException(
+        'Puzzle ${puzzle.id} needs a legal opening stroke.',
+      );
+    }
   }
 
   final PuzzleDefinition puzzle;
@@ -69,7 +73,6 @@ class PuzzleDeal {
   int _moves = 0;
   Map<int, int> _progress = const {};
   Map<int, int> _faded = const {};
-  bool _jammed = false;
   TargetLink? _link;
   int? _spilledCell;
 
@@ -82,7 +85,7 @@ class PuzzleDeal {
   bool get won => puzzle.targets.entries.every(
     (target) => progressAt(target.key) >= target.value.quota,
   );
-  bool get lost => !won && (movesLeft == 0 || _jammed);
+  bool get lost => !won && movesLeft == 0;
   int? get spilledCell => _spilledCell;
   bool get finished => won || lost;
   GuideMove? get guide => moves < guideLength ? puzzle.guide[moves] : null;
@@ -257,10 +260,10 @@ class PuzzleDeal {
       }
     }
     _progress = Map.unmodifiable(progress);
-    _board = List.unmodifiable(next);
     if (guide == null && movesLeft > 0 && !won) {
-      _jammed = !_hasLegalStroke(board);
+      _keepBoardPlayable(next, falls, stroke);
     }
+    _board = List.unmodifiable(next);
     return Turn(stroke, before, falls, progressBefore, linkBefore);
   }
 
@@ -306,13 +309,28 @@ class PuzzleDeal {
         next[cell] = candidate[cell];
       }
     }
+  }
+
+  void _keepBoardPlayable(List<Suit?> next, List<Fall> falls, Stroke stroke) {
     if (_hasLegalStroke(next)) return;
-    for (final cell in vacancies) {
+    for (final (index, fall) in falls.indexed) {
+      if (fall.fromRow >= 0) continue;
+      final cell = fall.toRow * _size.columns + fall.column;
       for (final neighbour in _size.neighbours(cell)) {
-        if (next[neighbour] == null) continue;
-        next[cell] = next[neighbour];
+        final suit = next[neighbour];
+        if (suit == null) continue;
+        next[cell] = suit;
+        falls[index] = Fall(suit, fall.column, fall.fromRow, fall.toRow);
         return;
       }
+    }
+
+    final match = stroke.path.take(stroke.isRectangle ? 4 : 2).toSet();
+    for (final (index, fall) in falls.indexed) {
+      final cell = fall.toRow * _size.columns + fall.column;
+      if (!match.contains(cell) || fall.suit == stroke.suit) continue;
+      next[cell] = stroke.suit;
+      falls[index] = Fall(stroke.suit, fall.column, fall.fromRow, fall.toRow);
     }
   }
 

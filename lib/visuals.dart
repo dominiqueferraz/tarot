@@ -62,7 +62,7 @@ class PlayAction extends StatelessWidget {
     child: Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label),
+        Flexible(child: Text(label)),
         Icon(
           onPressed == null ? Icons.lock_outline : Icons.arrow_forward_rounded,
         ),

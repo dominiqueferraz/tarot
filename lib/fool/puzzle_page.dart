@@ -7,7 +7,10 @@ import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../artwork.dart';
+import '../dialogs.dart';
 import '../l10n/generated/app_localizations.dart';
+import '../lives.dart';
+import '../lives_indicator.dart';
 import '../visuals.dart';
 import 'puzzle_deal.dart';
 import 'puzzle_presentation.dart';
@@ -20,6 +23,7 @@ class PuzzlePage extends StatefulWidget {
     required this.puzzle,
     required this.phaseNumber,
     required this.artwork,
+    required this.lives,
     this.onClear,
     this.onContinue,
     super.key,
@@ -28,6 +32,7 @@ class PuzzlePage extends StatefulWidget {
   final PuzzleDefinition puzzle;
   final int phaseNumber;
   final Artwork artwork;
+  final LifePool lives;
   final VoidCallback? onClear;
   final void Function(BuildContext)? onContinue;
 
@@ -50,6 +55,7 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
   bool _rejected = false;
   bool _reducedMotion = false;
   bool _ready = false;
+  bool _confirmingExit = false;
   Timer? _rejectTimer;
 
   late final _guideMotion = AnimationController(vsync: this);
@@ -98,7 +104,8 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
     return turn.linkBefore;
   }
 
-  bool get _acceptsInput => _turn == null && !_deal.finished;
+  bool get _acceptsInput =>
+      _turn == null && !_deal.finished && !_confirmingExit;
   int _displayProgress(int cell) =>
       _turn?.progressBefore[cell] ??
       (_turn == null ? _deal.progressAt(cell) : 0);
@@ -154,6 +161,7 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
   }
 
   void _restart() {
+    if (!_deal.lost || widget.lives.remaining == 0) return;
     _rejectTimer?.cancel();
     _fallMotion.stop();
     _sceneMotion.reset();
@@ -164,6 +172,46 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
       _clearGesture();
       _animateGuide(_deal.demonstration);
     });
+  }
+
+  Future<void> _returnToPath() async {
+    if (_confirmingExit) return;
+    final navigator = Navigator.of(context);
+    if (_deal.finished) {
+      navigator.pop();
+      return;
+    }
+    _confirmingExit = true;
+    final strings = AppLocalizations.of(context)!;
+    final leave = await showDialog<bool>(
+      context: context,
+      builder: (context) => PaperDialog(
+        title: strings.leavePuzzleTitle,
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          spacing: 8,
+          children: [
+            LifeStatus(lives: widget.lives),
+            Text(strings.leavePuzzleWarning),
+          ],
+        ),
+        actions: [
+          DialogAction(
+            label: strings.keepPlaying,
+            kind: DialogActionKind.secondary,
+            onPressed: () => Navigator.of(context).pop(false),
+          ),
+          DialogAction(
+            label: strings.returnToPath,
+            kind: DialogActionKind.destructive,
+            onPressed: () => Navigator.of(context).pop(true),
+          ),
+        ],
+      ),
+    );
+    _confirmingExit = false;
+    if (leave == true && mounted) navigator.pop();
   }
 
   void _clearGesture() {
@@ -193,7 +241,11 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
         _turn = turn;
       });
       if (turn != null) {
-        if (_deal.won) widget.onClear?.call();
+        if (_deal.won) {
+          widget.onClear?.call();
+        } else if (_deal.lost) {
+          widget.lives.loseLife();
+        }
         if (_reducedMotion) {
           _settled();
         } else {
@@ -351,7 +403,7 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     final strings = AppLocalizations.of(context)!;
-    return Scaffold(
+    final page = Scaffold(
       body: PaperSurface(
         child: SafeArea(
           left: false,
@@ -479,6 +531,17 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
         ),
       ),
     );
+    return PopScope<void>(
+      canPop: _deal.finished,
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) {
+          if (!_deal.finished) widget.lives.loseLife();
+        } else {
+          _returnToPath();
+        }
+      },
+      child: page,
+    );
   }
 
   String _guideExplanation(
@@ -536,82 +599,82 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
             children: [
               PaperSurface(
                 child: IconButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  tooltip: strings.campaignPath,
+                  onPressed: _returnToPath,
+                  tooltip: strings.returnToPath,
                   icon: const Icon(Icons.arrow_back_rounded),
+                ),
+              ),
+              PaperSurface(
+                child: Padding(
+                  padding: const EdgeInsetsDirectional.fromSTEB(2, 4, 10, 4),
+                  child: Text(
+                    strings.puzzleIndex(widget.phaseNumber),
+                    semanticsLabel: strings.puzzleNumber(widget.phaseNumber),
+                    style: labelType.copyWith(color: mutedInk),
+                  ),
                 ),
               ),
               Expanded(
                 child: Align(
-                  alignment: AlignmentDirectional.centerStart,
-                  child: PaperSurface(
-                    child: Padding(
-                      padding: const EdgeInsetsDirectional.fromSTEB(
-                        2,
-                        4,
-                        10,
-                        4,
-                      ),
-                      child: Text(
-                        strings.puzzleIndex(widget.phaseNumber),
-                        semanticsLabel: strings.puzzleNumber(
-                          widget.phaseNumber,
+                  alignment: AlignmentDirectional.centerEnd,
+                  child: Wrap(
+                    alignment: WrapAlignment.end,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      if (link != null)
+                        PaperSurface(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            child: Text(
+                              strings.linkMovesRemaining(link.movesLeft),
+                              style: labelType.copyWith(color: blue),
+                            ),
+                          ),
                         ),
-                        style: labelType.copyWith(color: mutedInk),
-                      ),
-                    ),
+                      if (_deal.guide != null)
+                        PaperSurface(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 4,
+                            ),
+                            child: Semantics(
+                              label: strings.guideStepProgress(
+                                _deal.moves + 1,
+                                _deal.guideLength,
+                              ),
+                              child: Wrap(
+                                alignment: WrapAlignment.end,
+                                spacing: 5,
+                                runSpacing: 3,
+                                children: [
+                                  for (var i = 0; i < _deal.guideLength; i++)
+                                    Container(
+                                      width: 7,
+                                      height: 7,
+                                      decoration: BoxDecoration(
+                                        color: i < _deal.moves
+                                            ? ink
+                                            : i == _deal.moves
+                                            ? gold
+                                            : Colors.transparent,
+                                        border: Border.all(
+                                          color: i <= _deal.moves ? ink : rule,
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
                 ),
               ),
-              if (link != null)
-                PaperSurface(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    child: Text(
-                      strings.linkMovesRemaining(link.movesLeft),
-                      style: labelType.copyWith(color: blue),
-                    ),
-                  ),
-                ),
-              if (_deal.guide != null)
-                PaperSurface(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 6,
-                      vertical: 4,
-                    ),
-                    child: Semantics(
-                      label: strings.guideStepProgress(
-                        _deal.moves + 1,
-                        _deal.guideLength,
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          for (var i = 0; i < _deal.guideLength; i++)
-                            Container(
-                              width: 7,
-                              height: 7,
-                              margin: EdgeInsets.only(left: i == 0 ? 0 : 5),
-                              decoration: BoxDecoration(
-                                color: i < _deal.moves
-                                    ? ink
-                                    : i == _deal.moves
-                                    ? gold
-                                    : Colors.transparent,
-                                border: Border.all(
-                                  color: i <= _deal.moves ? ink : rule,
-                                ),
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
             ],
           ),
         ),
@@ -1082,69 +1145,67 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
     return ColoredBox(
       color: ink.withValues(alpha: .26),
       child: Center(
-        child: Container(
-          margin: const EdgeInsets.all(14),
-          constraints: const BoxConstraints(maxWidth: 285),
-          decoration: BoxDecoration(
-            color: paper,
-            border: Border.all(color: ink, width: 1.5),
-            boxShadow: const [BoxShadow(color: ink, offset: Offset(4, 4))],
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (_deal.won)
-                Semantics(
-                  label: strings.starRating(_deal.stars),
-                  excludeSemantics: true,
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      for (var i = 0; i < 3; i++)
-                        Icon(
-                          i < _deal.stars
-                              ? Icons.star_rounded
-                              : Icons.star_border_rounded,
-                          color: i < _deal.stars ? rust : rule,
-                          size: 27,
-                        ),
-                    ],
-                  ),
-                )
-              else if (_deal.movesLeft == 0)
-                Text(strings.movesRemaining(0), style: _objectiveStyle),
-              const SizedBox(height: 6),
-              Text(
-                _resultText(strings),
-                style: displayType(27),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 10),
-              FilledButton(
-                onPressed: _deal.won
-                    ? () {
-                        final continuePuzzle = widget.onContinue;
-                        if (continuePuzzle == null) {
-                          Navigator.of(context).pop();
-                        } else {
-                          continuePuzzle(context);
-                        }
-                      }
-                    : _restart,
-                style: FilledButton.styleFrom(
-                  minimumSize: const Size(0, 46),
-                  textStyle: labelType,
-                  shape: const RoundedRectangleBorder(),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: DialogPanel(
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              spacing: 8,
+              children: [
+                if (_deal.won)
+                  Semantics(
+                    label: strings.starRating(_deal.stars),
+                    excludeSemantics: true,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        for (var i = 0; i < 3; i++)
+                          Icon(
+                            i < _deal.stars
+                                ? Icons.star_rounded
+                                : Icons.star_border_rounded,
+                            color: i < _deal.stars ? rust : rule,
+                            size: 27,
+                          ),
+                      ],
+                    ),
+                  )
+                else
+                  Text(strings.movesRemaining(0), style: _objectiveStyle),
+                Text(
+                  _resultText(strings),
+                  style: displayType(27),
+                  textAlign: TextAlign.center,
                 ),
-                child: Text(
-                  !_deal.won
-                      ? strings.retry
-                      : widget.onContinue == null
+                if (_deal.lost)
+                  LifeStatus(lives: widget.lives, showDepletedLabel: true),
+              ],
+            ),
+            actions: [
+              if (_deal.won)
+                DialogAction(
+                  label: widget.onContinue == null
                       ? strings.campaignPath
                       : strings.nextPuzzle,
+                  onPressed: () {
+                    final continuePuzzle = widget.onContinue;
+                    if (continuePuzzle == null) {
+                      Navigator.of(context).pop();
+                    } else {
+                      continuePuzzle(context);
+                    }
+                  },
+                )
+              else
+                ListenableBuilder(
+                  listenable: widget.lives,
+                  builder: (context, child) => widget.lives.remaining > 0
+                      ? DialogAction(label: strings.retry, onPressed: _restart)
+                      : DialogAction(
+                          label: strings.returnToPath,
+                          onPressed: _returnToPath,
+                        ),
                 ),
-              ),
             ],
           ),
         ),

@@ -29,7 +29,7 @@ The mobile opening teaches horizontal and vertical traces, squares and rectangle
 
 **Settle and refill.** A committed stroke costs one move. Surviving pieces fall within their columns, past the fixed marker where applicable, and new pieces enter at the top. The six guided moves use fixed arrivals. In free play, each column cycles through its own four-arrival sequence containing one of each suit. Restart restores the starting board, the guide and the refill sequence. There is no timer or Undo.
 
-**Win and lose.** Reach 30 light by the end of move 25. The six guided moves count toward the limit, leaving 19 moves at handoff. An attempt ends when the move limit is reached with the marker incomplete or when there is no legal stroke. Restart is free.
+**Win and lose.** Reach 30 light by the end of move 25. The six guided moves count toward the limit, leaving 19 moves at handoff. Running out of moves with the marker incomplete costs one life. When leaving an unfinished deal, choose Keep Playing to resume or Return to Path to spend one life and exit. Try Again restores the guide and opening board while a life remains. When the last life is spent, the result explains when retry becomes available. Check the campaign path or phase preview for the hearts and refill time.
 
 | Moves used in a clear | Result |
 |---|---|

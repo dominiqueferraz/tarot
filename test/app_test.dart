@@ -1,15 +1,19 @@
+import 'dart:convert';
 import 'dart:math' as math;
 
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:material_ui/material_ui.dart' show FilledButton;
+import 'package:material_ui/material_ui.dart' show FilledButton, Icons;
 import 'package:tarot_squared/artwork.dart';
 import 'package:tarot_squared/design_tokens.dart';
+import 'package:tarot_squared/dialogs.dart';
 import 'package:tarot_squared/fool/puzzle_deal.dart';
 import 'package:tarot_squared/fool/stroke.dart';
 import 'package:tarot_squared/fool/tableau_art.dart';
 import 'package:tarot_squared/l10n/generated/app_localizations.dart';
+import 'package:tarot_squared/lives.dart';
+import 'package:tarot_squared/lives_indicator.dart';
 import 'package:tarot_squared/main.dart';
 
 import 'fool_deal_test.dart'
@@ -268,7 +272,9 @@ void main() {
     expect(find.byKey(const Key('fool-grid')), findsOneWidget);
     expect(find.text(english.puzzleIndex(1)), findsOneWidget);
     expect(find.bySemanticsLabel(english.puzzleNumber(1)), findsOneWidget);
-    await tester.tap(find.byTooltip(english.campaignPath));
+    await tester.tap(find.byTooltip(english.returnToPath));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(english.returnToPath));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('campaign-path')), findsOneWidget);
   });
@@ -873,5 +879,241 @@ void main() {
       english.targetProgress(0, 30),
     );
     expect(find.text(english.retry), findsNothing);
+  });
+
+  testWidgets('confirms leaving and reopens play as individual lives refill', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(360, 640);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final source = jsonDecode(catalogSource) as Map<String, dynamic>;
+    final lamp =
+        (source['puzzles'] as List<dynamic>)[1] as Map<String, dynamic>;
+    lamp['moves'] = 1;
+    lamp['par'] = 1;
+    (lamp['target'] as Map<String, dynamic>)['quota'] = 2;
+    source['puzzles'] = [lamp];
+    final quickCatalog = PuzzleCatalog.parse(jsonEncode(source));
+
+    var now = DateTime.utc(2026, 1, 1);
+    const refillTime = Duration(minutes: 20);
+    final firstRefill = now.add(refillTime);
+    final expectedBalance = ['v2'];
+    List<String>? saved;
+    void expectLifeSpent() {
+      expectedBalance.add('${now.add(refillTime).millisecondsSinceEpoch}');
+      expect(saved, expectedBalance);
+    }
+
+    var saves = 0;
+    Future<void> launch() => tester.pumpWidget(
+      TarotSquaredApp(
+        catalog: quickCatalog,
+        artwork: artwork,
+        initialLanguage: 'en',
+        savedLives: saved,
+        saveLives: (balance) async {
+          saved = balance;
+          saves++;
+        },
+        lifeClock: () => now,
+      ),
+    );
+
+    final phase = find.byKey(const Key('phase-002'));
+    final play = find.text(english.play);
+    Future<void> enterDeal() async {
+      await tester.tap(phase);
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(play);
+      await tester.tap(play);
+      await tester.pumpAndSettle();
+    }
+
+    await launch();
+    await openPhase(tester, '002');
+    expect(find.byType(LifeStatus), findsNothing);
+    await dragStroke(tester, 'A1 B1', size: lampSize);
+    expect(saved, isNull);
+    await tester.tap(find.byTooltip(english.returnToPath));
+    await tester.pumpAndSettle();
+    expect(find.text(english.leavePuzzleWarning), findsOneWidget);
+    expect(find.byIcon(Icons.favorite), findsNWidgets(5));
+    final keepPlaying = find.widgetWithText(DialogAction, english.keepPlaying);
+    final leave = find.widgetWithText(DialogAction, english.returnToPath);
+    expect(
+      tester.widget<DialogAction>(keepPlaying).kind,
+      DialogActionKind.secondary,
+    );
+    expect(
+      tester.widget<DialogAction>(leave).kind,
+      DialogActionKind.destructive,
+    );
+    expect(tester.getSize(keepPlaying).height, tester.getSize(leave).height);
+    expect(saved, isNull);
+    await tester.tap(find.text(english.keepPlaying));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('fool-grid')), findsOneWidget);
+    expect(find.bySemanticsLabel(english.movesRemaining(1)), findsOneWidget);
+    expect(saved, isNull);
+    await tester.tap(find.byTooltip(english.returnToPath));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(english.returnToPath));
+    await tester.pumpAndSettle();
+    expectLifeSpent();
+    expect(find.byIcon(Icons.favorite), findsNWidgets(4));
+    expect(find.byIcon(Icons.heart_broken), findsOneWidget);
+
+    now = now.add(const Duration(minutes: 2));
+    await tester.pump(const Duration(seconds: 1));
+    await enterDeal();
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+    expect(find.text(english.leavePuzzleWarning), findsOneWidget);
+    expect(find.byIcon(Icons.heart_broken), findsOneWidget);
+    expect(find.text(english.refillsIn('18:00')), findsOneWidget);
+    expect(saved, expectedBalance);
+    await tester.tap(find.text(english.returnToPath));
+    await tester.pumpAndSettle();
+    expectLifeSpent();
+    now = now.add(const Duration(seconds: 1));
+    await tester.pump(const Duration(seconds: 1));
+    expect(find.text(english.refillsIn('17:59')), findsOneWidget);
+    await enterDeal();
+    expect(find.byType(LifeStatus), findsNothing);
+    expect(find.text(english.refillsIn('17:59')), findsNothing);
+
+    for (var remaining = 2; remaining >= 0; remaining--) {
+      await dragStroke(tester, 'A2 B2', size: lampSize);
+      expect(find.byIcon(Icons.heart_broken), findsNWidgets(5 - remaining));
+      expect(
+        find.textContaining(english.noLivesLeft),
+        remaining == 0 ? findsOneWidget : findsNothing,
+      );
+      expectLifeSpent();
+      now = now.add(const Duration(minutes: 5));
+      if (remaining > 0) {
+        await tester.tap(find.text(english.retry));
+        await tester.pumpAndSettle();
+        expect(saved, expectedBalance);
+      }
+    }
+    expect(saves, 5);
+    expect(find.text(english.retry), findsNothing);
+    expect(find.text(english.noLivesRefillsIn('07:59')), findsOneWidget);
+    expect(find.byType(DialogPanel), findsOneWidget);
+    expect(
+      find.widgetWithText(DialogAction, english.returnToPath),
+      findsOneWidget,
+    );
+    await tester.tap(find.text(english.returnToPath));
+    await tester.pumpAndSettle();
+    expect(find.text(english.leavePuzzleWarning), findsNothing);
+    expect(saves, 5);
+    expect(find.byIcon(Icons.heart_broken), findsNWidgets(5));
+    await tester.tap(phase);
+    await tester.pumpAndSettle();
+    expect(
+      tester
+          .widget<FilledButton>(
+            find.widgetWithText(FilledButton, english.noLivesLeft),
+          )
+          .onPressed,
+      isNull,
+    );
+    await tester.tap(find.text(english.noLivesLeft));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('fool-grid')), findsNothing);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await launch();
+    await tester.tap(play);
+    await tester.pumpAndSettle();
+    expect(find.byIcon(Icons.heart_broken), findsNWidgets(5));
+    await tester.tap(phase);
+    await tester.pumpAndSettle();
+    expect(find.text(english.refillsIn('02:59')), findsOneWidget);
+
+    now = firstRefill;
+    await tester.pump(const Duration(minutes: 3));
+    expect(find.byIcon(Icons.favorite), findsOneWidget);
+    expect(find.text(english.refillsIn('02:00')), findsOneWidget);
+    now = firstRefill.add(const Duration(minutes: 2));
+    await tester.pump(const Duration(minutes: 2));
+    expect(find.byIcon(Icons.favorite), findsNWidgets(2));
+    expect(find.text(english.refillsIn('00:01')), findsOneWidget);
+    await tester.tap(find.byType(LivesIndicator));
+    await tester.pumpAndSettle();
+    final dialog = find.byType(PaperDialog);
+    expect(
+      find.descendant(of: dialog, matching: find.byIcon(Icons.heart_broken)),
+      findsNWidgets(3),
+    );
+    now = now.add(const Duration(seconds: 1));
+    await tester.pump(const Duration(seconds: 1));
+    expect(
+      find.descendant(
+        of: dialog,
+        matching: find.text(english.refillsIn('05:00')),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: dialog, matching: find.byIcon(Icons.favorite)),
+      findsNWidgets(3),
+    );
+    await tester.tap(find.text(english.close));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(play);
+    await tester.tap(play);
+    await tester.pumpAndSettle();
+    await dragStroke(tester, 'A3 B3', size: lampSize);
+    expect(find.text(english.clear), findsWidgets);
+    expect(saves, 5);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    now = firstRefill.add(const Duration(hours: 6));
+    await launch();
+    await tester.tap(play);
+    await tester.pumpAndSettle();
+    expect(find.byIcon(Icons.favorite), findsNWidgets(5));
+    await tester.tap(find.bySemanticsLabel(english.livesRemaining(5, 5)));
+    await tester.pumpAndSettle();
+    expect(find.text(english.livesExplanation), findsOneWidget);
+  });
+
+  testWidgets('migrates existing balances without restarting the new timers', (
+    tester,
+  ) async {
+    final now = DateTime.utc(2026, 1, 1, 12);
+    final oldDeadline = now.subtract(const Duration(minutes: 70));
+    List<String>? migrated;
+    final pool = LifePool(
+      saved: ['0', '${oldDeadline.millisecondsSinceEpoch}'],
+      clock: () => now,
+      save: (state) async => migrated = state,
+    );
+    try {
+      await tester.pump();
+      final deadline = now
+          .add(const Duration(minutes: 20))
+          .millisecondsSinceEpoch;
+      expect(pool.remaining, 2);
+      expect(migrated, ['v2', '$deadline', '$deadline', '$deadline']);
+    } finally {
+      pool.dispose();
+    }
+    final restored = LifePool(
+      saved: migrated,
+      clock: () => now.add(const Duration(minutes: 5)),
+    );
+    try {
+      expect(restored.remaining, 2);
+      expect(restored.secondsUntilNext, 15 * 60);
+    } finally {
+      restored.dispose();
+    }
   });
 }

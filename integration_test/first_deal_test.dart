@@ -4,7 +4,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tarot_squared/artwork.dart';
-import 'package:tarot_squared/fool/puzzle_definition.dart';
+import 'package:tarot_squared/fool/puzzle_deal.dart';
+import 'package:tarot_squared/lives_indicator.dart';
 import 'package:tarot_squared/main.dart' as app;
 
 import '../test/app_test.dart'
@@ -39,11 +40,12 @@ void main() {
   }
 
   testWidgets(
-    'plays the first five puzzles and persists the Market Day unlock',
+    'plays the first five puzzles, persists Market Day, and restores a life',
     (tester) async {
       final preferences = SharedPreferencesAsync();
       final original = await preferences.getString('language');
       final previousUnlock = await preferences.getString('unlockedPuzzle');
+      final previousLives = await preferences.getStringList('lives');
       addTearDown(
         () => original == null
             ? preferences.remove('language')
@@ -54,8 +56,17 @@ void main() {
             ? preferences.remove('unlockedPuzzle')
             : preferences.setString('unlockedPuzzle', previousUnlock),
       );
+      addTearDown(
+        () => previousLives == null
+            ? preferences.remove('lives')
+            : preferences.setStringList('lives', previousLives),
+      );
+      final nextLife = DateTime.now().add(const Duration(minutes: 15));
+      final deadline = '${nextLife.millisecondsSinceEpoch}';
+      final initialLives = ['v2', deadline, deadline, deadline];
       await preferences.remove('unlockedPuzzle');
       await preferences.setString('language', 'en');
+      await preferences.setStringList('lives', initialLives);
       await app.main();
       await tester.pumpAndSettle();
       expect(find.text(english.moon.toUpperCase()), findsOneWidget);
@@ -348,6 +359,113 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text(english.marketDayTitle), findsOneWidget);
       expect(find.text(english.play), findsOneWidget);
+      expect(
+        find.bySemanticsLabel(
+          RegExp(RegExp.escape(english.livesRemaining(2, 5))),
+        ),
+        findsOneWidget,
+      );
+      expect(await preferences.getStringList('lives'), initialLives);
+
+      await tester.tap(find.byTooltip(english.close));
+      await tester.pumpAndSettle();
+      final lampPhase = find.byKey(const Key('phase-002'));
+      final play = find.text(english.play);
+
+      Future<void> enterLamplighter() async {
+        await tester.ensureVisible(lampPhase);
+        await tester.tap(lampPhase);
+        await tester.pumpAndSettle();
+        await tester.ensureVisible(play);
+        await tester.tap(play);
+        await tester.pumpAndSettle();
+      }
+
+      await screenshot(tester, 'tarot-hearts-campaign');
+      await tester.tap(find.byType(LivesIndicator));
+      await tester.pumpAndSettle();
+      await screenshot(tester, 'tarot-hearts-lives-dialog');
+      await tester.tap(find.text(english.close));
+      await tester.pumpAndSettle();
+      await enterLamplighter();
+      await tester.tap(find.byTooltip(english.returnToPath));
+      await tester.pumpAndSettle();
+      expect(find.text(english.leavePuzzleWarning), findsOneWidget);
+      expect(find.byType(LifeStatus), findsOneWidget);
+      await screenshot(tester, 'tarot-hearts-confirm-exit');
+      await tester.tap(find.text(english.keepPlaying));
+      await tester.pumpAndSettle();
+      expect(await preferences.getStringList('lives'), initialLives);
+      await tester.tap(find.byTooltip(english.returnToPath));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(english.returnToPath));
+      await tester.pumpAndSettle();
+      final afterExit = (await preferences.getStringList('lives'))!;
+      expect(afterExit, hasLength(5));
+      expect(afterExit.take(4), initialLives);
+      await enterLamplighter();
+      expect(find.byType(LifeStatus), findsNothing);
+      await screenshot(tester, 'tarot-hearts-playing');
+
+      final source = await rootBundle.loadString(PuzzleCatalog.assetPath);
+      final lamp = PuzzleCatalog.parse(source).puzzles[1];
+      final replay = PuzzleDeal(lamp);
+      final size = lamp.size;
+      while (!replay.finished) {
+        final stroke = [
+          for (var cell = 0; cell < size.cellCount; cell++)
+            for (final next in size.neighbours(cell))
+              if (replay.inspect([cell, next])?.totalGain == 0) [cell, next],
+        ].first;
+        replay.play(stroke);
+        await dragStroke(
+          tester,
+          stroke.map(size.cellLabel).join(' '),
+          size: size,
+        );
+      }
+      expect(find.textContaining(english.noLivesLeft), findsOneWidget);
+      expect(find.byType(LifeStatus), findsOneWidget);
+      expect(find.text(english.retry), findsNothing);
+      final afterLoss = (await preferences.getStringList('lives'))!;
+      expect(afterLoss, hasLength(6));
+      expect(afterLoss.take(5), afterExit);
+      await screenshot(tester, 'tarot-hearts-failed-deal');
+
+      await tester.pumpWidget(const SizedBox.shrink());
+      await app.main();
+      await tester.pumpAndSettle();
+      await tester.tap(play);
+      await tester.pumpAndSettle();
+      expect(
+        find.bySemanticsLabel(
+          RegExp(RegExp.escape(english.livesRemaining(0, 5))),
+        ),
+        findsOneWidget,
+      );
+      await tester.ensureVisible(lampPhase);
+      await tester.tap(lampPhase);
+      await tester.pumpAndSettle();
+      expect(find.text(english.noLivesLeft), findsOneWidget);
+      await screenshot(tester, 'tarot-hearts-out-of-lives');
+
+      await tester.pumpWidget(const SizedBox.shrink());
+      final elapsed = DateTime.now().subtract(const Duration(minutes: 1));
+      await preferences.setStringList('lives', [
+        'v2',
+        '${elapsed.millisecondsSinceEpoch}',
+        ...afterLoss.skip(2),
+      ]);
+      await app.main();
+      await tester.pumpAndSettle();
+      await tester.tap(play);
+      await tester.pumpAndSettle();
+      expect(
+        find.bySemanticsLabel(
+          RegExp(RegExp.escape(english.livesRemaining(1, 5))),
+        ),
+        findsOneWidget,
+      );
     },
   );
 

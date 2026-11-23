@@ -134,7 +134,11 @@ const dockReplay = [
 List<int> cells(String route, {BoardSize size = openingSize}) =>
     route.split(' ').map(size.parseCell).toList();
 
-PuzzleCatalog rectangularCatalog(List<String> board, String targetCell) {
+PuzzleCatalog rectangularCatalog(
+  List<String> board,
+  String targetCell, {
+  List<String>? ribbons,
+}) {
   final data = jsonDecode(
     File(PuzzleCatalog.assetPath).readAsStringSync(),
   ) as Map<String, Object?>;
@@ -144,6 +148,7 @@ PuzzleCatalog rectangularCatalog(List<String> board, String targetCell) {
       ...lamp,
       'board': board,
       'moves': 25,
+      if (ribbons != null) 'refill': {'type': 'ribbons', 'columns': ribbons},
       'target': {
         'cell': targetCell,
         'suit': 'C',
@@ -282,6 +287,59 @@ String layout(PuzzleDeal deal) => [
 ].join();
 
 void main() {
+  test('refill keeps a jammed ribbon board playable until moves run out', () {
+    for (final (board, target, ribbons, route) in [
+      (['WWL'], 'C1', ['C', 'S', 'O'], 'A1 B1'),
+      (['W.L', '...', 'W.W'], 'C1', ['CO', 'W', 'S'], 'A1 C1 C3 A3 A1'),
+    ]) {
+      final puzzle = rectangularCatalog(
+        board,
+        target,
+        ribbons: ribbons,
+      ).puzzles.single;
+      final deal = PuzzleDeal(puzzle);
+      final stroke = cells(route, size: puzzle.size);
+      for (var move = 1; move <= puzzle.limit; move++) {
+        final turn = deal.play(stroke);
+        expect(turn, isNotNull, reason: '$route on move $move');
+        expect(deal.finished, move == puzzle.limit);
+        for (final fall in turn!.falls) {
+          final cell = fall.toRow * puzzle.size.columns + fall.column;
+          expect(deal.board[cell], fall.suit);
+        }
+      }
+      expect(deal.lost, isTrue);
+    }
+  });
+
+  test('every campaign deal can finish without an early loss', () {
+    for (final puzzle in catalog.puzzles) {
+      final deal = PuzzleDeal(puzzle);
+      final size = puzzle.size;
+      while (!deal.finished) {
+        final guide = deal.guide;
+        if (guide != null) {
+          expect(deal.play(guide.path), isNotNull, reason: puzzle.id);
+          continue;
+        }
+        final strokes = [
+          for (var cell = 0; cell < size.cellCount; cell++)
+            for (final next in size.neighbours(cell))
+              ?deal.inspect([cell, next]),
+        ];
+        expect(
+          strokes,
+          isNotEmpty,
+          reason: '${puzzle.id} at move ${deal.moves}',
+        );
+        strokes.sort((a, b) => a.totalGain.compareTo(b.totalGain));
+        expect(deal.play(strokes.first.path), isNotNull, reason: puzzle.id);
+      }
+      expect(deal.lost, isTrue, reason: puzzle.id);
+      expect(deal.moves, puzzle.limit, reason: puzzle.id);
+    }
+  });
+
   test('The Fair Split recovers from a spill and fills both on one stroke', () {
     final deal = PuzzleDeal(fairSplit);
     final west = fairSplit.size.parseCell('B3');

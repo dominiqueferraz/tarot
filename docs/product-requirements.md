@@ -49,7 +49,7 @@ The delight loop is the core of the game. Every rule, board and reward exists to
 | Scale | The loop | Where the delight comes from |
 |---|---|---|
 | **The stroke** (seconds) | Spot a group → trace it → release → the board answers | A gesture that turns into a consequence. The action lands on its target, pieces fall, and the scene above responds in the same order the grid shows. The best strokes do **two things at once**, like a rectangle that clears a wide area and feeds two fixtures. |
-| **The board** (minutes) | Read the goal → take an opportunity → read the fall → adapt → clear or retry | With open supply, rhythm: many satisfying strokes building toward a quota. With measured supply, the pleasure of spotting another use for a scarce piece or power while there is still time to act. A failure can be explained from what was visible, and the restart is instant. Stars invite a second look for the shorter, cleverer line. |
+| **The board** (minutes) | Read the goal → take an opportunity → read the fall → adapt → clear or retry | With open supply, rhythm: many satisfying strokes building toward a quota. With measured supply, the pleasure of spotting another use for a scarce piece or power while there is still time to act. A failure can be explained from what was visible, and the restart is instant while a life remains. Stars invite a second look for the shorter, cleverer line. |
 | **The chapter** (a session) | Uncover fragments → meet an impossible position → the card is lent → win it → the encounter changes the place | Ownership. The thing that couldn't be done becomes the player's power, and the world visibly changes because of it. |
 | **The campaign** (months to years) | Learn a grammar → meet its entries in new combinations → a new grammar arrives once the old ones are spent | Recognition. A new board uses familiar things in a way the player didn't expect but can predict: a dignity pair never seen before, a trump on a different system, a grown piece meeting a card. |
 
@@ -60,8 +60,8 @@ The delight loop is the core of the game. Every rule, board and reward exists to
 2. **Show the gesture, then resolve it.** During the drag, show the selected path, its aiming direction for a trace, or the turns of a closed shape. Keep the board in its current state until release. Then show which pieces clear, what the stroke hits and how the columns settle.
 3. **Reward the setup the player made.** A large rectangle opens space. A link lights up its targets and gives the player a limited window to use it. Tie each reaction to the arrangement the player can point to on the board.
 4. **Every board has a payoff stroke.** Each board is authored with at least one stroke that does two jobs or completes a visible chain. The atlas describes an example **payoff**. Accept any play that achieves the visible goal.
-5. **Failure teaches, then gets out of the way.** A loss shows the unmet objective or exhausted move count and offers an instant retry. Retries are free and unlimited.
-6. **Give a stuck player somewhere to go.** Offer a familiar board or an unlocked sibling when the route branches. At a required reading or encounter, offer a free retry on failure.
+5. **Failure teaches, then gets out of the way.** A loss shows the unmet objective. Offer an instant retry while a life remains.
+6. **Give a stuck player somewhere to go.** Offer a familiar board or an unlocked sibling when the route branches. The campaign path remains available to browse while lives refill.
 7. **The first thirty seconds pay off at once.** On 001 the first connection clears a pair, then a square and a wider rectangle show how the same gesture can clear a much larger area.
 8. **Teach the grammar, then let its entries appear.** Dedicated boards teach only the basics:
    - the four suit tools, gravity and gaps;
@@ -81,6 +81,8 @@ The delight loop is the core of the game. Every rule, board and reward exists to
 ### The play surface
 
 Use visible text for labels, controls, titles, values, a short puzzle objective and brief explanations in guided hint bubbles. Teach play through gestures demonstrated on the live board with temporary ink paths, rings, arrows and pointer drawings. Keep the same landmarks recognizable with motion disabled and label the board and controls for assistive technologies. Offer retry only after a failed deal.
+
+Use the same compact paper panel and spacing for dialogs and deal results. Fill the primary action with ink, outline the secondary action, and use rust for a confirmation that spends a life. Keep action targets at least 48 logical pixels high and let them stack when the available width requires it.
 
 **Board sizes.** The reference board is **six columns by six rows**. Each board fixes its own footprint from the start of the board to the end.
 - **Footprint.** Each deal can choose its width and height independently. For portrait play, use 4 × 4 through 8 × 9 as reference sizes for legibility checks. A board may mask out cells to make an irregular outline, such as a quay, tower or riverbank.
@@ -109,10 +111,11 @@ On a phone, the goal, every row, the illustration and the active power must be r
 
 **Moves and restarts.**
 - **There is no Undo.** A released stroke is committed and spends one move from the board's visible limit. Playing a card is free.
-- **Restart is instant.** Restart Deal restores the initial board, hand, charges, ribbon cursors, move counter, actor pose and illustration. In a two-phase encounter, Retry Phase restores that same state from the phase checkpoint.
+- **Retry is instant while a life remains.** It restores the initial board, hand, charges, ribbon cursors, move counter, actor pose and illustration. In a two-phase encounter, Retry Phase restores that same state from the phase checkpoint.
 - **Resolve once on release.** The same stroke from the same state produces the same board and ordered events. Age durations once per paid stroke, including strokes that trigger several settles. A free invocation may resolve a goal immediately. Check the completed stroke for victory before declaring the move budget spent.
-- **Running out ends the attempt.** When the moves run out, or the game can tell that the goal is no longer reachable, the board names the cause and offers a restart.
-- **No real time.** There are no timers, no speed scoring and no leaderboards. The player can think as long as they like. Every countdown in the game counts strokes (beats), never seconds. Stars and the under-par mark are personal records, not rankings.
+- **Running out ends the attempt.** Reaching the move limit with an incomplete goal costs one life. Leaving an unfinished deal prompts the player to keep playing or return to the path for one life. Starting a deal or clearing the goal preserves the balance. A clear on the final move earns the win.
+- **Each life refills in 20 minutes.** Campaign deals share a pool of five lives. Every spent life has its own deadline, including while the app is closed. Save the outstanding deadlines together on the device. Show whole and broken hearts on the campaign path, phase previews, the lives dialog, the exit confirmation and failed-deal results. When a life is missing, show the time until the earliest refill in minutes and seconds under the hearts. At zero lives, disable Play in the preview and show “No lives left. Refills in …” in the failed-deal result.
+- **Take as long as you like on the board.** Board effects count strokes. Stars and the under-par mark are personal records based on moves.
 
 | Suit | What the last stroke does | Why a shorter path might be better |
 |---|---|---|
@@ -152,7 +155,7 @@ What gives a board its character is how its ribbons are written. The two ends of
 - **Guided supply.** Settle the entire board after each paid stroke and evaluate seeded candidate fills against that position. Favour lower rows and columns with legal pairs, suit variety and several ways to aim at targets. Also project the fall after a visible legal pair clears to see which isolated lower cells would gain a partner. Evaluate these possibilities without playing turns on the player's behalf.
 - **Rectangles.** Weight compatible arrivals toward available corners. Reward a ready rectangle and moves that can assemble one from pieces already visible. A player can build the shape by lowering one column or shifting several together. Keep ordinary pairs available alongside those opportunities.
 - **Fair arrivals.** Weights govern the suits available to fill an empty cell. Starting pieces and surviving pieces keep their printed suits. Restart repeats the deal and the same choices repeat the same draws. A drag spends no moves and draws no pieces until it is committed.
-- **No legal stroke.** Guided fill chooses a match involving one or more arrivals if its sampled fills would leave the board jammed and the supply can create a pair. Authored ribbons keep their exact arrivals. If there is no trace or rectangle available after settling and the player has no way to create one, offer Restart.
+- **No legal stroke.** If free play would have no legal trace or rectangle after a refill, match an arrival to an adjacent piece. On a sparse layout with no such pair, restore the matching pieces at the positions that made the last stroke legal. The board then continues with its remaining moves.
 - **Opening boards.** Authors lay out fixtures, gaps, masked cells, relics and teaching examples such as the ferry’s Wand pair. Guided fill deals the rest with particular weight on playable lower rows and a trace for each suit. An individual piece can sit alone until the player sets up its match.
 - **Arrivals are puzzle material.** A Cup that will drop into column D after three clears can be the partner a plan is waiting for. Planning around what is coming next is a decision every board can use.
 - **Dry columns.** A ribbon outlasts the move limit unless the board marks a **dry column** at its top. A dry column stops refilling when its ribbon ends, and its cleared cells then stay empty paper. Dry columns and suits the ribbons never carry are how a board makes a stranding final.
@@ -354,7 +357,7 @@ More colours, hidden refills, bigger boards and very low move limits do not, on 
 
 **Tutorial guidance and feedback.**
 - **Opening guides.** The Fool’s Step demonstrates each of its six gestures with a pointer hand and waits for the player to repeat it. Reduced motion uses the same path with still markers. The archived Far Wreath guide demonstrates the former lozenge rules. Play proceeds independently after the last demonstration. [Opening routes](opening-deals.md)
-- **Feedback** distinguishes four cases: an illegal gesture, a legal setup move, an opportunity that closes after a set number of strokes, and an unrecoverable loss. A loss is declared only when it is certain, for example when a needed suit is down to one piece, an actor has escaped, or the moves left are fewer than the groups that can never merge. The check always counts the rest of the supply ribbons, which the game knows exactly because they are authored. A single Cup is not stranded if a ribbon still holds a Cup for its column or a neighbouring one. So a board declares an early loss only when something no ribbon replaces is stranded, or when an upper bound on what the remaining moves can produce falls short of the goal. Otherwise it plays on until the moves run out. Include reduced motion, non-color suit shapes, clear focus, readable lane arrows and a text description of the expected move.
+- **Feedback** distinguishes an illegal gesture, a legal setup move, an opportunity that closes after a set number of strokes, and a loss at the move limit. A stranded piece or missed opportunity can change which goals are still reachable. Show those changes on the board and continue play until the goal is complete, the moves run out or the player returns to the path. Include reduced motion, non-color suit shapes, clear focus, readable lane arrows and a text description of the expected move.
 
 ### Layers on hard boards
 

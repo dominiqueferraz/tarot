@@ -10,6 +10,8 @@ import '../fool/puzzle_page.dart';
 import '../fool/puzzle_presentation.dart';
 import '../fool/tableau_art.dart';
 import '../l10n/generated/app_localizations.dart';
+import '../lives.dart';
+import '../lives_indicator.dart';
 import '../visuals.dart';
 import 'phase_preview.dart';
 
@@ -17,6 +19,7 @@ class CampaignPage extends StatefulWidget {
   const CampaignPage({
     required this.catalog,
     required this.artwork,
+    required this.lives,
     required this.unlockedIndex,
     required this.onUnlock,
     super.key,
@@ -24,6 +27,7 @@ class CampaignPage extends StatefulWidget {
 
   final PuzzleCatalog catalog;
   final Artwork artwork;
+  final LifePool lives;
   final ValueListenable<int> unlockedIndex;
   final void Function(PuzzleDefinition) onUnlock;
 
@@ -60,8 +64,13 @@ class _CampaignPageState extends State<CampaignPage> {
       builder: (context, unlocked, child) => PhasePreview(
         puzzle: widget.catalog.puzzles[phase],
         artwork: widget.artwork,
+        lives: widget.lives,
         onPlay: phase <= unlocked
-            ? () => Navigator.of(context).pushReplacement(_puzzleRoute(phase))
+            ? () {
+                if (widget.lives.remaining > 0) {
+                  Navigator.of(context).pushReplacement(_puzzleRoute(phase));
+                }
+              }
             : null,
       ),
     ),
@@ -75,6 +84,7 @@ class _CampaignPageState extends State<CampaignPage> {
         puzzle: puzzle,
         phaseNumber: phase + 1,
         artwork: widget.artwork,
+        lives: widget.lives,
         onClear: next == null ? null : () => widget.onUnlock(next),
         onContinue: next == null
             ? null
@@ -101,10 +111,16 @@ class _CampaignPageState extends State<CampaignPage> {
                 ),
                 child: Row(
                   children: [
-                    IconButton(
-                      tooltip: strings.home,
-                      onPressed: () => Navigator.of(context).pop(),
-                      icon: const Icon(Icons.arrow_back_rounded),
+                    SizedBox(
+                      width: 68,
+                      child: Align(
+                        alignment: AlignmentDirectional.centerStart,
+                        child: IconButton(
+                          tooltip: strings.home,
+                          onPressed: () => Navigator.of(context).pop(),
+                          icon: const Icon(Icons.arrow_back_rounded),
+                        ),
+                      ),
                     ),
                     Expanded(
                       child: Semantics(
@@ -116,7 +132,7 @@ class _CampaignPageState extends State<CampaignPage> {
                         ),
                       ),
                     ),
-                    const SizedBox(width: 48),
+                    LivesIndicator(lives: widget.lives),
                   ],
                 ),
               ),

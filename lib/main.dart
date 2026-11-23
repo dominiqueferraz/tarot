@@ -3,19 +3,22 @@ import 'package:material_ui/material_ui.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'artwork.dart';
-import 'fool/puzzle_definition.dart';
 import 'campaign/campaign_page.dart';
+import 'fool/puzzle_definition.dart';
 import 'l10n/generated/app_localizations.dart';
+import 'lives.dart';
 import 'visuals.dart';
 
 const _languageKey = 'language';
 const _progressKey = 'unlockedPuzzle';
+const _livesKey = 'lives';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final preferences = SharedPreferencesAsync();
   String? savedLanguage;
   String? unlockedPuzzle;
+  List<String>? savedLives;
   final catalog = PuzzleCatalog.parse(
     await rootBundle.loadString(PuzzleCatalog.assetPath),
   );
@@ -29,6 +32,11 @@ Future<void> main() async {
   } on PlatformException catch (error) {
     debugPrint('Could not read puzzle progress: ${error.code}');
   }
+  try {
+    savedLives = await preferences.getStringList(_livesKey);
+  } on PlatformException catch (error) {
+    debugPrint('Could not read lives: ${error.code}');
+  }
   final artwork = await Artwork.load();
   runApp(
     TarotSquaredApp(
@@ -38,6 +46,8 @@ Future<void> main() async {
       artwork: artwork,
       unlockedPuzzle: unlockedPuzzle,
       saveUnlock: (id) => preferences.setString(_progressKey, id),
+      savedLives: savedLives,
+      saveLives: (state) => preferences.setStringList(_livesKey, state),
     ),
   );
 }
@@ -50,6 +60,9 @@ class TarotSquaredApp extends StatefulWidget {
     required this.artwork,
     this.unlockedPuzzle,
     this.saveUnlock,
+    this.savedLives,
+    this.saveLives,
+    this.lifeClock,
     super.key,
   });
 
@@ -59,6 +72,9 @@ class TarotSquaredApp extends StatefulWidget {
   final Artwork artwork;
   final String? unlockedPuzzle;
   final Future<void> Function(String)? saveUnlock;
+  final List<String>? savedLives;
+  final Future<void> Function(List<String>)? saveLives;
+  final DateTime Function()? lifeClock;
 
   @override
   State<TarotSquaredApp> createState() => _TarotSquaredAppState();
@@ -66,6 +82,8 @@ class TarotSquaredApp extends StatefulWidget {
 
 class _TarotSquaredAppState extends State<TarotSquaredApp> {
   Locale? _locale;
+  late final LifePool _lives;
+  late final AppLifecycleListener _lifecycle;
   late final _unlockedIndex = ValueNotifier(
     widget.catalog.unlockedIndex(widget.unlockedPuzzle),
   );
@@ -73,6 +91,12 @@ class _TarotSquaredAppState extends State<TarotSquaredApp> {
   @override
   void initState() {
     super.initState();
+    _lives = LifePool(
+      saved: widget.savedLives,
+      save: widget.saveLives,
+      clock: widget.lifeClock,
+    );
+    _lifecycle = AppLifecycleListener(onResume: _lives.refresh);
     final initial = widget.initialLanguage;
     if (AppLocalizations.supportedLocales.any(
       (locale) => locale.languageCode == initial,
@@ -83,6 +107,8 @@ class _TarotSquaredAppState extends State<TarotSquaredApp> {
 
   @override
   void dispose() {
+    _lifecycle.dispose();
+    _lives.dispose();
     _unlockedIndex.dispose();
     super.dispose();
   }
@@ -137,6 +163,7 @@ class _TarotSquaredAppState extends State<TarotSquaredApp> {
             builder: (context) => CampaignPage(
               catalog: widget.catalog,
               artwork: widget.artwork,
+              lives: _lives,
               unlockedIndex: _unlockedIndex,
               onUnlock: _unlock,
             ),

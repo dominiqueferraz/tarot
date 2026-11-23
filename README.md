@@ -8,6 +8,8 @@ Play opens an ascending campaign path. Tap a phase to see its illustration, scor
 
 Clearing The Fool’s Step unlocks **Lamplighter**, where Cups fuel the quay lamp to 44 light. Clearing Lamplighter unlocks **High Water**, a 6 × 7 board where Cups fill the mill inlet with 32 units of water. High Water unlocks **The Mooring**, a wide 7 × 6 board where a Sword square links the two cords so an aimed cut reaches both. The Mooring unlocks **The Ferryman’s Fare**, an 8 × 8 board where both scale pans need 24 Coins. After paying the fare, the Fool reaches **Market Day** and helps open a bread stall using Wands, Cups and Coins. Market Day unlocks **The Fair Split**, where Cups must bring both sluice floats to their marks on the same move. The seven deals give 25, 22, 18, 26, 25, 18 and 24 moves, respectively.
 
+Five hearts show your lives on the campaign path and phase previews. Broken hearts mark spent lives. Running out of moves costs one life. When you leave an unfinished deal, you can keep playing or confirm that you want to spend a life and return to the path. Each spent life returns 20 minutes later, even while the app is closed. The timer below the hearts shows when the next life returns. At zero lives, you can browse the campaign while you wait to play or retry.
+
 The home card uses the Moon (XVIII) from the Rider–Waite–Smith deck. The paper texture, suit shapes and ridge use the opening playtest artwork from the Arcana prototype archive.
 
 ## Author a puzzle
@@ -36,7 +38,7 @@ bin/flutter devices
 - On iOS, run `bin/flutter run --flavor 'Tarot Squared' -d <device-id>` to select the app's Xcode scheme.
 - On Android, run `bin/flutter run -d <device-id>`. To build a debug APK, run `bin/flutter build apk --debug`. Android release signing is pending.
 
-On iOS, run `bin/test integration_test/first_deal_test.dart --flavor 'Tarot Squared' -d <device-id>` to replay all seven deals, verify that the language and Market Day unlock persist, and clear The Fair Split after a spill. On Android, run `bin/test integration_test/first_deal_test.dart -d <device-id>`.
+On iOS, run `bin/test integration_test/first_deal_test.dart --flavor 'Tarot Squared' -d <device-id>` to replay all seven deals and verify language settings, progress, life storage and offline refill. On Android, run `bin/test integration_test/first_deal_test.dart -d <device-id>`.
 
 ## Archive for iOS
 
