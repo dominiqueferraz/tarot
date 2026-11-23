@@ -18,7 +18,6 @@ import '../test/fool_deal_test.dart'
         highWaterSize,
         lampReplay,
         lampSize,
-        marketDayCatalog,
         marketDayReplay,
         marketDaySize,
         marketSize,
@@ -39,7 +38,7 @@ void main() {
   }
 
   testWidgets(
-    'plays the five opening puzzles and persists The Ferryman’s Fare unlock',
+    'plays the first five puzzles and persists the Market Day unlock',
     (tester) async {
       final preferences = SharedPreferencesAsync();
       final original = await preferences.getString('language');
@@ -329,6 +328,10 @@ void main() {
       }
       expect(find.text(english.clear), findsOneWidget);
       await screenshot(tester, 'tarot-squared-ferrymans-fare-complete');
+      expect(await preferences.getString('unlockedPuzzle'), '006');
+      await tester.tap(find.text(english.nextPuzzle));
+      await tester.pumpAndSettle();
+      expect(find.text(english.marketDayStory), findsOneWidget);
       await tester.pumpWidget(const SizedBox.shrink());
       await app.main();
       await tester.pumpAndSettle();
@@ -336,20 +339,20 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.byKey(const Key('phase-002')), findsOneWidget);
       expect(find.byKey(const Key('phase-001')), findsOneWidget);
-      await tester.tap(find.byKey(const Key('phase-005')));
+      final marketPhase = find.byKey(const Key('phase-006'));
+      await tester.ensureVisible(marketPhase);
+      await tester.tap(marketPhase);
       await tester.pumpAndSettle();
-      expect(find.text(english.ferrymansFareTitle), findsOneWidget);
+      expect(find.text(english.marketDayTitle), findsOneWidget);
       expect(find.text(english.play), findsOneWidget);
     },
   );
 
-  testWidgets('plays the mixed-target Market Day preparation board', (
-    tester,
-  ) async {
+  testWidgets('opens the bread stall and clears Market Day', (tester) async {
     final source = await rootBundle.loadString(PuzzleCatalog.assetPath);
     await tester.pumpWidget(
       app.TarotSquaredApp(
-        catalog: marketDayCatalog(source, includeOpeningDeals: true),
+        catalog: PuzzleCatalog.parse(source),
         artwork: await Artwork.load(),
         initialLanguage: 'pt',
         unlockedPuzzle: '006',
@@ -368,6 +371,8 @@ void main() {
     await screenshot(tester, 'tarot-squared-market-day-path');
     await tester.tapAt(tester.getCenter(coinBadge));
     await tester.pumpAndSettle();
+    expect(find.text(portuguese.marketDayStory), findsOneWidget);
+    await screenshot(tester, 'tarot-squared-market-day-preview');
     await tester.ensureVisible(play);
     await tester.tap(play);
     await tester.pumpAndSettle();
@@ -388,7 +393,8 @@ void main() {
       expect(find.bySemanticsLabel(name), findsOneWidget);
     }
     await screenshot(tester, 'tarot-squared-market-day-board');
-    for (final (trace, light, water, coins) in marketDayReplay) {
+    for (final (step, (trace, light, water, coins))
+        in marketDayReplay.indexed) {
       await dragStroke(tester, trace, size: marketDaySize);
       for (final (cell, progress) in [
         ('C3', light),
@@ -402,7 +408,9 @@ void main() {
           reason: trace,
         );
       }
+      if (step == 1) await screenshot(tester, 'tarot-squared-market-day-work');
     }
-    expect(find.text(portuguese.clear), findsOneWidget);
+    expect(find.text(portuguese.marketDayClear), findsOneWidget);
+    await screenshot(tester, 'tarot-squared-market-day-complete');
   });
 }

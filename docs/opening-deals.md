@@ -228,13 +228,21 @@ The last step of a Coin trace sets its direction. E4 → D4 deposits two Coins i
 
 [Puzzle catalog](../assets/puzzles/fool.json) · [Reference replays](../test/fool_deal_test.dart)
 
-## Market Day preparation board
+## Level 006 · Market Day
 
-The 7 × 7 test board uses the market scenery with three independent fixtures. The lamp at C3 accepts Wands, the inlet at F3 accepts Cups, and the pan at C6 accepts Coins. Each needs 6 within 18 moves. The campaign still ends at The Ferryman’s Fare while Market Day is being authored.
+The ferry has crossed. On the far bank, the Fool stops at a baker’s shuttered stall before the market opens. Light the stall lantern at C3 with Wands so the baker can see, fill the water trough at F3 with Cups for the dough, and pay for a loaf by aiming Coins at C6. Each target needs 6 on the 7 × 7 board. The turn limit is 18, with a par of 12.
 
-Trace E3 → D3 to give the lamp 2 light. The same move drops two Cups into D3 and E3. Trace D3 → E3 to pour 2 into the inlet. Closing C3 → F3 → F6 → C6 → C3 on the opening grid makes a Wand square with all three fixtures as wildcard corners. Only the lamp scores, because it is the Wand target. The lamp, inlet and pan each have their own progress display and suit marker.
+The lamp brightens, the water rises, and Coins stack in the pan as the player works. On a clear, the shutter opens and a loaf passes across the counter to the Fool. The result reads “Bread for the road.”
 
-[Test board and clear replay](../test/fool_deal_test.dart)
+| Opening | What follows |
+|---|---|
+| E3 → D3 | The Wands give the lantern 2 light and their fall brings two Cups into position. Trace D3 → E3 to pour 2 into the trough. |
+| E6 → D6 | The Coins make the first payment. A later Cup rectangle feeds the trough. |
+| D2 → E2 | The Cups clear without watering the trough. A Coin rectangle can still deliver the full payment, leaving time to finish the lantern and trough. |
+
+All three approaches have five-move reference clears with guided refill seed 613. On the opening grid, C3 → F3 → F6 → C6 → C3 makes a Wand square with all three fixtures as wildcard corners. Only the Wand lantern gains progress.
+
+[Puzzle catalog](../assets/puzzles/fool.json) · [Reference replays](../test/fool_deal_test.dart)
 
 ## Lozenge playtest routes
 

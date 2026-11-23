@@ -20,8 +20,9 @@ import 'fool_deal_test.dart'
         guidedRoutes,
         lampReplay,
         lampSize,
+        marketDayReplay,
         marketDaySize,
-        marketDayCatalog,
+        marketDayVariant,
         marketSize,
         openingSize,
         tallCatalog,
@@ -424,142 +425,160 @@ void main() {
     );
   });
 
-  testWidgets('a mixed market shows every scoring suit on the path and board', (
-    tester,
-  ) async {
-    tester.view.physicalSize = const Size(360, 640);
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.resetPhysicalSize);
-    addTearDown(tester.view.resetDevicePixelRatio);
-    await tester.pumpWidget(
-      TarotSquaredApp(
-        catalog: marketDayCatalog(catalogSource, includeOpeningDeals: true),
-        artwork: artwork,
-        initialLanguage: 'es',
-        unlockedPuzzle: '006',
-      ),
-    );
-    final play = find.text(spanish.play);
-    await tester.tap(play);
-    await tester.pumpAndSettle();
-    final pathBadges = [
-      for (final suit in [Suit.wand, Suit.cup, Suit.coin])
-        find.byKey(Key('phase-suit-006-${suit.name}')),
-    ];
-    final marketPhase = find.byKey(const Key('phase-006'));
-    await tester.ensureVisible(marketPhase);
-    final phase = tester.getRect(marketPhase);
-    final preceding = tester.getRect(find.byKey(const Key('phase-005')));
-    expect(phase.overlaps(preceding), isFalse);
-    final singleBadge = tester.getRect(
-      find.byKey(const Key('phase-suit-005-coin')),
-    );
-    final singleMedallion = tester.getCenter(
-      find.byKey(const Key('phase-medallion-005')),
-    );
-    final badgeRadius = (singleBadge.center - singleMedallion).distance;
-    final medallion = tester.getRect(
-      find.byKey(const Key('phase-medallion-006')),
-    );
-    for (final badge in pathBadges) {
-      final badgeRect = tester.getRect(badge);
-      expect(badgeRect.size, singleBadge.size);
-      expect(phase.contains(badgeRect.center), isTrue);
-      expect(
-        (badgeRect.center - medallion.center).distance,
-        lessThanOrEqualTo((medallion.width + badgeRect.width) / 2),
+  testWidgets(
+    'Market Day shows its story and scoring suits on the path and board',
+    (tester) async {
+      tester.view.physicalSize = const Size(360, 640);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      await tester.pumpWidget(
+        TarotSquaredApp(
+          catalog: catalog,
+          artwork: artwork,
+          initialLanguage: 'es',
+          unlockedPuzzle: '006',
+        ),
       );
-    }
-    expectEvenOrbit(
-      pathBadges
-          .map((badge) => tester.getCenter(badge) - medallion.center)
-          .toList(),
-      badgeRadius,
-    );
-    await tester.tapAt(tester.getCenter(pathBadges.last));
-    await tester.pumpAndSettle();
-    expect(
-      find.text(spanish.suitAndQuota(spanish.wands, spanish.lightGoal(6))),
-      findsOneWidget,
-    );
-    expect(
-      find.text(spanish.suitAndQuota(spanish.cups, spanish.waterGoal(6))),
-      findsOneWidget,
-    );
-    expect(
-      find.text(spanish.suitAndQuota(spanish.coins, spanish.coinAmount(6))),
-      findsOneWidget,
-    );
-    await tester.ensureVisible(play);
-    await tester.tap(play);
-    await tester.pumpAndSettle();
-    final panel = find.byKey(const Key('fool-suit-panel'));
-    final symbols = <Rect>[];
-    for (final (suit, name) in [
-      (Suit.wand, spanish.wands),
-      (Suit.cup, spanish.cups),
-      (Suit.coin, spanish.coins),
-    ]) {
-      final badge = find.byKey(Key('puzzle-suit-${suit.name}'));
-      expect(find.descendant(of: panel, matching: badge), findsOneWidget);
-      expect(find.bySemanticsLabel(name), findsOneWidget);
-      symbols.add(tester.getRect(badge));
-    }
-    final box = tester.getRect(panel);
-    final ring = tester.getRect(find.byKey(const Key('puzzle-suit-ring')));
-    expect(ring.center, box.center);
-    expect(ring.width, closeTo(box.width * .56, .01));
-    expect(symbols.first.center.dx, closeTo(box.center.dx, .01));
-    expect(symbols.first.center.dy, closeTo(ring.top, .01));
-    expectEvenOrbit(
-      symbols.map((symbol) => symbol.center - box.center).toList(),
-      box.width * .28,
-    );
-    final grid = tester.getRect(find.byKey(const Key('fool-grid')));
-    expect(tester.getRect(panel).bottom, lessThan(grid.top));
-    expect(grid.bottom, lessThan(640));
-    await dragStroke(tester, 'E3 D3', size: marketDaySize);
-    await dragStroke(tester, 'D3 E3', size: marketDaySize);
-    expect(
-      find.bySemanticsLabel(
-        targetSemantics(
-          spanish,
-          'C3',
-          spanish.marketLamp,
-          2,
-          6,
-          suit: spanish.wands,
+      final play = find.text(spanish.play);
+      await tester.tap(play);
+      await tester.pumpAndSettle();
+      final pathBadges = [
+        for (final suit in [Suit.wand, Suit.cup, Suit.coin])
+          find.byKey(Key('phase-suit-006-${suit.name}')),
+      ];
+      final marketPhase = find.byKey(const Key('phase-006'));
+      await tester.ensureVisible(marketPhase);
+      final phase = tester.getRect(marketPhase);
+      final preceding = tester.getRect(find.byKey(const Key('phase-005')));
+      expect(phase.overlaps(preceding), isFalse);
+      final singleBadge = tester.getRect(
+        find.byKey(const Key('phase-suit-005-coin')),
+      );
+      final singleMedallion = tester.getCenter(
+        find.byKey(const Key('phase-medallion-005')),
+      );
+      final badgeRadius = (singleBadge.center - singleMedallion).distance;
+      final medallion = tester.getRect(
+        find.byKey(const Key('phase-medallion-006')),
+      );
+      for (final badge in pathBadges) {
+        final badgeRect = tester.getRect(badge);
+        expect(badgeRect.size, singleBadge.size);
+        expect(phase.contains(badgeRect.center), isTrue);
+        expect(
+          (badgeRect.center - medallion.center).distance,
+          lessThanOrEqualTo((medallion.width + badgeRect.width) / 2),
+        );
+      }
+      expectEvenOrbit(
+        pathBadges
+            .map((badge) => tester.getCenter(badge) - medallion.center)
+            .toList(),
+        badgeRadius,
+      );
+      await tester.tapAt(tester.getCenter(pathBadges.last));
+      await tester.pumpAndSettle();
+      expect(find.text(spanish.marketDayStory), findsOneWidget);
+      expect(find.text(spanish.marketDayObjective), findsOneWidget);
+      expect(
+        find.text(spanish.suitAndQuota(spanish.wands, spanish.lightGoal(6))),
+        findsOneWidget,
+      );
+      expect(
+        find.text(spanish.suitAndQuota(spanish.cups, spanish.waterGoal(6))),
+        findsOneWidget,
+      );
+      expect(
+        find.text(spanish.suitAndQuota(spanish.coins, spanish.coinAmount(6))),
+        findsOneWidget,
+      );
+      await tester.ensureVisible(play);
+      await tester.tap(play);
+      await tester.pumpAndSettle();
+      expect(find.text(spanish.marketDayObjective), findsOneWidget);
+      final panel = find.byKey(const Key('fool-suit-panel'));
+      final symbols = <Rect>[];
+      for (final (suit, name) in [
+        (Suit.wand, spanish.wands),
+        (Suit.cup, spanish.cups),
+        (Suit.coin, spanish.coins),
+      ]) {
+        final badge = find.byKey(Key('puzzle-suit-${suit.name}'));
+        expect(find.descendant(of: panel, matching: badge), findsOneWidget);
+        expect(find.bySemanticsLabel(name), findsOneWidget);
+        symbols.add(tester.getRect(badge));
+      }
+      final box = tester.getRect(panel);
+      final ring = tester.getRect(find.byKey(const Key('puzzle-suit-ring')));
+      expect(ring.center, box.center);
+      expect(ring.width, closeTo(box.width * .56, .01));
+      expect(symbols.first.center.dx, closeTo(box.center.dx, .01));
+      expect(symbols.first.center.dy, closeTo(ring.top, .01));
+      expectEvenOrbit(
+        symbols.map((symbol) => symbol.center - box.center).toList(),
+        box.width * .28,
+      );
+      final grid = tester.getRect(find.byKey(const Key('fool-grid')));
+      expect(tester.getRect(panel).bottom, lessThan(grid.top));
+      expect(grid.bottom, lessThan(640));
+      await dragStroke(tester, 'E3 D3', size: marketDaySize);
+      await dragStroke(tester, 'D3 E3', size: marketDaySize);
+      expect(
+        find.bySemanticsLabel(
+          targetSemantics(
+            spanish,
+            'C3',
+            spanish.marketLamp,
+            2,
+            6,
+            suit: spanish.wands,
+          ),
         ),
-      ),
-      findsOneWidget,
-    );
-    expect(
-      find.bySemanticsLabel(
-        targetSemantics(
-          spanish,
-          'F3',
-          spanish.marketInlet,
-          2,
-          6,
-          suit: spanish.cups,
+        findsOneWidget,
+      );
+      expect(
+        find.bySemanticsLabel(
+          targetSemantics(
+            spanish,
+            'F3',
+            spanish.marketInlet,
+            2,
+            6,
+            suit: spanish.cups,
+          ),
         ),
-      ),
-      findsOneWidget,
-    );
-    expect(
-      find.bySemanticsLabel(
-        targetSemantics(
-          spanish,
-          'C6',
-          spanish.farePan,
-          0,
-          6,
-          suit: spanish.coins,
+        findsOneWidget,
+      );
+      expect(
+        find.bySemanticsLabel(
+          targetSemantics(
+            spanish,
+            'C6',
+            spanish.paymentPan,
+            0,
+            6,
+            suit: spanish.coins,
+          ),
         ),
-      ),
-      findsOneWidget,
-    );
-  });
+        findsOneWidget,
+      );
+      final stall = find.byWidgetPredicate(
+        (widget) =>
+            widget is CustomPaint && widget.painter is BreadStallPainter,
+      );
+      BreadStallPainter painter() =>
+          tester.widget<CustomPaint>(stall).painter! as BreadStallPainter;
+      expect(painter().light, closeTo(2 / 6, .01));
+      expect(painter().water, closeTo(2 / 6, .01));
+      expect(painter().motion, 0);
+      for (final (trace, _, _, _) in marketDayReplay.skip(2)) {
+        await dragStroke(tester, trace, size: marketDaySize);
+      }
+      expect(painter().motion, 1);
+      expect(find.text(spanish.marketDayClear), findsOneWidget);
+    },
+  );
 
   testWidgets('two and four scoring suits form evenly spaced circles', (
     tester,
@@ -575,7 +594,7 @@ void main() {
       await tester.pumpWidget(
         TarotSquaredApp(
           key: ValueKey(count),
-          catalog: marketDayCatalog(catalogSource, suitCount: count),
+          catalog: marketDayVariant(catalogSource, suitCount: count),
           artwork: artwork,
           initialLanguage: 'en',
         ),

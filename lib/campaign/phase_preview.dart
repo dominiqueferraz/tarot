@@ -23,6 +23,7 @@ class PhasePreview extends StatelessWidget {
   Widget build(BuildContext context) {
     final strings = AppLocalizations.of(context)!;
     final words = puzzleWords(strings, puzzle.textKey);
+    final story = puzzleStory(strings, puzzle.textKey);
     final quotas = <(Suit, TargetKind, int), List<PuzzleTarget>>{};
     for (final target in puzzle.targets.values) {
       (quotas[(target.suit, target.kind, target.quota)] ??= []).add(target);
@@ -87,6 +88,14 @@ class PhasePreview extends StatelessWidget {
                             ),
                             const SizedBox(height: 24),
                             _PreviewArt(artwork: artwork, puzzle: puzzle),
+                            if (story != null) ...[
+                              const SizedBox(height: 14),
+                              Text(
+                                story.opening,
+                                textAlign: TextAlign.center,
+                                style: displayType(19),
+                              ),
+                            ],
                             const SizedBox(height: 22),
                             Row(
                               children: [

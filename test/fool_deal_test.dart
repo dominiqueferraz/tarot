@@ -13,6 +13,7 @@ final lamplighter = catalog.puzzles[1];
 final highWater = catalog.puzzles[2];
 final mooring = catalog.puzzles[3];
 final ferrymansFare = catalog.puzzles[4];
+final marketDay = catalog.puzzles[5];
 const openingSize = BoardSize(6, 6);
 const lampSize = BoardSize(5, 6);
 const highWaterSize = BoardSize(6, 7);
@@ -182,51 +183,29 @@ const marketDayReplay = [
   ('B3 G3 G6 B6 B3', 6, 6, 6),
 ];
 
-PuzzleCatalog marketDayCatalog(
+PuzzleCatalog marketDayVariant(
   String source, {
   bool links = false,
   int suitCount = 3,
-  bool includeOpeningDeals = false,
 }) {
   final data = jsonDecode(source) as Map<String, Object?>;
+  final entries = (data['puzzles'] as List<Object?>)
+      .cast<Map<String, Object?>>();
+  final market = entries.singleWhere((puzzle) => puzzle['id'] == '006');
+  final board = (market['board'] as List<Object?>).cast<String>();
+  final targets = (market['targets'] as List<Object?>)
+      .cast<Map<String, Object?>>();
   data['puzzles'] = [
-    if (includeOpeningDeals) ...(data['puzzles'] as List<Object?>),
     {
-      'id': '006',
-      'scene': 'market',
-      'textKey': 'marketDay',
+      ...market,
       'board': [
-        'SWOCSOC',
-        'OCSCCOW',
-        'SOLWWLC',
-        'COSOWOC',
-        suitCount == 4 ? 'WCOCSOL' : 'WCOCSOW',
-        suitCount >= 3 ? 'OWLOOWC' : 'OWCOOWC',
-        'CWSOOCS',
+        ...board.take(4),
+        suitCount == 4 ? 'WCOCSOL' : board[4],
+        suitCount == 2 ? 'OWCOOWC' : board[5],
+        board[6],
       ],
       'targets': [
-        {
-          'cell': 'C3',
-          'suit': 'W',
-          'quota': 6,
-          'label': 'marketLamp',
-          'kind': 'lantern',
-        },
-        {
-          'cell': 'F3',
-          'suit': 'C',
-          'quota': 6,
-          'label': 'marketInlet',
-          'kind': 'inlet',
-        },
-        if (suitCount >= 3)
-          {
-            'cell': 'C6',
-            'suit': 'O',
-            'quota': 6,
-            'label': 'farePan',
-            'kind': 'pan',
-          },
+        ...targets.take(suitCount),
         if (suitCount == 4)
           {
             'cell': 'G5',
@@ -237,13 +216,6 @@ PuzzleCatalog marketDayCatalog(
           },
       ],
       'linksTargets': links,
-      'moves': 18,
-      'par': 12,
-      'refill': {
-        'type': 'guided',
-        'seed': 613,
-        'weights': {'W': 1, 'C': 1, 'S': 1, 'O': 1},
-      },
     },
   ];
   return PuzzleCatalog.parse(jsonEncode(data));
@@ -263,7 +235,7 @@ String layout(PuzzleDeal deal) => [
 void main() {
   test('mixed targets score independently even on the same square', () {
     final source = File(PuzzleCatalog.assetPath).readAsStringSync();
-    final puzzle = marketDayCatalog(source, links: true).puzzles.single;
+    final puzzle = marketDayVariant(source, links: true).puzzles.single;
     final lamp = marketDaySize.parseCell('C3');
     final inlet = marketDaySize.parseCell('F3');
     final pan = marketDaySize.parseCell('C6');
@@ -289,6 +261,40 @@ void main() {
     }
     expect(deal.won, isTrue);
   });
+
+  test(
+    'Market Day opens the stall after either setup and a missed opening',
+    () {
+      for (final replay in [
+        marketDayReplay.map((move) => move.$1),
+        [
+          'E6 D6',
+          'D1 G1 G6 D6 D1',
+          'C3 F3 F6 C6 C3',
+          'C3 F3 F6 C6 C3',
+          'C3 G3 G6 C6 C3',
+        ],
+        [
+          'D2 E2',
+          'C1 E1 E6 C6 C1',
+          'C3 G3 G6 C6 C3',
+          'C3 G3 G6 C6 C3',
+          'C3 F3 F6 C6 C3',
+        ],
+      ]) {
+        final deal = PuzzleDeal(marketDay);
+        for (final route in replay) {
+          expect(
+            deal.play(cells(route, size: marketDay.size)),
+            isNotNull,
+            reason: route,
+          );
+        }
+        expect(deal.won, isTrue);
+        expect(deal.moves, 5);
+      }
+    },
+  );
 
   test('rectangular deals use both edges for aim, rectangles and refill', () {
     final puzzle = tallCatalog.puzzles.single;
@@ -346,15 +352,24 @@ void main() {
     expect(catalog.next(lamplighter), highWater);
     expect(catalog.next(highWater), mooring);
     expect(catalog.next(mooring), ferrymansFare);
-    expect(catalog.next(ferrymansFare), isNull);
+    expect(catalog.next(ferrymansFare), marketDay);
+    expect(catalog.next(marketDay), isNull);
     expect(catalog.unlockedIndex('002'), 1);
     expect(catalog.unlockedIndex('003'), 2);
     expect(catalog.unlockedIndex('004'), 3);
     expect(catalog.unlockedIndex('005'), 4);
-    expect(catalog.puzzles.map((puzzle) => puzzle.limit), [25, 22, 18, 26, 25]);
+    expect(catalog.unlockedIndex('006'), 5);
+    expect(catalog.puzzles.map((puzzle) => puzzle.limit), [
+      25,
+      22,
+      18,
+      26,
+      25,
+      18,
+    ]);
     expect(
       catalog.puzzles.map((puzzle) => (puzzle.size.columns, puzzle.size.rows)),
-      [(6, 6), (5, 6), (6, 7), (7, 6), (8, 8)],
+      [(6, 6), (5, 6), (6, 7), (7, 6), (8, 8), (7, 7)],
     );
     expect(catalog.unlockedIndex('missing'), 0);
     for (final puzzle in catalog.puzzles) {

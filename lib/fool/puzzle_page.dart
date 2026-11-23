@@ -741,6 +741,7 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
                       PuzzleScene.mill => const Key('mill-scene'),
                       PuzzleScene.dock => const Key('dock-scene'),
                       PuzzleScene.market => const Key('market-scene'),
+                      PuzzleScene.breadStall => const Key('bread-stall-scene'),
                     },
                     height: panelHeight,
                     child: AnimatedBuilder(
@@ -1092,7 +1093,8 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
               const SizedBox(height: 6),
               Text(
                 _deal.won
-                    ? strings.clear
+                    ? puzzleStory(strings, _puzzle.textKey)?.ending ??
+                          strings.clear
                     : _puzzle.targets.entries
                           .map((target) {
                             final progress = strings.targetProgress(

@@ -37,6 +37,13 @@ import 'tableau_art.dart';
   ),
 };
 
+({String opening, String ending})? puzzleStory(
+  AppLocalizations strings,
+  PuzzleTextKey key,
+) => key == PuzzleTextKey.marketDay
+    ? (opening: strings.marketDayStory, ending: strings.marketDayClear)
+    : null;
+
 String targetName(AppLocalizations strings, TargetLabel label) =>
     switch (label) {
       TargetLabel.trailMarker => strings.trailMarker,
@@ -48,7 +55,7 @@ String targetName(AppLocalizations strings, TargetLabel label) =>
       TargetLabel.eastPan => strings.eastPan,
       TargetLabel.marketLamp => strings.marketLamp,
       TargetLabel.marketInlet => strings.marketInlet,
-      TargetLabel.farePan => strings.farePan,
+      TargetLabel.paymentPan => strings.paymentPan,
     };
 
 String targetAmount(AppLocalizations strings, TargetKind kind, int amount) =>
@@ -153,6 +160,13 @@ class PuzzleIllustration extends StatelessWidget {
         PuzzleScene.market => MarketPainter(
           artwork: artwork,
           targets: targets,
+          motion: motion,
+        ),
+        PuzzleScene.breadStall => BreadStallPainter(
+          artwork: artwork,
+          light: progressOf(TargetKind.lantern),
+          water: progressOf(TargetKind.inlet),
+          payment: progressOf(TargetKind.pan),
           motion: motion,
         ),
       },

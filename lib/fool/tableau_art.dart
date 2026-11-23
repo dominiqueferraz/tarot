@@ -400,6 +400,137 @@ class MarketPainter extends CustomPainter {
       oldDelegate.motion != motion;
 }
 
+class BreadStallPainter extends CustomPainter {
+  const BreadStallPainter({
+    required this.artwork,
+    required this.light,
+    required this.water,
+    required this.payment,
+    required this.motion,
+  });
+
+  final Artwork artwork;
+  final double light;
+  final double water;
+  final double payment;
+  final double motion;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    canvas.save();
+    canvas.scale(
+      size.width / SceneLayout.width,
+      size.height / SceneLayout.height,
+    );
+    canvas.clipRect(
+      const Rect.fromLTWH(0, 0, SceneLayout.width, SceneLayout.height),
+    );
+    artwork.paint(canvas, Art.quaySky);
+    artwork.paint(
+      canvas,
+      Art.mooredBoat,
+      origin: const Offset(29, 84),
+      scale: .80,
+    );
+    _polygon(canvas, [97, 85, 523, 85, 552, 94, 112, 99], parchment);
+    _polygon(canvas, [112, 99, 552, 94, 545, 101, 119, 106], ink);
+
+    final walk = Curves.easeInOut.transform(motion);
+    artwork.paint(
+      canvas,
+      Art.fool,
+      origin: Offset(182 + 57 * walk, 90),
+      scale: .89,
+    );
+
+    _rect(canvas, 272, 31, 177, 57, const Color(0xFF6D503C));
+    const window = Rect.fromLTWH(289, 33, 142, 36);
+    final opening = Curves.easeOut.transform(motion);
+    canvas.save();
+    canvas.clipRect(window);
+    canvas.drawRect(window, Paint()..color = const Color(0xFFDDA761));
+    final apron = Paint()..color = const Color(0xFF3B5B51);
+    canvas.drawOval(const Rect.fromLTWH(368, 52, 37, 30), apron);
+    canvas.drawCircle(
+      const Offset(386, 48),
+      9,
+      Paint()..color = const Color(0xFF9E694A),
+    );
+    canvas.drawOval(
+      const Rect.fromLTWH(375, 37, 22, 9),
+      Paint()..color = paper,
+    );
+    _loaf(canvas, const Offset(334, 63));
+    _loaf(canvas, const Offset(358, 63));
+    final shutterHeight = window.height * (1 - opening);
+    _rect(
+      canvas,
+      window.left,
+      window.top,
+      window.width,
+      shutterHeight,
+      const Color(0xFFB08C66),
+    );
+    for (var y = window.top + 7; y < window.top + shutterHeight; y += 7) {
+      canvas.drawLine(
+        Offset(window.left, y),
+        Offset(window.right, y),
+        _pen(ink, 1),
+      );
+    }
+    canvas.restore();
+    canvas.drawRect(window, _pen(ink, 2));
+    _rect(canvas, 276, 69, 169, 7, const Color(0xFFCEAA76));
+    _polygon(canvas, [266, 18, 452, 18, 469, 35, 253, 35], rust);
+    for (var x = 277.0; x < 450; x += 32) {
+      canvas.drawLine(Offset(x, 21), Offset(x + 2, 32), _pen(paleGold, 2));
+    }
+    canvas.drawLine(const Offset(254, 35), const Offset(468, 35), _pen(ink, 2));
+
+    const lantern = Offset(271, 54);
+    _sceneGlow(canvas, lantern, 44, light);
+    _lantern(canvas, artwork, lantern, .55, light);
+    _inlet(canvas, const Offset(480, 72), .86, water);
+    _scalePan(canvas, const Offset(428, 55), payment);
+
+    if (motion > .28) {
+      final handoff = const Interval(
+        .28,
+        1,
+        curve: Curves.easeInOut,
+      ).transform(motion);
+      final point = Offset.lerp(
+        const Offset(310, 63),
+        Offset(193 + 57 * walk, 70),
+        handoff,
+      )!;
+      _loaf(canvas, point);
+    }
+    canvas.restore();
+  }
+
+  void _loaf(Canvas canvas, Offset center) {
+    final shape = Rect.fromCenter(center: center, width: 23, height: 12);
+    canvas.drawOval(shape, Paint()..color = const Color(0xFFE9AF59));
+    canvas.drawOval(shape, _pen(ink, 1.5));
+    for (final x in [-4.0, 3.0]) {
+      canvas.drawLine(
+        center + Offset(x + 2, -4),
+        center + Offset(x, 1),
+        _pen(paper, 1.5),
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(BreadStallPainter oldDelegate) =>
+      oldDelegate.artwork != artwork ||
+      oldDelegate.light != light ||
+      oldDelegate.water != water ||
+      oldDelegate.payment != payment ||
+      oldDelegate.motion != motion;
+}
+
 void _sceneGlow(Canvas canvas, Offset center, double fullRadius, double light) {
   if (light == 0) return;
   final reach = math.sqrt(light);

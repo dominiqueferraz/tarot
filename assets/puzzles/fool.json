@@ -83,6 +83,21 @@
       "difficulty": "normal",
       "par": 15,
       "refill": {"type": "guided", "seed": 571, "weights": {"O": 1, "W": 1, "C": 1, "S": 1}}
+    },
+    {
+      "id": "006",
+      "scene": "breadStall",
+      "textKey": "marketDay",
+      "board": ["SWOCSOC", "OCSCCOW", "SOLWWLC", "COSOWOC", "WCOCSOW", "OWLOOWC", "CWSOOCS"],
+      "targets": [
+        {"cell": "C3", "suit": "W", "quota": 6, "kind": "lantern", "label": "marketLamp"},
+        {"cell": "F3", "suit": "C", "quota": 6, "kind": "inlet", "label": "marketInlet"},
+        {"cell": "C6", "suit": "O", "quota": 6, "kind": "pan", "label": "paymentPan"}
+      ],
+      "moves": 18,
+      "difficulty": "normal",
+      "par": 12,
+      "refill": {"type": "guided", "seed": 613, "weights": {"W": 1, "C": 1, "S": 1, "O": 1}}
     }
   ]
 }

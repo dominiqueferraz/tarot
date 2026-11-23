@@ -15,7 +15,7 @@ enum Suit {
       _named(values, symbol, (suit) => suit.symbol, 'suit');
 }
 
-enum PuzzleScene { ridge, quay, mill, dock, market }
+enum PuzzleScene { ridge, quay, mill, dock, market, breadStall }
 
 enum PuzzleTextKey {
   foolsStep,
@@ -38,7 +38,7 @@ enum TargetLabel {
   eastPan(TargetKind.pan),
   marketLamp(TargetKind.lantern),
   marketInlet(TargetKind.inlet),
-  farePan(TargetKind.pan);
+  paymentPan(TargetKind.pan);
 
   const TargetLabel(this.defaultKind);
 
