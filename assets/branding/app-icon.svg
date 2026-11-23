@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <title>Tarot Squared app icon</title>
+  <defs>
+    <linearGradient id="night" x1=".16" y1="1" x2=".84" y2="0" gradientUnits="objectBoundingBox">
+      <stop stop-color="#0A233B" />
+      <stop offset="1" stop-color="#204C6B" />
+    </linearGradient>
+  </defs>
+  <rect width="1024" height="1024" fill="url(#night)" />
+  <g transform="translate(42.22 -16.22) scale(0.999)">
+    <path fill="#E3A236" d="M170 716 C176 763 274 776 383 736 C314 786 200 806 171 763 C160 747 162 730 170 716 Z"/>
+    <path fill="#D76F43" d="M203 649 C215 677 274 688 342 672 C294 699 227 708 201 679 C193 670 194 658 203 649 Z"/>
+    <g transform="translate(24 10) rotate(-18 484 690)">
+      <rect x="275" y="247" width="452" height="570" rx="33" fill="#091D30" opacity=".42"/>
+      <rect x="267" y="238" width="452" height="570" rx="33" fill="#E5BB7E"/>
+      <rect x="284" y="255" width="418" height="536" rx="19" fill="#A34434"/>
+    </g>
+    <g transform="translate(24 10) rotate(-3 506 690)">
+      <rect x="276" y="208" width="452" height="582" rx="33" fill="#091D30" opacity=".42"/>
+      <rect x="268" y="198" width="452" height="582" rx="33" fill="#F2D398"/>
+      <rect x="285" y="215" width="418" height="548" rx="19" fill="#417179"/>
+    </g>
+    <g transform="translate(-50 24) rotate(14 538 480)">
+      <rect x="324" y="209" width="452" height="582" rx="33" fill="#091D30" opacity=".42"/>
+      <rect x="312" y="196" width="452" height="582" rx="33" fill="#F4E2BB"/>
+      <rect x="334" y="218" width="408" height="538" rx="16" fill="none" stroke="#CA9B59" stroke-width="6"/>
+      <path fill="#A6412B" d="M538 239 L552 253 L538 267 L524 253 Z"/>
+      <rect x="365" y="294" width="346" height="346" rx="8" fill="#103958"/>
+      <path fill="#F7C967" d="M526 351 C466 359 422 411 422 468 C422 532 474 583 538 583 C584 583 625 555 645 515 C587 536 531 510 510 460 C495 423 503 381 526 351 Z"/>
+      <path fill="#F4E2BB" d="M608 371 L619 401 L649 412 L619 423 L608 453 L597 423 L567 412 L597 401 Z"/>
+      <path fill="#9C6327" d="M484 691 H592 V702 H484 Z M513 717 H563 V725 H513 Z"/>
+    </g>
+  </g>
+</svg>
