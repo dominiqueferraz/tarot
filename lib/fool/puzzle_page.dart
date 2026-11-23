@@ -724,7 +724,8 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
     final guide = _demonstration;
     final lesson = _deal.guide;
     final faded = _deal.faded.entries.firstOrNull;
-    final fadedTarget = faded == null ? null : _puzzle.targets[faded.key]!;
+    final spilled = _deal.spilledCell;
+    final hintCell = spilled ?? faded?.key;
     return SizedBox(
       width: width,
       child: Column(
@@ -742,6 +743,7 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
                       PuzzleScene.dock => const Key('dock-scene'),
                       PuzzleScene.market => const Key('market-scene'),
                       PuzzleScene.breadStall => const Key('bread-stall-scene'),
+                      PuzzleScene.sluice => const Key('sluice-scene'),
                     },
                     height: panelHeight,
                     child: AnimatedBuilder(
@@ -843,22 +845,16 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
                       ),
                     ),
                   if (_turn == null &&
-                      faded != null &&
-                      fadedTarget != null &&
+                      hintCell != null &&
                       _path.isEmpty &&
                       !_showResult)
                     Positioned.fill(
                       child: GuideHint(
                         pitch: pitch,
-                        placement: _fadeHintPlacement(faded.key),
-                        explanation: strings.targetFadingHint(
-                          targetName(strings, fadedTarget.label),
-                          targetAmount(
-                            strings,
-                            fadedTarget.kind,
-                            fadedTarget.fading,
-                          ),
-                        ),
+                        placement: _targetHintPlacement(hintCell),
+                        explanation: spilled != null
+                            ? strings.fillTogetherHint
+                            : _fadingHint(strings, _puzzle.targets[hintCell]!),
                       ),
                     ),
                   if (showResult) BlockSemantics(child: _result(strings)),
@@ -944,6 +940,8 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
   }
 
   Widget _targetValue(AppLocalizations strings, int cell, double pitch) {
+    final target = _puzzle.targets[cell]!;
+    final progress = _displayProgress(cell);
     return Positioned(
       left: _size.columnOf(cell) * pitch,
       top: (_size.rowOf(cell) + .73) * pitch,
@@ -956,10 +954,7 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
               child: Padding(
                 padding: EdgeInsets.symmetric(horizontal: pitch * .07),
                 child: Text(
-                  strings.targetProgress(
-                    _displayProgress(cell),
-                    _puzzle.targets[cell]!.quota,
-                  ),
+                  strings.targetProgress(progress, target.quota),
                   key: Key('target-value-${_size.cellLabel(cell)}'),
                   textScaler: TextScaler.noScaling,
                   style: TextStyle(
@@ -976,7 +971,13 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
     );
   }
 
-  HintPlacement _fadeHintPlacement(int cell) {
+  String _fadingHint(AppLocalizations strings, PuzzleTarget target) =>
+      strings.targetFadingHint(
+        targetName(strings, target.label),
+        targetAmount(strings, target.kind, target.fading),
+      );
+
+  HintPlacement _targetHintPlacement(int cell) {
     final row = _size.rowOf(cell);
     return row < _size.rows - 2
         ? (x: _size.columnOf(cell) + .5, y: row + 1.04, tail: HintTail.top)
@@ -1056,6 +1057,27 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
     ].reduce(strings.labelWithDetail);
   }
 
+  String _resultText(AppLocalizations strings) {
+    if (_deal.won) {
+      return puzzleStory(strings, _puzzle.textKey)?.ending ?? strings.clear;
+    }
+    final nameTargets = _puzzle.scoringSuits.length > 1 || _puzzle.fillTogether;
+    return _puzzle.targets.entries
+        .map((entry) {
+          final progress = strings.targetProgress(
+            _deal.progressAt(entry.key),
+            entry.value.quota,
+          );
+          return nameTargets
+              ? strings.namedTargetProgress(
+                  targetName(strings, entry.value.label),
+                  progress,
+                )
+              : progress;
+        })
+        .join(nameTargets ? '\n' : strings.progressSeparator);
+  }
+
   Widget _result(AppLocalizations strings) {
     return ColoredBox(
       color: ink.withValues(alpha: .26),
@@ -1089,30 +1111,12 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
                         ),
                     ],
                   ),
-                ),
+                )
+              else if (_deal.movesLeft == 0)
+                Text(strings.movesRemaining(0), style: _objectiveStyle),
               const SizedBox(height: 6),
               Text(
-                _deal.won
-                    ? puzzleStory(strings, _puzzle.textKey)?.ending ??
-                          strings.clear
-                    : _puzzle.targets.entries
-                          .map((target) {
-                            final progress = strings.targetProgress(
-                              _deal.progressAt(target.key),
-                              target.value.quota,
-                            );
-                            return _puzzle.scoringSuits.length == 1
-                                ? progress
-                                : strings.namedTargetProgress(
-                                    targetName(strings, target.value.label),
-                                    progress,
-                                  );
-                          })
-                          .join(
-                            _puzzle.scoringSuits.length == 1
-                                ? strings.progressSeparator
-                                : '\n',
-                          ),
+                _resultText(strings),
                 style: displayType(27),
                 textAlign: TextAlign.center,
               ),

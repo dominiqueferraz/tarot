@@ -16,6 +16,8 @@ import 'fool_deal_test.dart'
     show
         catalog,
         cells,
+        fairSplit,
+        fairSplitReplay,
         foolsStep,
         guidedRoutes,
         lampReplay,
@@ -602,6 +604,50 @@ void main() {
       }
       expect(painter().motion, 1);
       expect(find.text(spanish.marketDayClear), findsOneWidget);
+      await tester.tap(find.text(spanish.nextPuzzle));
+      await tester.pumpAndSettle();
+      expect(find.text(spanish.fairSplitTitle), findsOneWidget);
+      expect(find.text(spanish.fairSplitObjective), findsOneWidget);
+      expect(
+        previewTarget(spanish, spanish.westFloat, spanish.cups, 44),
+        findsOneWidget,
+      );
+      expect(
+        previewTarget(spanish, spanish.eastFloat, spanish.cups, 50),
+        findsOneWidget,
+      );
+      await tester.ensureVisible(play);
+      await tester.tap(play);
+      await tester.pumpAndSettle();
+      expect(find.text(spanish.retry), findsNothing);
+      expect(
+        tester.getRect(find.byKey(const Key('fool-grid'))).bottom,
+        lessThan(640),
+      );
+
+      expect(
+        find.bySemanticsLabel(
+          targetSemantics(spanish, 'B3', spanish.westFloat, 0, 44),
+        ),
+        findsOneWidget,
+      );
+      for (final (step, (trace, west, east)) in fairSplitReplay.indexed) {
+        await dragStroke(tester, trace, size: fairSplit.size);
+        expect(
+          tester.widget<Text>(find.byKey(const Key('target-value-B3'))).data,
+          spanish.targetProgress(west, 44),
+        );
+        expect(
+          tester.widget<Text>(find.byKey(const Key('target-value-E6'))).data,
+          spanish.targetProgress(east, 50),
+        );
+        if (step == fairSplitReplay.length - 2) {
+          expect(find.text(spanish.fillTogetherHint), findsOneWidget);
+          expect(find.text(spanish.retry), findsNothing);
+        }
+      }
+      expect(find.text(spanish.fillTogetherHint), findsNothing);
+      expect(find.bySemanticsLabel(spanish.starRating(3)), findsOneWidget);
     },
   );
 
@@ -818,6 +864,7 @@ void main() {
     }
     expect(replay.lost, isTrue);
     expect(find.text(english.puzzleIndex(0)), findsOneWidget);
+    expect(find.text(english.movesRemaining(0)), findsOneWidget);
     await tester.tap(find.text(english.retry));
     await tester.pumpAndSettle();
     expect(find.text(english.puzzleIndex(25)), findsOneWidget);

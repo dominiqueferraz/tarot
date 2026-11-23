@@ -35,6 +35,10 @@ import 'tableau_art.dart';
     title: strings.marketDayTitle,
     objective: strings.marketDayObjective,
   ),
+  PuzzleTextKey.fairSplit => (
+    title: strings.fairSplitTitle,
+    objective: strings.fairSplitObjective,
+  ),
 };
 
 ({String opening, String ending})? puzzleStory(
@@ -56,6 +60,8 @@ String targetName(AppLocalizations strings, TargetLabel label) =>
       TargetLabel.marketLamp => strings.marketLamp,
       TargetLabel.marketInlet => strings.marketInlet,
       TargetLabel.paymentPan => strings.paymentPan,
+      TargetLabel.westFloat => strings.westFloat,
+      TargetLabel.eastFloat => strings.eastFloat,
     };
 
 String targetAmount(AppLocalizations strings, TargetKind kind, int amount) =>
@@ -153,6 +159,12 @@ class PuzzleIllustration extends StatelessWidget {
           light: progressOf(TargetKind.lantern),
           water: progressOf(TargetKind.inlet),
           payment: progressOf(TargetKind.pan),
+          motion: motion,
+        ),
+        PuzzleScene.sluice => SluicePainter(
+          artwork: artwork,
+          west: progressOf(TargetKind.inlet, label: TargetLabel.westFloat),
+          east: progressOf(TargetKind.inlet, label: TargetLabel.eastFloat),
           motion: motion,
         ),
       },

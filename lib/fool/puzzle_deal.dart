@@ -71,6 +71,7 @@ class PuzzleDeal {
   Map<int, int> _faded = const {};
   bool _jammed = false;
   TargetLink? _link;
+  int? _spilledCell;
 
   List<Suit?> get board => _board;
   TargetLink? get link => _link;
@@ -82,6 +83,7 @@ class PuzzleDeal {
     (target) => progressAt(target.key) >= target.value.quota,
   );
   bool get lost => !won && (movesLeft == 0 || _jammed);
+  int? get spilledCell => _spilledCell;
   bool get finished => won || lost;
   GuideMove? get guide => moves < guideLength ? puzzle.guide[moves] : null;
   int get guideLength => puzzle.guide.length;
@@ -234,7 +236,7 @@ class PuzzleDeal {
             progressAt(entry.key) > 0)
           entry.key: math.min(progressAt(entry.key), entry.value.fading),
     });
-    _progress = Map.unmodifiable({
+    final progress = {
       for (final entry in puzzle.targets.entries)
         entry.key: math.min(
           entry.value.quota,
@@ -242,7 +244,19 @@ class PuzzleDeal {
               (stroke.gains[entry.key] ?? 0) -
               (_faded[entry.key] ?? 0),
         ),
-    });
+    };
+    _spilledCell = null;
+    if (puzzle.fillTogether) {
+      final filled = puzzle.targets.entries
+          .where((entry) => progress[entry.key] == entry.value.quota)
+          .toList();
+      if (filled.length == 1) {
+        final target = filled.single;
+        progress[target.key] = target.value.quota - 1;
+        _spilledCell = target.key;
+      }
+    }
+    _progress = Map.unmodifiable(progress);
     _board = List.unmodifiable(next);
     if (guide == null && movesLeft > 0 && !won) {
       _jammed = !_hasLegalStroke(board);

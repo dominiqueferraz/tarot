@@ -575,6 +575,103 @@ void _sceneFlare(Canvas canvas, Offset center, double light) {
   canvas.restore();
 }
 
+class SluicePainter extends CustomPainter {
+  const SluicePainter({
+    required this.artwork,
+    required this.west,
+    required this.east,
+    required this.motion,
+  });
+
+  final Artwork artwork;
+  final double west;
+  final double east;
+  final double motion;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    canvas.save();
+    canvas.scale(
+      size.width / SceneLayout.width,
+      size.height / SceneLayout.height,
+    );
+    canvas.clipRect(
+      const Rect.fromLTWH(0, 0, SceneLayout.width, SceneLayout.height),
+    );
+    artwork.paint(canvas, Art.quaySky);
+    _rect(canvas, 0, 83, SceneLayout.width, 27, _water);
+    for (final (x, y) in [(8.0, 93.0), (116.0, 104.0), (467.0, 100.0)]) {
+      canvas.drawLine(Offset(x, y), Offset(x + 64, y), _pen(_waterline, 1.6));
+    }
+
+    const stone = Color(0xFFBAA17A);
+    _polygon(canvas, [84, 45, 516, 45, 550, 94, 50, 94], stone);
+    canvas.drawPath(
+      _path(const [
+        Offset(50, 94),
+        Offset(84, 45),
+        Offset(516, 45),
+        Offset(550, 94),
+      ]),
+      _pen(ink, 2),
+    );
+    _rect(canvas, 50, 88, 500, 7, ink);
+
+    final channel = Path()
+      ..addPolygon(const [
+        Offset(174, 67),
+        Offset(426, 67),
+        Offset(439, 82),
+        Offset(325, 82),
+        Offset(341, 110),
+        Offset(259, 110),
+        Offset(275, 82),
+        Offset(161, 82),
+      ], true);
+    canvas.drawPath(channel, Paint()..color = const Color(0xFF33423E));
+    canvas.save();
+    canvas.clipPath(channel);
+    if (motion > 0) {
+      final arms = const Interval(
+        0,
+        .55,
+        curve: Curves.easeOut,
+      ).transform(motion);
+      final outlet = const Interval(
+        .45,
+        1,
+        curve: Curves.easeOut,
+      ).transform(motion);
+      final reach = 141 * arms;
+      _rect(canvas, 159, 68, reach, 14, _water);
+      _rect(canvas, 441 - reach, 68, reach, 14, _water);
+      _rect(canvas, 257, 80, 86, 30 * outlet, _water);
+      final surface = _pen(_waterline, 1.5);
+      canvas.drawLine(const Offset(159, 74), Offset(159 + reach, 74), surface);
+      canvas.drawLine(Offset(441 - reach, 74), const Offset(441, 74), surface);
+      canvas.drawLine(
+        const Offset(300, 80),
+        Offset(300, 80 + 30 * outlet),
+        surface,
+      );
+    }
+    canvas.restore();
+    canvas.drawPath(channel, _pen(ink, 2));
+
+    _inlet(canvas, const Offset(174, 65), 1.32, west, marked: true);
+    _inlet(canvas, const Offset(426, 65), 1.32, east, marked: true);
+    artwork.paint(canvas, Art.fool, origin: const Offset(86, 86), scale: .71);
+    canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(SluicePainter oldDelegate) =>
+      artwork != oldDelegate.artwork ||
+      west != oldDelegate.west ||
+      east != oldDelegate.east ||
+      motion != oldDelegate.motion;
+}
+
 class TableauPainter extends CustomPainter {
   TableauPainter({
     required this.board,
@@ -680,6 +777,7 @@ class TableauPainter extends CustomPainter {
         entry.value,
         center - const Offset(0, 7),
         progress[entry.key]!,
+        marked: puzzle.fillTogether,
       );
       if (puzzle.scoringSuits.length > 1) {
         artwork.paint(
@@ -940,15 +1038,16 @@ void _paintFixture(
   Artwork artwork,
   PuzzleTarget target,
   Offset center,
-  double amount,
-) {
+  double amount, {
+  bool marked = false,
+}) {
   switch (target.kind) {
     case TargetKind.marker:
       _marker(canvas, artwork, center, 24, amount);
     case TargetKind.lantern:
       _lantern(canvas, artwork, center, 1, amount);
     case TargetKind.inlet:
-      _inlet(canvas, center, 1, amount);
+      _inlet(canvas, center, 1, amount, marked: marked);
     case TargetKind.cord:
       _cord(
         canvas,
@@ -1030,7 +1129,13 @@ void _lantern(
   canvas.restore();
 }
 
-void _inlet(Canvas canvas, Offset center, double scale, double water) {
+void _inlet(
+  Canvas canvas,
+  Offset center,
+  double scale,
+  double water, {
+  bool marked = false,
+}) {
   canvas.save();
   canvas.translate(center.dx, center.dy);
   canvas.scale(scale);
@@ -1046,17 +1151,29 @@ void _inlet(Canvas canvas, Offset center, double scale, double water) {
     _pen(paper, 1.5),
   );
   canvas.drawRRect(channel, Paint()..color = const Color(0xFF33423E));
+  const mark = -2.5;
+  const bottom = 14.0;
+  final surface = bottom - (marked ? bottom - mark : 25) * water;
   if (water > 0) {
     canvas.save();
     canvas.clipRRect(channel);
-    final surface = 14 - 25 * water;
-    _rect(canvas, -16, surface, 32, 25, _water);
+    _rect(canvas, -16, surface, 32, bottom - surface, _water);
     canvas.drawLine(
       Offset(-14, surface + 1),
       Offset(14, surface + 1),
       _pen(_waterline, 2),
     );
     canvas.restore();
+  }
+  if (marked) {
+    for (final x in [-15.0, 9.0]) {
+      canvas.drawLine(Offset(x, mark), Offset(x + 6, mark), _pen(paleGold, 2));
+    }
+    final floatHeight = (surface - 2).clamp(-8.0, 10.0);
+    canvas.drawOval(
+      Rect.fromCenter(center: Offset(0, floatHeight), width: 13, height: 5),
+      Paint()..color = paleGold,
+    );
   }
   canvas.drawRRect(channel, _pen(ink, 1.5));
   canvas.restore();

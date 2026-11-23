@@ -15,7 +15,7 @@ enum Suit {
       _named(values, symbol, (suit) => suit.symbol, 'suit');
 }
 
-enum PuzzleScene { ridge, quay, mill, dock, market, breadStall }
+enum PuzzleScene { ridge, quay, mill, dock, market, breadStall, sluice }
 
 enum PuzzleTextKey {
   foolsStep,
@@ -24,6 +24,7 @@ enum PuzzleTextKey {
   mooring,
   ferrymansFare,
   marketDay,
+  fairSplit,
 }
 
 enum TargetKind { marker, lantern, inlet, cord, pan }
@@ -38,7 +39,9 @@ enum TargetLabel {
   eastPan(TargetKind.pan),
   marketLamp(TargetKind.lantern),
   marketInlet(TargetKind.inlet),
-  paymentPan(TargetKind.pan);
+  paymentPan(TargetKind.pan),
+  westFloat(TargetKind.inlet),
+  eastFloat(TargetKind.inlet);
 
   const TargetLabel(this.defaultKind);
 
@@ -232,6 +235,7 @@ class PuzzleDefinition {
     required this.targets,
     required this.masked,
     required this.linksTargets,
+    required this.fillTogether,
     required this.scoringSuits,
     required this.limit,
     required this.difficulty,
@@ -249,6 +253,7 @@ class PuzzleDefinition {
   final Map<int, PuzzleTarget> targets;
   final Set<int> masked;
   final bool linksTargets;
+  final bool fillTogether;
   final Set<Suit> scoringSuits;
   final int limit;
   final PuzzleDifficulty difficulty;
@@ -316,6 +321,11 @@ class PuzzleDefinition {
         'The board needs at least one target and one L per target.',
       );
     }
+    final fillTogether =
+        data.containsKey('fillTogether') && _field<bool>(data, 'fillTogether');
+    if (fillTogether && targets.length != 2) {
+      throw const FormatException('Filling together requires two targets.');
+    }
     final masked = {
       for (var cell = 0; cell < symbols.length; cell++)
         if (symbols[cell] == '.') cell,
@@ -354,6 +364,7 @@ class PuzzleDefinition {
       linksTargets:
           data.containsKey('linksTargets') &&
           _field<bool>(data, 'linksTargets'),
+      fillTogether: fillTogether,
       scoringSuits: Set.unmodifiable(
         targets.values.map((target) => target.suit),
       ),

@@ -14,6 +14,7 @@ final highWater = catalog.puzzles[2];
 final mooring = catalog.puzzles[3];
 final ferrymansFare = catalog.puzzles[4];
 final marketDay = catalog.puzzles[5];
+final fairSplit = catalog.puzzles[6];
 const openingSize = BoardSize(6, 6);
 const lampSize = BoardSize(5, 6);
 const highWaterSize = BoardSize(6, 7);
@@ -183,6 +184,54 @@ const marketDayReplay = [
   ('B3 G3 G6 B6 B3', 6, 6, 6),
 ];
 
+const fairSplitReplay = [
+  ('B2 E2 E6 B6 B2', 4, 7),
+  ('B3 F3 F6 B6 B3', 10, 11),
+  ('B3 E3 E6 B6 B3', 17, 18),
+  ('B3 E3 E6 B6 B3', 22, 23),
+  ('D2 D3 D4 C4', 22, 23),
+  ('E2 D2 D3 D4 C4 C5 B5 B4', 30, 31),
+  ('C4 D4 D5 E5', 30, 31),
+  ('B3 E3 E6 B6 B3', 37, 38),
+  ('B1 F1 F5 B5 B1', 37, 38),
+  ('D4 E4 E5', 40, 41),
+  ('B3 G3 G7 B7 B3', 40, 41),
+  ('B3 E3 E7 B7 B3', 43, 45),
+  ('B1 E1 E6 B6 B1', 44, 50),
+];
+
+const _fairSplitLinkedReplay = [
+  'B2 E2 E6 B6 B2',
+  'B3 F3 F6 B6 B3',
+  'B3 E3 E6 B6 B3',
+  'B1 E1 E6 B6 B1',
+  'D4 D3 C3',
+  'A3 E3 E6 A6 A3',
+  'B2 E2 E6 B6 B2',
+  'F1 E1 D1 D2 C2 C3',
+  'B3 E3 E6 B6 B3',
+  'B3 E3 E6 B6 B3',
+  'B3 C3 C7 B7 B3',
+  'D7 C7 C6 C5 B5 B4',
+];
+
+const _fairSplitEastReplay = [
+  'G6 F6',
+  'B3 E3 E6 B6 B3',
+  'A4 B4',
+  'B2 E2 E6 B6 B2',
+  'B3 E3 E6 B6 B3',
+  'B3 E3 E6 B6 B3',
+  'B6 B5 B4',
+  'D5 E5 F5',
+  'B3 E3 E6 B6 B3',
+  'B2 E2 E6 B6 B2',
+  'B3 E3 E6 B6 B3',
+  'E4 E5 D5 C5 C6',
+  'B1 F1 F4 B4 B1',
+  'B3 F3 F6 B6 B3',
+];
+
 PuzzleCatalog marketDayVariant(
   String source, {
   bool links = false,
@@ -233,6 +282,100 @@ String layout(PuzzleDeal deal) => [
 ].join();
 
 void main() {
+  test('The Fair Split recovers from a spill and fills both on one stroke', () {
+    final deal = PuzzleDeal(fairSplit);
+    final west = fairSplit.size.parseCell('B3');
+    final east = fairSplit.size.parseCell('E6');
+    for (final (path, westAmount, eastAmount) in fairSplitReplay) {
+      expect(deal.finished, isFalse, reason: path);
+      final turn = deal.play(cells(path, size: fairSplit.size));
+      expect(turn, isNotNull, reason: path);
+      expect(
+        [deal.progressAt(west), deal.progressAt(east)],
+        [westAmount, eastAmount],
+        reason: path,
+      );
+      if (path == fairSplitReplay[fairSplitReplay.length - 2].$1) {
+        expect(turn!.stroke.gains[west], 9);
+        expect(deal.spilledCell, west);
+        expect(deal.movesLeft, 12);
+        expect(deal.board, isNot(turn.before));
+        expect(deal.won, isFalse);
+        expect(deal.lost, isFalse);
+      }
+    }
+    expect(deal.spilledCell, isNull);
+    expect(deal.won, isTrue);
+    expect(deal.stars, 3);
+  });
+
+  test('The Fair Split supports a linked finish and an east-first route', () {
+    for (final replay in [_fairSplitLinkedReplay, _fairSplitEastReplay]) {
+      final deal = PuzzleDeal(fairSplit);
+      for (final path in replay.take(replay.length - 1)) {
+        expect(deal.play(cells(path, size: fairSplit.size)), isNotNull);
+      }
+      expect(deal.won, isFalse);
+      final link = deal.link;
+      final finish = deal.play(cells(replay.last, size: fairSplit.size))!;
+      expect(finish.stroke.gains.keys, unorderedEquals(fairSplit.targets.keys));
+      expect(finish.stroke.isRectangle, replay == _fairSplitEastReplay);
+      if (replay == _fairSplitLinkedReplay) {
+        expect(link?.movesLeft, 1);
+      }
+      expect(deal.won, isTrue);
+    }
+  });
+
+  test('The Fair Split cannot bank the two final fills separately', () {
+    final config = jsonDecode(
+      File(PuzzleCatalog.assetPath).readAsStringSync(),
+    ) as Map<String, Object?>;
+    final entry = (config['puzzles'] as List).last as Map;
+    for (final target in entry['targets'] as List) {
+      (target as Map)['quota'] = 2;
+    }
+    entry['moves'] = 2;
+    entry['par'] = 2;
+    final puzzle = PuzzleCatalog.parse(jsonEncode(config)).puzzles.last;
+    final deal = PuzzleDeal(puzzle);
+    final west = puzzle.size.parseCell('B3');
+    final east = puzzle.size.parseCell('E6');
+    expect(deal.play(cells('B1 B2', size: puzzle.size))?.stroke.gains, {
+      west: 2,
+    });
+    expect(deal.spilledCell, west);
+    expect(deal.progressAt(west), 1);
+    expect(deal.lost, isFalse);
+    expect(deal.play(cells('G6 F6', size: puzzle.size))?.stroke.gains, {
+      east: 2,
+    });
+    expect(deal.spilledCell, east);
+    expect(deal.progressAt(east), 1);
+    expect(deal.progressAt(west), 1);
+    expect(deal.lost, isTrue);
+  });
+
+  test('The Fair Split uses all 24 moves on a losing attempt', () {
+    final deal = PuzzleDeal(fairSplit);
+    final size = fairSplit.size;
+    final pairs = [
+      for (var cell = 0; cell < size.cellCount; cell++)
+        for (final next in size.neighbours(cell)) [cell, next],
+    ];
+    for (var left = 24; left > 0; left--) {
+      expect(deal.finished, isFalse);
+      expect(deal.movesLeft, left);
+      final miss = pairs.firstWhere(
+        (pair) => deal.inspect(pair)?.gains.isEmpty ?? false,
+      );
+      expect(deal.play(miss), isNotNull);
+    }
+    expect(deal.movesLeft, 0);
+    expect(deal.won, isFalse);
+    expect(deal.lost, isTrue);
+  });
+
   test('mixed targets score independently even on the same square', () {
     final source = File(PuzzleCatalog.assetPath).readAsStringSync();
     final puzzle = marketDayVariant(source, links: true).puzzles.single;
@@ -353,12 +496,14 @@ void main() {
     expect(catalog.next(highWater), mooring);
     expect(catalog.next(mooring), ferrymansFare);
     expect(catalog.next(ferrymansFare), marketDay);
-    expect(catalog.next(marketDay), isNull);
+    expect(catalog.next(marketDay), fairSplit);
+    expect(catalog.next(fairSplit), isNull);
     expect(catalog.unlockedIndex('002'), 1);
     expect(catalog.unlockedIndex('003'), 2);
     expect(catalog.unlockedIndex('004'), 3);
     expect(catalog.unlockedIndex('005'), 4);
     expect(catalog.unlockedIndex('006'), 5);
+    expect(catalog.unlockedIndex('007'), 6);
     expect(catalog.puzzles.map((puzzle) => puzzle.limit), [
       25,
       22,
@@ -366,10 +511,11 @@ void main() {
       26,
       25,
       18,
+      24,
     ]);
     expect(
       catalog.puzzles.map((puzzle) => (puzzle.size.columns, puzzle.size.rows)),
-      [(6, 6), (5, 6), (6, 7), (7, 6), (8, 8), (7, 7)],
+      [(6, 6), (5, 6), (6, 7), (7, 6), (8, 8), (7, 7), (7, 7)],
     );
     expect(catalog.unlockedIndex('missing'), 0);
     for (final puzzle in catalog.puzzles) {

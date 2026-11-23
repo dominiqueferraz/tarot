@@ -244,6 +244,21 @@ All three approaches have five-move reference clears with guided refill seed 613
 
 [Puzzle catalog](../assets/puzzles/fool.json) · [Reference replays](../test/fool_deal_test.dart)
 
+## Level 007 · The Fair Split
+
+Market Day unlocks the sluice. The west float at B3 needs 44 water and the east float at E6 needs 50. Bring both floats to their marks on the same move to send water through the shared channel. The 7 × 7 board gives 24 moves with a par of 13. Guided refill uses seed 743 and weights the four suits equally.
+
+Build the two water levels with aimed Cup traces and Cup rectangles. A float that fills alone spills and settles one unit below its mark. A Cup rectangle can score for both. The Cup square B3–E6 uses the two floats as corners and links them for two moves. During that link, a Cup trace aimed at either float feeds both.
+
+| Reference approach | What resolves |
+|---|---|
+| B2 → E2 → E6 → B6 → B2, then build a shared rectangle | The opening feeds both floats. The west float spills on move 12 and holds at 43/44 with the east at 45/50. The B1–E6 rectangle raises both to their marks on move 13. |
+| Build the B3–E6 square and save its link for an aimed pour | The square on move 10 sets the link. A setup stroke places Cups for D7 → C7 → C6 → C5 → B5 → B4, which pours six units into each float and clears on move 12. |
+| G6 → F6, then work back toward the west float | The east gets the first two units. A wider B3–F6 rectangle brings both to their marks on move 14. |
+| Continue feeding one float at a time near the marks | Each release spends a move. A float that fills alone settles one unit below its mark. If the final move leaves either float short, the attempt ends and offers a retry. |
+
+[Puzzle catalog](../assets/puzzles/fool.json) · [Reference replays](../test/fool_deal_test.dart)
+
 ## Lozenge playtest routes
 
 Read columns left to right and rows top to bottom. A closed route can be drawn in either direction and started between any of its corners. For a route with a setup stroke, start on a fresh deal and play the steps in order.

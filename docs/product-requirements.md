@@ -129,6 +129,8 @@ On a phone, the goal, every row, the illustration and the active power must be r
 
 A deal can ask the player to deliver, release, balance, illuminate or restore something. It can ask for a quota of suit actions, or for every piece of one suit, or for every ordinary piece. Show the goal and tracked quantities when the board is dealt. When a guided lesson reveals a target later, show its goal and tracker at the reveal.
 
+**Simultaneous fills.** A deal can require two fixtures to reach their quotas on the same paid stroke. Each keeps partial progress. If only one reaches its mark, it spills and settles one unit below the mark as part of that move. Show a brief hint near that fixture when it spills. In The Fair Split, a Cup rectangle can feed both in one stroke, and a Cup square can link them for an aimed pour using the shared linking rules. [Authored deal](opening-deals.md#level-007--the-fair-split)
+
 For each suit-based objective, show its scoring suit or suits next to its name and progress in the goal tracker. Keep a single framed square beside the illustration. Center one scoring suit symbol. When there are multiple suits, place the first symbol at the top and space the others evenly around a visible ring. Give each symbol an accessible name. Mark each target on mixed-suit boards with the suit that earns its progress, including targets that match other suits as wildcard corners.
 
 ### Every board refills

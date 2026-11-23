@@ -14,6 +14,7 @@ import '../test/fool_deal_test.dart'
         cells,
         dockReplay,
         dockSize,
+        fairSplitReplay,
         guidedRoutes,
         highWaterSize,
         lampReplay,
@@ -350,11 +351,13 @@ void main() {
     },
   );
 
-  testWidgets('opens the bread stall and clears Market Day', (tester) async {
+  testWidgets('clears Market Day and The Fair Split', (tester) async {
     final source = await rootBundle.loadString(PuzzleCatalog.assetPath);
+    final catalog = PuzzleCatalog.parse(source);
+    final split = catalog.puzzles.singleWhere((puzzle) => puzzle.id == '007');
     await tester.pumpWidget(
       app.TarotSquaredApp(
-        catalog: PuzzleCatalog.parse(source),
+        catalog: catalog,
         artwork: await Artwork.load(),
         initialLanguage: 'pt',
         unlockedPuzzle: '006',
@@ -414,5 +417,46 @@ void main() {
     }
     expect(find.text(portuguese.marketDayClear), findsOneWidget);
     await screenshot(tester, 'tarot-squared-market-day-complete');
+
+    await tester.tap(find.text(portuguese.nextPuzzle));
+    await tester.pumpAndSettle();
+    expect(find.text(portuguese.fairSplitTitle), findsOneWidget);
+    expect(
+      previewTarget(portuguese, portuguese.westFloat, portuguese.cups, 44),
+      findsOneWidget,
+    );
+    expect(
+      previewTarget(portuguese, portuguese.eastFloat, portuguese.cups, 50),
+      findsOneWidget,
+    );
+    await screenshot(tester, 'tarot-squared-fair-split-preview');
+    await tester.ensureVisible(play);
+    await tester.tap(play);
+    await tester.pumpAndSettle();
+    final retry = find.text(portuguese.retry);
+    final west = find.byKey(const Key('target-value-B3'));
+    final east = find.byKey(const Key('target-value-E6'));
+    expect(retry, findsNothing);
+    await screenshot(tester, 'tarot-squared-fair-split-board');
+    for (final (step, (trace, westAmount, eastAmount))
+        in fairSplitReplay.indexed) {
+      await dragStroke(tester, trace, size: split.size);
+      expect(
+        tester.widget<Text>(west).data,
+        portuguese.targetProgress(westAmount, 44),
+      );
+      expect(
+        tester.widget<Text>(east).data,
+        portuguese.targetProgress(eastAmount, 50),
+      );
+      if (step == fairSplitReplay.length - 2) {
+        expect(find.text(portuguese.fillTogetherHint), findsOneWidget);
+        expect(retry, findsNothing);
+        await screenshot(tester, 'tarot-squared-fair-split-spill');
+      }
+    }
+    expect(find.text(portuguese.fillTogetherHint), findsNothing);
+    expect(find.bySemanticsLabel(portuguese.starRating(3)), findsOneWidget);
+    await screenshot(tester, 'tarot-squared-fair-split-complete');
   });
 }
