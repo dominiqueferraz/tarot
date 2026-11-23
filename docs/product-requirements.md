@@ -263,6 +263,18 @@ The board is drawn from the same deck as the album. Today's suit pieces stand fo
 | Values (1–5) | An ordinary piece showing a small ink numeral | Adds its value to the trace's strength, and grows by feeding (see *Values, feeding and elemental dignities*). Rising or falling runs come later, as a constraint. | Values and feeding with the Empress (Volume 1). Runs with the Minor Arcana volume. |
 | Court figures | Page, Knight, Queen, King of each suit | The Page falls and delivers its action where it lands. The Knight moves one cell per paid stroke. The Queen never leaves and adds 1 to any trace through her. The King fixes the direction his trace fires in. | The Minor Arcana volume. Earlier as encounter characters. |
 
+#### Suit accumulation and promotion
+
+**Proposal for the Minor Arcana volume.** A card lets players grow an ordinary piece of any suit into a Page, Knight, Queen, King or Ace of that suit. Prototype promotion as a one-charge card loan. The choice is when to spend the growing piece in a trace and when to save it for a rank with a different use.
+
+1. **Build value on one piece.** Use the existing same-suit feeding rule. Two feeds worth 2 grow a piece from 1 to 3 to 5. The value moves with the piece when it falls. Friendly dignities and long-trace charges can help prepare a full piece on boards that already use those rules.
+2. **Move it into position.** Print the available rank marks on the grid. Clear a support or use a familiar movement power to bring a full piece to one of them. A Knight or King mark shows its facing. An Ace mark sits at the head of a ribbon and shows the supply it will open.
+3. **Use the card to promote it.** Arm the card and aim a same-suit feed at a piece already worth 5 on a rank mark. The traced pieces leave as in an ordinary feed, and the card gives the facing piece the printed rank before the board settles. The new piece keeps its suit and uses its rank's strength and behaviour. An Ace becomes the ribbon's fixed source.
+
+**Example.** Feed two Cups into a third, then bring another Cup pair into line and feed it again. Clear the support beneath the full Cup so it drops onto a crown mark. With the card armed, one more aimed Cup feed makes a King of Cups facing the inlet. A bent trace can then reach the King and pour in his printed direction.
+
+Show the value or rank that a stroke will produce while the player traces. Keep the suit emblem dominant and use the existing small rank silhouettes. Teach one promotion on the first board, with a payoff soon enough to connect it to the setup. On later boards use the choice between spending now and saving for a rank, or between two reachable ranks. Playtest whether players can predict the result and check the deal's certificates against the ranks, movement and refill that promotion can introduce.
+
 **Limits on special pieces.**
 - **Invariants.** Each special piece or rule states which certificate invariant it breaks, and authors check certificates against the table below.
 - **One per Normal board.** A Normal board carries at most one special piece type, a trump or a court rank. Hard boards may carry two.
