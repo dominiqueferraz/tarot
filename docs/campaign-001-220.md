@@ -18,7 +18,7 @@
 
 **Board brief.** Each entry should eventually state its **payoff** and its **losing line**. The payoff is the stroke that does two jobs or completes a visible chain, the board's moment in the [delight loop](product-requirements.md). Name the different ways a player can progress, one recoverable weak choice and the trade each approach makes. The individual examples below are prompts for authoring. Alongside them, state the misbelief the board overturns, its cast and its pressure (see [depth and progression](design-notes.md#depth-and-progression)).
 
-**Route through the world.** In 001–050 a traveller uncovers a road and the tools to mend it. In 051–100 communities rely on that road: reopen a bell tower, a causeway and a mint. In 101–150 the traveller repairs the harbour’s machinery during a flood. In 151–200 its inhabitants need help after the seawall breaks. In 201–220 they assemble to restore the four gates. Old locations recur with the physical consequences of earlier encounters. A player can skip every line of dialogue and still read every objective.
+**Route through the world.** The Fool follows a lit trail down to a river. A ferry, a roadside map and a repaired bridge open the route to the harbour. When the water rises and the seawall breaks, the Fool returns to the places and people along that route to get the harbour working again. [Campaign story map](#campaign-story-map)
 
 ### Chapter and acquisition index
 
@@ -46,6 +46,70 @@
 | 191–200 | The Sun | Exposure and cast shadows | Illuminate | 196 |
 | 201–210 | Judgement | Memorial squares and a trumpet | Recall | 206 |
 | 211–220 | The World | Matched gates on the board edges | Close the Wreath | 216 |
+
+## Campaign story map
+
+These are proposed story connections drawn from the eight playable deals and the planned puzzles and encounters in every chapter below. The prologue uses its current level numbers. The later blocks use chapter names while the atlas keeps its legacy numbering.
+
+Show the story in the same place the player sees the puzzle resolve. A road lights, a shutter opens, or a cart reaches the person waiting for it. Use the extra boards planned for each chapter to revisit its place and help with the work already under way. Put the handoff to the next block on the main route, so optional jobs and dialogue can be skipped. [PRD on stories and encounters](product-requirements.md#stories-and-encounters)
+
+### Prologue · From the ridge to the road
+
+| Fool block | Story |
+|---|---|
+| 001–003 · The ridge and the quay | The Fool lights the trail marker and follows the path down to the river. Oil in the quay lamp reveals the moored boat, and water in the mill channel gets the wheel turning again. |
+| 004–006 · The first crossing | Free the boat's bow and stern, then settle the fare at the landing. On the far bank, light the baker's lantern, fill the dough trough and pay for a loaf. The shutter opens and the Fool has bread for the road. |
+| 007–008 · The far-bank path | Bring the two sluice floats up together to send water down the shared channel. Further along, come around the west-facing lamp and light the uphill path from its open side. |
+| 009–012 · A broken stretch of river road | Gather the Cups at the next landing, then help the night fishers by lighting their lamp and cutting the rigging free. The road breaks at the next crossing. Ring the far-bank bell and bring the stranded Cups back together beneath the gap. |
+| 013–015 · The little drawbridge | At the drawbridge, the Fool earns Leap and gets water to the inlet across the gap. At the next landing, a leaped pour rings the bell. Further upstream, the same trick sends water into the inlet across the weir. |
+| 016–017 · Two optional river stops | Call a skiff at a remote landing and ring the two bells on either side of a break. Both stops show small crossings still in use along the river. |
+| 018–020 · Take someone across | Bring a float exactly to its mark, then ready the lamp and float at the quiet landing. When a traveller arrives, raise the gangplank, free the ferry and ring it home. The Fool leaves the crossing ready for the next person. |
+
+### Volume 1 · Open the road to the harbour
+
+| Chapter | Story |
+|---|---|
+| I · The Magician | At a sign painter's workshop, fresh stamps turn mismatched pieces into the tools the painter needs. Practise on the tray, the payment pan and the misprints. Transmute supplies the Wand at the corner that completes the shot, and the lit roadside sign points to the archive. |
+| II · The High Priestess | The archive's road map is tucked among folded, clasped pages. Follow the index marks, pay the fee and turn the inaccessible leaf. With the archivist, wash away the blot and light the newly uncovered route. |
+| III · The Empress | The route leads through an orchard whose troughs and lamps need tending. Feed the young growth, save enough for the harvest and restore the barren row. At the end, water the old tree and light its fruit lamp. The orchard will have a shipment for the road. |
+| IV · The Emperor | The road bridge is out. Work through the gatehouse, its two floors and the raised terraces, then learn to hold a load on a temporary shelf. Help the bridge builder seat the stones at both ends and reopen the crossing. |
+| V · The Hierophant | At the chapel, the bells have to be heard in the right order before its doors will open. Use the loft and side bells to learn the peal. The bell ringer sends an echo to the distant tower, calling travellers back to the road. |
+| VI · The Lovers | Gates in the garden and carriage yard open when both halves of their seal answer. Bring the separated Coins together, then use the payment and signal to get the two ferrymen working in step. Both halves of the river crossing open. |
+| VII · The Chariot | At the station, route passengers, orchard freight and mail through the switches and sidings. Put a stranded cart back on its rail. The courier picks up the map case and delivers it to the harbour dock. |
+
+### Volume 2 · Keep the harbour working as the water rises
+
+| Chapter | Story |
+|---|---|
+| VIII · Justice | At the toll bridge and mint, payments tip rails as well as filling the till. Level the bridge for carts and learn to catch rolling Coins before they reach the drain. Recover the mint keeper's seal Coin and balance the till to reopen the mint. |
+| IX · The Hermit | The harbour has become hard to read after dark. Clear screens to reveal dock numbers, switches and the ledger, then guide a late cart into its berth. The keeper's borrowed lantern reaches the hidden oil inlet and restores the lighthouse. |
+| X · Wheel of Fortune | The harbour clock's rim turns, but its missing tooth keeps the signal out of time. Work around passing spokes, tolls and locks until the clockmaker can fit the tooth. Bring the rim onto the marked hour and ring the bell. |
+| XI · Strength | Relief parcels and carts need to pass a gate patrolled by a lion. Wait for safe passages and hold the lion only when its pose leaves room. Guide it home, then keep the passage clear long enough for its keeper to come through. |
+| XII · The Hanged Man | The flood has left a bell underwater. Learn the flooded works by raising keys and lowering weights through their shafts. The bell diver sends the messenger key up first, then raises the bell while its counterweight drops and opens the belfry. |
+| XIII · The unnamed card | Back at the flooded orchard, the old crop has to come away before the buried seeds can sprout. Save a seed parcel, clear the plots and deliver a viable seed to the keeper. The orchard can start growing again. |
+| XIV · Temperance | The harbour landings sit at different levels. Use exact waterlines to board passengers, free the jetty and unload ferries. The lock keeper transfers water from one basin to the next and takes a boat through both levels. |
+
+### Volume 3 · Repair the breach and bring the fleet home
+
+| Chapter | Story |
+|---|---|
+| XV · The Devil | At the outer toll landing, chains can hold a load in place or trap it. Cut the anchor bond to free the ferryman, then temporarily bind the counterweight so the toll gate stays raised until the ferry is through. |
+| XVI · The Tower | The broken seawall has cut the relief road. Recover useful stone and reopen the blocked shafts, then bring down the ruined watchtower into the breach. The surviving pier and the fallen stone carry the relief cart across. |
+| XVII · The Star | Broken channels leave the harbour's navigation marks dark. Follow the current to relight the reachable stars and place a new inlet beyond the break. The astronomer completes the constellation over the water and the night ferry has a route. |
+| XVIII · The Moon | A crab is stranded near the wreck on a guarded bank. Follow its changing route, use the twin towers to hold it at a safe spot, and lure it with water when the ferry exposes the channel. The crab reaches its pool. |
+| XIX · The Sun | In daylight, the quay and courtyards need light in some places and shade in others. Open windows, move awnings and use the bridge's shadow to keep passages usable. Light both play yards while keeping the seedlings shaded. |
+| XX · Judgement | The returning choir rehearses the old harbour call. Recover a phrase with the memorial trumpet, then recall the trace once the final bell settles into reach. The choir sounds all three harbour bells in order. |
+| XXI · The World | The four gates connect places the Fool has already helped. Revisit the orchard and mint, then cut the quay's cord and light the lighthouse. The final gate drops a Coin onto the bell pan, and the whole harbour fleet answers. |
+
+### Standalone stories after the main campaign
+
+The PRD sketches three return visits. They can open with their own local problem after the fleet comes home. [Expansion proposals](product-requirements.md#after-the-third-volume)
+
+| Proposed block | Story |
+|---|---|
+| The winter ferry | Get a creature across the lock while the channel is still open. When the water freezes, use the ice to bring the next load across by land. |
+| Letters from the old mint | The courier returns to the mint three times as letters reach their recipients. Each delivery changes who weighs down the pan. Recall an earlier payment to keep the letters moving. |
+| The night market | Return to the market after dark with deliveries for three stallholders. The awning that helps the lantern keeper casts shade on the moonlit stall. The last delivery determines whose stall closes the evening. |
 
 ## 0 · The Fool · prologue 001–020
 
