@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "rules": {
     "shapeProgress": 4,
     "cornerProgressPerPiece": 1,
@@ -13,13 +13,9 @@
     {
       "id": "001",
       "scene": "ridge",
-      "text": {
-        "en": {"title": "The Fool’s Step", "objective": "Light the trail marker", "target": "Trail marker"},
-        "pt": {"title": "O Passo do Louco", "objective": "Acenda o marco da trilha", "target": "Marco da trilha"},
-        "es": {"title": "El paso del Loco", "objective": "Enciende la marca del sendero", "target": "Marca del sendero"}
-      },
+      "textKey": "foolsStep",
       "board": ["SSWWOW", "CSWWCO", "SOCWWW", "CSSCLO", "WSSWWW", "WWSSCC"],
-      "target": {"cell": "E4", "suit": "W", "light": 30},
+      "target": {"cell": "E4", "suit": "W", "light": 30, "label": "trailMarker"},
       "moves": 25,
       "difficulty": "normal",
       "par": 14,
@@ -36,17 +32,43 @@
     {
       "id": "002",
       "scene": "quay",
-      "text": {
-        "en": {"title": "Lamplighter", "objective": "Fuel the quay lamp", "target": "Quay lamp"},
-        "pt": {"title": "O Acendedor", "objective": "Abasteça o lampião do cais", "target": "Lampião do cais"},
-        "es": {"title": "El farolero", "objective": "Llena el farol del muelle", "target": "Farol del muelle"}
-      },
-      "board": ["WSOCSO", "CCWCCW", "CCLSCO", "OCOCSC", "CWCWOC", "SCCOWC"],
-      "target": {"cell": "C3", "suit": "C", "light": 44, "fade": 1},
-      "moves": 25,
+      "textKey": "lamplighter",
+      "board": ["WSOCS", "CCWCC", "CCLSC", "OCOCS", "CWCWO", "SCCOW"],
+      "target": {"cell": "C3", "suit": "C", "light": 44, "label": "quayLamp", "fade": 1},
+      "moves": 22,
       "difficulty": "normal",
       "par": 15,
       "refill": {"type": "guided", "seed": 215, "weights": {"C": 3, "W": 1, "S": 1, "O": 1}}
+    },
+    {
+      "id": "003",
+      "scene": "mill",
+      "textKey": "highWater",
+      "board": ["WSOWSC", "SCCOWO", "OWSWCS", "COOCWO", "OLCCSW", "CCWWOC", "CCWOOS"],
+      "target": {"cell": "B5", "suit": "C", "light": 32, "label": "millInlet"},
+      "moves": 18,
+      "difficulty": "normal",
+      "par": 15,
+      "refill": {"type": "guided", "seed": 327, "weights": {"C": 3, "W": 1, "S": 1, "O": 1}}
+    },
+    {
+      "id": "004",
+      "scene": "dock",
+      "textKey": "mooring",
+      "board": [".WSSCO.", "WSSCSSO", "OSLSSWC", "SSWOSSS", "CSSSLSS", "OWSSOSW"],
+      "targets": [
+        {"cell": "C3", "suit": "S", "light": 24, "label": "bowCord"},
+        {"cell": "E5", "suit": "S", "light": 24, "label": "sternCord"}
+      ],
+      "linksTargets": true,
+      "moves": 26,
+      "difficulty": "normal",
+      "par": 15,
+      "refill": {"type": "guided", "seed": 449, "weights": {"S": 3, "C": 1, "W": 1, "O": 1}},
+      "guide": [
+        {"cue": "linkSquare", "path": "C3 E3 E5 C5 C3", "hint": [3.7, 2.24, "bottom"], "arrivals": ["", "", "SS", "SCS", "SO", "", ""]},
+        {"cue": "linkedAim", "path": "C1 C2", "hint": [2.17, 1.34, "right"], "arrivals": ["", "", "OS", "", "", "", ""]}
+      ]
     }
   ]
 }

@@ -73,6 +73,7 @@ class _CampaignPageState extends State<CampaignPage> {
     return MaterialPageRoute(
       builder: (context) => PuzzlePage(
         puzzle: puzzle,
+        phaseNumber: phase + 1,
         artwork: widget.artwork,
         onClear: next == null ? null : () => widget.onUnlock(next),
         onContinue: next == null
@@ -87,7 +88,6 @@ class _CampaignPageState extends State<CampaignPage> {
   @override
   Widget build(BuildContext context) {
     final strings = AppLocalizations.of(context)!;
-    final language = Localizations.localeOf(context).languageCode;
     final puzzles = widget.catalog.puzzles;
     return Scaffold(
       key: const Key('campaign-path'),
@@ -171,7 +171,6 @@ class _CampaignPageState extends State<CampaignPage> {
                                   _phase(
                                     strings,
                                     puzzle,
-                                    language,
                                     stops[index],
                                     index,
                                     unlocked,
@@ -247,12 +246,11 @@ class _CampaignPageState extends State<CampaignPage> {
   Widget _phase(
     AppLocalizations strings,
     PuzzleDefinition puzzle,
-    String language,
     Offset stop,
     int index,
     int unlocked,
   ) {
-    final title = puzzle.words(language).title;
+    final title = puzzleWords(strings, puzzle.textKey).title;
     const tapWidth =
         CampaignStyle.medallion + CampaignStyle.suitBadgeOverhang * 2;
     final locked = index > unlocked;

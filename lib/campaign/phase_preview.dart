@@ -22,7 +22,12 @@ class PhasePreview extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final strings = AppLocalizations.of(context)!;
-    final words = puzzle.words(Localizations.localeOf(context).languageCode);
+    final words = puzzleWords(strings, puzzle.textKey);
+    final quota = switch (puzzle.scene) {
+      PuzzleScene.mill => strings.waterGoal(puzzle.target),
+      PuzzleScene.dock => strings.cordGoal(puzzle.target),
+      _ => strings.lightGoal(puzzle.target),
+    };
     return Scaffold(
       key: const Key('phase-preview'),
       body: PaperSurface(
@@ -113,7 +118,7 @@ class PhasePreview extends StatelessWidget {
                                       ),
                                       const SizedBox(height: 7),
                                       Text(
-                                        '${suitName(strings, puzzle.scoringSuit)} · ${strings.lightGoal(puzzle.target)}',
+                                        '${suitName(strings, puzzle.scoringSuit)} · $quota',
                                         style: labelType.copyWith(
                                           color: mutedInk,
                                         ),

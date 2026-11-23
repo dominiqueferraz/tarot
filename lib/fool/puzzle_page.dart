@@ -18,6 +18,7 @@ import 'tableau_art.dart';
 class PuzzlePage extends StatefulWidget {
   const PuzzlePage({
     required this.puzzle,
+    required this.phaseNumber,
     required this.artwork,
     this.onClear,
     this.onContinue,
@@ -25,6 +26,7 @@ class PuzzlePage extends StatefulWidget {
   });
 
   final PuzzleDefinition puzzle;
+  final int phaseNumber;
   final Artwork artwork;
   final VoidCallback? onClear;
   final void Function(BuildContext)? onContinue;
@@ -36,9 +38,8 @@ class PuzzlePage extends StatefulWidget {
 class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
   late var _deal = PuzzleDeal(widget.puzzle);
   PuzzleDefinition get _puzzle => widget.puzzle;
-  bool get _atQuay => _puzzle.scene == PuzzleScene.quay;
-  PuzzleWords get _words =>
-      _puzzle.words(Localizations.localeOf(context).languageCode);
+  BoardSize get _size => _puzzle.size;
+  bool get _animatesClear => _puzzle.scene != PuzzleScene.quay;
   Turn? _turn;
   Stroke? _demonstration;
   List<int> _path = [];
@@ -57,7 +58,7 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
         ..addStatusListener((status) {
           if (status == AnimationStatus.completed) _settled();
         });
-  late final _walkMotion =
+  late final _sceneMotion =
       AnimationController(vsync: this, duration: BoardMotion.scene)
         ..addStatusListener((status) {
           if (status == AnimationStatus.completed) setState(() {});
@@ -83,35 +84,49 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
     _rejectTimer?.cancel();
     _guideMotion.dispose();
     _fallMotion.dispose();
-    _walkMotion.dispose();
+    _sceneMotion.dispose();
     super.dispose();
   }
 
+  TargetLink? get _visibleLink {
+    final turn = _turn;
+    if (turn == null ||
+        (turn.stroke.linkedTargets.isNotEmpty &&
+            _fallMotion.value >= BoardMotion.releaseFraction)) {
+      return _deal.link;
+    }
+    return turn.linkBefore;
+  }
+
   bool get _acceptsInput => _turn == null && !_deal.finished;
-  int get _displayLight => _turn?.lightBefore ?? _deal.light;
+  int _displayProgress(int cell) =>
+      _turn?.progressBefore[cell] ??
+      (_turn == null ? _deal.progressAt(cell) : 0);
+
   double get _fadeProgress =>
       _turn == null || _deal.faded == 0 || _reducedMotion
       ? 1
       : (_fallMotion.value / BoardMotion.fadeCueFraction).clamp(0.0, 1.0);
 
-  double get _fixtureLight {
-    final light = _displayLight;
-    if (_turn == null || _deal.faded == 0) return light / _puzzle.target;
-    return (light - _deal.faded * Curves.easeOut.transform(_fadeProgress)) /
-        _puzzle.target;
+  double _fixtureProgress(int cell) {
+    final fade = _turn == null ? 0 : _deal.fadedAt(cell);
+    return (_displayProgress(cell) -
+            fade * Curves.easeOut.transform(_fadeProgress)) /
+        _puzzle.targets[cell]!.quota;
   }
 
-  double get _sceneLight {
-    final turn = _turn;
-    if (turn == null || _deal.light <= turn.lightBefore) return _fixtureLight;
+  double _sceneProgress(int cell) {
+    final before = _displayProgress(cell);
+    final after = _deal.progressAt(cell);
+    if (_turn == null || after <= before) return _fixtureProgress(cell);
     const arrival = Interval(
       BoardMotion.releaseFraction,
       1,
       curve: Curves.easeOut,
     );
     final progress = arrival.transform(_fallMotion.value);
-    return (turn.lightBefore + (_deal.light - turn.lightBefore) * progress) /
-        _puzzle.target;
+    return (before + (after - before) * progress) /
+        _puzzle.targets[cell]!.quota;
   }
 
   double _guideCycle(Stroke clue) =>
@@ -132,8 +147,8 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
     setState(() {
       _turn = null;
       _animateGuide(_deal.demonstration);
-      if (_deal.won && !_atQuay && !_reducedMotion) {
-        _walkMotion.forward(from: 0);
+      if (_deal.won && _animatesClear && !_reducedMotion) {
+        _sceneMotion.forward(from: 0);
       }
     });
   }
@@ -141,7 +156,7 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
   void _restart() {
     _rejectTimer?.cancel();
     _fallMotion.stop();
-    _walkMotion.reset();
+    _sceneMotion.reset();
     setState(() {
       _deal = PuzzleDeal(_puzzle);
       _turn = null;
@@ -206,28 +221,28 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
     _preview = _deal.inspect(_path);
   }
 
-  int? _hit(Offset point, double width, {bool centered = true}) {
-    final column = (point.dx * boardSide / width).floor();
-    final row = (point.dy * boardSide / width).floor();
-    final cell = cellAt(column, row);
+  int? _hit(Offset point, double pitch, {bool centered = true}) {
+    final column = (point.dx / pitch).floor();
+    final row = (point.dy / pitch).floor();
+    final cell = _size.cellAt(column, row);
     if (cell == null || !centered) return cell;
     final delta = Offset(
-      point.dx * boardSide / width - column - .5,
-      point.dy * boardSide / width - row - .5,
+      point.dx / pitch - column - .5,
+      point.dy / pitch - row - .5,
     );
     return delta.distanceSquared <= BoardStyle.hitRadius * BoardStyle.hitRadius
         ? cell
         : null;
   }
 
-  void _pointerDown(PointerDownEvent event, double width) {
+  void _pointerDown(PointerDownEvent event, double pitch) {
     if (!_acceptsInput ||
         _activePointer != null ||
         (event.buttons & kPrimaryButton) == 0) {
       return;
     }
-    final cell = _hit(event.localPosition, width, centered: false);
-    if (cell == null) return;
+    final cell = _hit(event.localPosition, pitch, centered: false);
+    if (cell == null || _puzzle.masked.contains(cell)) return;
     _rejectTimer?.cancel();
     setState(() {
       _clearGesture();
@@ -238,26 +253,27 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
     });
   }
 
-  void _pointerMove(PointerEvent event, double width) {
+  void _pointerMove(PointerEvent event, double pitch) {
     if (event.pointer != _activePointer || _lastPoint == null) return;
     final start = _lastPoint!;
     final end = event.localPosition;
     // Sample the intervening cells so fast swipes behave like slow ones.
-    final steps = ((end - start).distance / (width / boardSide / 6))
-        .ceil()
-        .clamp(1, 128);
+    final steps = ((end - start).distance / (pitch / 6)).ceil().clamp(
+      1,
+      math.max(128, 6 * math.max(_size.columns, _size.rows)),
+    );
     setState(() {
       for (var step = 1; step <= steps; step++) {
-        final cell = _hit(Offset.lerp(start, end, step / steps)!, width);
+        final cell = _hit(Offset.lerp(start, end, step / steps)!, pitch);
         if (cell != null) _visit(cell);
       }
       _lastPoint = end;
     });
   }
 
-  void _pointerUp(PointerUpEvent event, double width) {
+  void _pointerUp(PointerUpEvent event, double pitch) {
     if (event.pointer != _activePointer) return;
-    _pointerMove(event, width);
+    _pointerMove(event, pitch);
     _activePointer = null;
     _lastPoint = null;
     _commit();
@@ -285,7 +301,10 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
     }
     final key = event.logicalKey;
     final current = _keyboardCell;
-    final cell = current ?? _demonstration?.path.first ?? 0;
+    final cell =
+        current ??
+        _demonstration?.path.first ??
+        _deal.board.indexWhere((piece) => piece != null);
     final (dx, dy) = switch (key) {
       LogicalKeyboardKey.arrowLeft => (-1, 0),
       LogicalKeyboardKey.arrowRight => (1, 0),
@@ -294,11 +313,18 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
       _ => (0, 0),
     };
     if (dx != 0 || dy != 0) {
-      setState(
-        () => _keyboardCell = current == null
-            ? cell
-            : cellAt(columnOf(cell) + dx, rowOf(cell) + dy) ?? cell,
+      final neighbour = _size.cellAt(
+        _size.columnOf(cell) + dx,
+        _size.rowOf(cell) + dy,
       );
+      setState(() {
+        _keyboardCell =
+            current == null ||
+                neighbour == null ||
+                _puzzle.masked.contains(neighbour)
+            ? cell
+            : neighbour;
+      });
       return KeyEventResult.handled;
     }
     switch (key) {
@@ -318,7 +344,10 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
   bool get _showResult =>
       _deal.finished &&
       _turn == null &&
-      (!_deal.won || _atQuay || _reducedMotion || _walkMotion.isCompleted);
+      (!_deal.won ||
+          !_animatesClear ||
+          _reducedMotion ||
+          _sceneMotion.isCompleted);
 
   @override
   Widget build(BuildContext context) {
@@ -351,7 +380,8 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
                   : math.min(BoardStyle.maxWidth, contentWidth);
               final size = math.min(
                 maxWidth,
-                availableHeight / (1 + 1 / SceneLayout.ratio),
+                availableHeight /
+                    (1 / _size.aspectRatio + 1 / SceneLayout.ratio),
               );
               final width = size.clamp(128.0, contentWidth).toDouble();
               final panelHeight =
@@ -362,8 +392,21 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
                 wide: wide,
                 suitWidth: panelHeight + BoardStyle.frameWidth * 2,
               );
-              final board = _tableau(strings, width, panelHeight, _showResult);
-              return Column(
+              final boardWidth = math.min(
+                width - BoardStyle.frameWidth * 2,
+                math.max(1.0, availableHeight - panelHeight) *
+                    _size.aspectRatio,
+              );
+              final resultOnBoard =
+                  boardWidth / _size.aspectRatio >= BoardStyle.resultMinHeight;
+              final board = _tableau(
+                strings,
+                width,
+                panelHeight,
+                boardWidth,
+                showResult: _showResult && resultOnBoard,
+              );
+              final content = Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -399,6 +442,15 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
                   ),
                 ],
               );
+              return _showResult && !resultOnBoard
+                  ? Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        content,
+                        BlockSemantics(child: _result(strings)),
+                      ],
+                    )
+                  : content;
             },
           ),
         ),
@@ -406,23 +458,34 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
     );
   }
 
-  String _guideExplanation(AppLocalizations strings, GuideCue cue, int light) =>
-      switch (cue) {
-        GuideCue.match => strings.guideMatch,
-        GuideCue.square => strings.guideSquare,
-        GuideCue.rectangle => strings.guideCupRectangle,
-        GuideCue.enclose => strings.guideEnclose(
-          light,
-          suitName(strings, _puzzle.scoringSuit),
-        ),
-        GuideCue.aim => strings.guideAim(
-          light,
-          suitName(strings, _puzzle.scoringSuit),
-        ),
-        GuideCue.wildcard => strings.guideCoinWildcard,
-      };
+  String _guideExplanation(
+    AppLocalizations strings,
+    GuideCue cue,
+    Stroke stroke,
+  ) => switch (cue) {
+    GuideCue.match => strings.guideMatch,
+    GuideCue.square => strings.guideSquare,
+    GuideCue.rectangle => strings.guideCupRectangle,
+    GuideCue.enclose => strings.guideEnclose(
+      stroke.light,
+      suitName(strings, _puzzle.scoringSuit),
+    ),
+    GuideCue.aim => strings.guideAim(
+      stroke.light,
+      suitName(strings, _puzzle.scoringSuit),
+    ),
+    GuideCue.wildcard => strings.guideCoinWildcard,
+    GuideCue.linkSquare => strings.guideLinkSquare(
+      suitName(strings, _puzzle.scoringSuit),
+    ),
+    GuideCue.linkedAim => strings.guideLinkedAim(
+      suitName(strings, _puzzle.scoringSuit),
+      stroke.gains.values.first,
+    ),
+  };
 
   Widget _navigation(AppLocalizations strings, EdgeInsets sides) {
+    final link = _visibleLink;
     return Stack(
       alignment: Alignment.center,
       children: [
@@ -442,7 +505,41 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
                   icon: const Icon(Icons.arrow_back_rounded),
                 ),
               ),
-              const Spacer(),
+              Expanded(
+                child: Align(
+                  alignment: AlignmentDirectional.centerStart,
+                  child: PaperSurface(
+                    child: Padding(
+                      padding: const EdgeInsetsDirectional.fromSTEB(
+                        2,
+                        4,
+                        10,
+                        4,
+                      ),
+                      child: Text(
+                        '${widget.phaseNumber}',
+                        semanticsLabel: strings.puzzleNumber(
+                          widget.phaseNumber,
+                        ),
+                        style: labelType.copyWith(color: mutedInk),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              if (link != null)
+                PaperSurface(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    child: Text(
+                      strings.linkMovesRemaining(link.movesLeft),
+                      style: labelType.copyWith(color: blue),
+                    ),
+                  ),
+                ),
               if (_deal.guide != null)
                 PaperSurface(
                   child: Padding(
@@ -488,6 +585,7 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
     required bool wide,
     required double suitWidth,
   }) {
+    final words = puzzleWords(strings, _puzzle.textKey);
     return Row(
       children: [
         Expanded(
@@ -496,11 +594,11 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
             children: [
               Semantics(
                 header: true,
-                child: Text(_words.title, style: displayType(wide ? 32 : 38)),
+                child: Text(words.title, style: displayType(wide ? 32 : 38)),
               ),
               const SizedBox(height: 5),
               Text(
-                _words.objective,
+                words.objective,
                 style: labelType.copyWith(fontSize: 14, color: mutedInk),
               ),
             ],
@@ -554,9 +652,11 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
     AppLocalizations strings,
     double width,
     double panelHeight,
-    bool finished,
-  ) {
-    final inside = width - BoardStyle.frameWidth * 2;
+    double boardWidth, {
+    required bool showResult,
+  }) {
+    final boardHeight = boardWidth / _size.aspectRatio;
+    final pitch = boardWidth / _size.columns;
     final guide = _demonstration;
     final lesson = _deal.guide;
     return SizedBox(
@@ -569,19 +669,26 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
               Expanded(
                 child: _frame(
                   SizedBox(
-                    key: Key(_atQuay ? 'quay-scene' : 'fool-ridge'),
+                    key: switch (_puzzle.scene) {
+                      PuzzleScene.ridge => const Key('fool-ridge'),
+                      PuzzleScene.quay => const Key('quay-scene'),
+                      PuzzleScene.mill => const Key('mill-scene'),
+                      PuzzleScene.dock => const Key('dock-scene'),
+                    },
                     height: panelHeight,
                     child: AnimatedBuilder(
-                      animation: Listenable.merge([_walkMotion, _fallMotion]),
+                      animation: Listenable.merge([_sceneMotion, _fallMotion]),
                       builder: (context, child) {
                         final motion = _deal.won && _reducedMotion
                             ? 1.0
-                            : _walkMotion.value;
+                            : _sceneMotion.value;
                         return PuzzleIllustration(
                           artwork: widget.artwork,
                           scene: _puzzle.scene,
-                          light: _sceneLight,
-                          walk: motion,
+                          progress: _puzzle.targets.keys
+                              .map(_sceneProgress)
+                              .toList(),
+                          motion: motion,
                         );
                       },
                     ),
@@ -616,8 +723,9 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
           ),
           const SizedBox(height: BoardStyle.spacing),
           _frame(
-            SizedBox.square(
-              dimension: inside,
+            SizedBox(
+              width: boardWidth,
+              height: boardHeight,
               child: Stack(
                 fit: StackFit.expand,
                 children: [
@@ -627,9 +735,9 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
                     child: Listener(
                       key: const Key('fool-grid'),
                       behavior: HitTestBehavior.opaque,
-                      onPointerDown: (event) => _pointerDown(event, inside),
-                      onPointerMove: (event) => _pointerMove(event, inside),
-                      onPointerUp: (event) => _pointerUp(event, inside),
+                      onPointerDown: (event) => _pointerDown(event, pitch),
+                      onPointerMove: (event) => _pointerMove(event, pitch),
+                      onPointerUp: (event) => _pointerUp(event, pitch),
                       onPointerCancel: (event) {
                         if (event.pointer == _activePointer) _cancel();
                       },
@@ -638,7 +746,7 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
                           _guideMotion,
                           _fallMotion,
                         ]),
-                        child: _accessibilityGrid(strings, inside),
+                        child: _accessibilityGrid(strings, pitch),
                         builder: (context, child) {
                           final demonstration = _demonstration;
                           final cycle = demonstration == null
@@ -649,7 +757,10 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
                               board: _deal.board,
                               artwork: widget.artwork,
                               puzzle: _puzzle,
-                              light: _fixtureLight,
+                              progress: {
+                                for (final cell in _puzzle.targets.keys)
+                                  cell: _fixtureProgress(cell),
+                              },
                               fadeProgress: _fadeProgress,
                               path: _path,
                               preview: _preview,
@@ -657,6 +768,7 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
                               guideTime:
                                   (_guideMotion.value * cycle * 2) % cycle,
                               turn: _turn,
+                              link: _visibleLink,
                               turnProgress: _fallMotion.value,
                               keyboardCell: _keyboardCell,
                               reducedMotion: _reducedMotion,
@@ -668,29 +780,32 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
                       ),
                     ),
                   ),
-                  _markerValue(inside / boardSide),
+                  for (final cell in _puzzle.targets.keys)
+                    _markerValue(cell, pitch),
                   if (guide != null && lesson != null && _path.isEmpty)
                     Positioned.fill(
                       child: GuideHint(
+                        pitch: pitch,
                         placement: lesson.hint,
                         explanation: _guideExplanation(
                           strings,
                           lesson.cue,
-                          guide.light,
+                          guide,
                         ),
                       ),
                     ),
                   if (_turn == null &&
                       _deal.faded > 0 &&
                       _path.isEmpty &&
-                      !finished)
+                      !_showResult)
                     Positioned.fill(
                       child: GuideHint(
+                        pitch: pitch,
                         placement: _fadeHintPlacement,
                         explanation: strings.lampFadingHint(_puzzle.fading),
                       ),
                     ),
-                  if (finished) BlockSemantics(child: _result(strings)),
+                  if (showResult) BlockSemantics(child: _result(strings)),
                 ],
               ),
             ),
@@ -700,10 +815,10 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
     );
   }
 
-  Widget _markerValue(double pitch) {
+  Widget _markerValue(int cell, double pitch) {
     return Positioned(
-      left: columnOf(_puzzle.marker) * pitch,
-      top: (rowOf(_puzzle.marker) + .73) * pitch,
+      left: _size.columnOf(cell) * pitch,
+      top: (_size.rowOf(cell) + .73) * pitch,
       width: pitch,
       child: IgnorePointer(
         child: ExcludeSemantics(
@@ -713,8 +828,15 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
               child: Padding(
                 padding: EdgeInsets.symmetric(horizontal: pitch * .07),
                 child: Text(
-                  '$_displayLight/${_puzzle.target}',
-                  key: Key(_atQuay ? 'quay-lamp-value' : 'trail-marker-value'),
+                  '${_displayProgress(cell)}/${_puzzle.targets[cell]!.quota}',
+                  key: switch (_puzzle.scene) {
+                    PuzzleScene.ridge => const Key('trail-marker-value'),
+                    PuzzleScene.quay => const Key('quay-lamp-value'),
+                    PuzzleScene.mill => const Key('mill-inlet-value'),
+                    PuzzleScene.dock => Key(
+                      'cord-value-${_size.cellLabel(cell)}',
+                    ),
+                  },
                   textScaler: TextScaler.noScaling,
                   style: TextStyle(
                     color: paper,
@@ -731,11 +853,15 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
   }
 
   HintPlacement get _fadeHintPlacement {
-    final row = rowOf(_puzzle.marker);
-    return row < boardSide - 2
-        ? (x: columnOf(_puzzle.marker) + .5, y: row + 1.04, tail: HintTail.top)
+    final row = _size.rowOf(_puzzle.marker);
+    return row < _size.rows - 2
+        ? (
+            x: _size.columnOf(_puzzle.marker) + .5,
+            y: row + 1.04,
+            tail: HintTail.top,
+          )
         : (
-            x: columnOf(_puzzle.marker) + .5,
+            x: _size.columnOf(_puzzle.marker) + .5,
             y: row + .10,
             tail: HintTail.bottom,
           );
@@ -755,18 +881,13 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
     ),
   );
 
-  Widget _accessibilityGrid(AppLocalizations strings, double width) {
-    final pitch = width / boardSide;
+  Widget _accessibilityGrid(AppLocalizations strings, double pitch) {
     final labels = {
       Suit.wand: strings.wand,
       Suit.cup: strings.cup,
       Suit.sword: strings.sword,
       Suit.coin: strings.coin,
     };
-    final markerLabel = [
-      '${_words.target} $_displayLight/${_puzzle.target}',
-      if (_turn == null && _deal.faded > 0) strings.lampFaded(_deal.faded),
-    ].join(', ');
     return Semantics(
       container: true,
       explicitChildNodes: true,
@@ -775,31 +896,41 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
           : '${strings.board}, ${strings.gestureGuide}',
       child: Stack(
         children: [
-          for (var cell = 0; cell < cellCount; cell++)
-            Positioned(
-              left: columnOf(cell) * pitch,
-              top: rowOf(cell) * pitch,
-              width: pitch,
-              height: pitch,
-              child: Semantics(
-                sortKey: OrdinalSortKey(cell.toDouble()),
-                label:
-                    '${String.fromCharCode(65 + columnOf(cell))}${rowOf(cell) + 1}, '
-                    '${labels[_deal.board[cell]] ?? markerLabel}',
-                selected: _path.contains(cell),
-                onTap: _acceptsInput ? () => _markCell(cell) : null,
-                customSemanticsActions: _path.isEmpty
-                    ? null
-                    : {
-                        CustomSemanticsAction(label: strings.commit): _commit,
-                        CustomSemanticsAction(label: strings.cancel): _cancel,
-                      },
-                child: const SizedBox.expand(),
+          for (var cell = 0; cell < _size.cellCount; cell++)
+            if (!_puzzle.masked.contains(cell))
+              Positioned(
+                left: _size.columnOf(cell) * pitch,
+                top: _size.rowOf(cell) * pitch,
+                width: pitch,
+                height: pitch,
+                child: Semantics(
+                  sortKey: OrdinalSortKey(cell.toDouble()),
+                  label:
+                      '${_size.cellLabel(cell)}, '
+                      '${labels[_deal.board[cell]] ?? _targetLabel(strings, cell)}',
+                  selected: _path.contains(cell),
+                  onTap: _acceptsInput ? () => _markCell(cell) : null,
+                  customSemanticsActions: _path.isEmpty
+                      ? null
+                      : {
+                          CustomSemanticsAction(label: strings.commit): _commit,
+                          CustomSemanticsAction(label: strings.cancel): _cancel,
+                        },
+                  child: const SizedBox.expand(),
+                ),
               ),
-            ),
         ],
       ),
     );
+  }
+
+  String _targetLabel(AppLocalizations strings, int cell) {
+    final target = _puzzle.targets[cell]!;
+    return [
+      '${targetName(strings, target.label)} ${_displayProgress(cell)}/${target.quota}',
+      if (_turn == null && _deal.fadedAt(cell) > 0)
+        strings.lampFaded(_deal.fadedAt(cell)),
+    ].join(', ');
   }
 
   Widget _result(AppLocalizations strings) {
@@ -838,7 +969,14 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
                 ),
               const SizedBox(height: 6),
               Text(
-                _deal.won ? strings.clear : '${_deal.light}/${_puzzle.target}',
+                _deal.won
+                    ? strings.clear
+                    : _puzzle.targets.entries
+                          .map(
+                            (target) =>
+                                '${_deal.progressAt(target.key)}/${target.value.quota}',
+                          )
+                          .join(' · '),
                 style: displayType(27),
                 textAlign: TextAlign.center,
               ),

@@ -15,6 +15,7 @@ abstract final class BoardStyle {
   static const frameWidth = 1.4;
   static const outerPadding = 16.0;
   static const maxWidth = 490.0;
+  static const resultMinHeight = 200.0;
   static const sidebarWidth = 250.0;
   static const sidebarGap = 22.0;
   static const wideBreakpoint = 580.0;

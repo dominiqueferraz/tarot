@@ -140,9 +140,9 @@ Extract `playtest/`, `dist/` and the two `tools/*.test.js` files from `Arcana-Co
 
 The Fool follows the lit ridge trail down to the quay at night, where an empty boat is tied to a mooring post. The same staff and bundle identify the Fool at the landing. The illustrated lamp grows as it fills and its reflection stretches across the water. Both recede when the lamp loses light. At 44 light the lamp blazes over the moored boat.
 
-The fixed lamp is at C3. The player has 25 moves, par 15, and free play from the first stroke. Use Cups to pour oil into the lamp. Close **B2 → D2 → D4 → B4 → B2** for 4 light or aim **A3 → B3** for 2. Both use the same shared rules as 001. The lamp dims by 1 on a paid stroke that earns no light, down to zero. An actual loss briefly dims the lamp and contracts its glow. An in-board bubble explains the effect. The bubble clears at the start of a trace. The guided refill samples four weighted fills, with Cups three times as likely as each other suit before scoring, and favours matches in the lower rows and available aimed Cup pours. Retry restores the opening and the seed.
+The fixed lamp is at C3 on a 5 × 6 board. The player has 22 moves, par 15, and free play from the first stroke. Use Cups to pour oil into the lamp. Close **B2 → D2 → D4 → B4 → B2** for 4 light or aim **A3 → B3** for 2. Both use the same shared rules as 001. The lamp dims by 1 on a paid stroke that earns no light, down to zero. An actual loss briefly dims the lamp and contracts its glow. An in-board bubble explains the effect. The bubble clears at the start of a trace. The guided refill samples four weighted fills, with Cups three times as likely as each other suit before scoring, and favours matches in the lower rows and available aimed Cup pours. Retry restores the opening and the seed.
 
-The [puzzle catalog](../assets/puzzles/fool.json) contains the starting grid, localized labels and refill seed. The next-puzzle action after 001 opens the preview for 002. The campaign path keeps both phases accessible once 002 is unlocked.
+The [puzzle catalog](../assets/puzzles/fool.json) contains the starting grid, localization keys and refill seed. The next-puzzle action after 001 opens the preview for 002. The campaign path keeps both phases accessible once 002 is unlocked.
 
 ### Archived lamp-and-bell deal
 
@@ -184,6 +184,33 @@ A player can also inspect the Cup group at the top left or trace the Wand elbow 
 **Payoff.** B4 → C4: one stroke lights the lamp and rings the bell.
 
 **Historical status.** The short board used the printed ribbons and a four-move limit. Its routes concern that layout. The archived core playtest uses one trail marker and the supply described above. The fixed-pair ferry study is a reference for the timing of the bell and boat.
+
+## Level 003 · High Water
+
+The Fool reaches a mill beside a dry intake channel. Fill the inlet at B5 with 32 units of water on a 6 × 7 board. The deal opens in free play with 18 moves and a par of 15. A Cup trace that ends facing the inlet pours one unit per Cup. A Cup rectangle can also feed the inlet under the shared scoring rules. Water carries over between strokes. As it rises, the channel fills, and the wheel turns on completion.
+
+The opening has three ways in. These are example starts with verified clears from the [authored board and refill seed](../assets/puzzles/fool.json).
+
+| Approach | Opening move | Example clear |
+|---|---|---|
+| Build a rectangle with gravity | Clear the Wands at C6 → C7. The Cups from C2 and C5 fall to C4 and C7. Close A4 → C4 → C7 → A7 → A4 to clear 11 pieces and pour 4 units. | 7 moves |
+| Pour from below | Trace A6 → A7 → B7 → B6 for 4 units. The fall sets up a rectangle using the inlet as a corner. | 5 moves |
+| Pour from the right | Trace D4 → D5 → C5 for 3 units. Use the lower Cup group next and clear around the inlet to bring new pours into reach. | 11 moves |
+
+Guided refill weights Cups three times as heavily as each other suit. Following nearby Cup pairs without checking where the final step points can exhaust the moves. Lamplighter’s completion action opens the High Water preview and saves its unlock on the campaign path.
+
+## Level 004 · The Mooring
+
+At the dusk dock, cut 24 strands from each of two cords in 26 moves, with a par of 15. The board is 7 × 6, with A1 and G1 masked. Only playable cells receive pieces. The bow cord at C3 and stern cord at E5 stand at opposite corners of a square.
+
+| Guided move | What the player sees |
+|---|---|
+| C3 → E3 → E5 → C5 → C3 | The Sword square cuts 5 strands from each cord. Blue rings and a bolt join them. The link has two moves left. |
+| C1 → C2 | Aim at the bow. Both cords gain 2 cuts, and the bolt flashes. The guide hands back control at 7/24 on each cord with one linked move left. |
+
+Try G5 → F5 after the handoff to use the last linked move from the stern side. Each cut from an aimed stroke reaches both linked cords in full. Any paid move uses one turn, including a miss. A new qualifying square refreshes the link. Rectangles still cut the cords they cover under the shared scoring rules.
+
+Guided refill weights Swords three times as heavily as each other suit. The boat leaves once both counters reach 24. Clearing High Water unlocks The Mooring.
 
 ## Lozenge playtest routes
 

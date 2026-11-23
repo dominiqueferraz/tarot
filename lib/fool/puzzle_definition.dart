@@ -15,16 +15,28 @@ enum Suit {
       _named(values, symbol, (suit) => suit.symbol, 'suit');
 }
 
-enum PuzzleScene { ridge, quay }
+enum PuzzleScene { ridge, quay, mill, dock }
+
+enum PuzzleTextKey { foolsStep, lamplighter, highWater, mooring }
+
+enum TargetLabel { trailMarker, quayLamp, millInlet, bowCord, sternCord }
 
 enum PuzzleDifficulty { normal, hard, superHard }
 
-enum GuideCue { match, square, rectangle, enclose, aim, wildcard }
+enum GuideCue {
+  match,
+  square,
+  rectangle,
+  enclose,
+  aim,
+  wildcard,
+  linkSquare,
+  linkedAim,
+}
 
 enum HintTail { top, right, bottom }
 
 typedef HintPlacement = ({double x, double y, HintTail tail});
-typedef PuzzleWords = ({String title, String objective, String target});
 
 class GuideMove {
   const GuideMove(this.cue, this.path, this.hint, this.arrivals);
@@ -34,7 +46,7 @@ class GuideMove {
   final HintPlacement hint;
   final List<List<Suit>> arrivals;
 
-  factory GuideMove._read(Map<String, Object?> data) {
+  factory GuideMove._read(Map<String, Object?> data, BoardSize size) {
     final cue = _field<String>(data, 'cue');
     final route = _field<String>(data, 'path').trim().split(RegExp(r'\s+'));
     final hint = _field<List<Object?>>(data, 'hint');
@@ -49,14 +61,14 @@ class GuideMove {
     }
     final x = (hint[0] as num).toDouble();
     final y = (hint[1] as num).toDouble();
-    if (x <= 0 || x >= boardSide || y <= 0 || y >= boardSide) {
+    if (x <= 0 || x >= size.columns || y <= 0 || y >= size.rows) {
       throw const FormatException(
         'Guide hint coordinates must be inside the board.',
       );
     }
     return GuideMove(
       _named(GuideCue.values, cue, (value) => value.name, 'guide cue'),
-      List.unmodifiable(route.map(_cell)),
+      List.unmodifiable(route.map(size.parseCell)),
       (
         x: x,
         y: y,
@@ -67,7 +79,11 @@ class GuideMove {
           'hint tail',
         ),
       ),
-      _columns(_field<List<Object?>>(data, 'arrivals'), allowEmpty: true),
+      _columns(
+        _field<List<Object?>>(data, 'arrivals'),
+        size.columns,
+        allowEmpty: true,
+      ),
     );
   }
 }
@@ -75,10 +91,10 @@ class GuideMove {
 sealed class Refill {
   const Refill();
 
-  factory Refill._read(Map<String, Object?> data) {
+  factory Refill._read(Map<String, Object?> data, int width) {
     return switch (_field<String>(data, 'type')) {
       'ribbons' => RibbonRefill(
-        _columns(_field<List<Object?>>(data, 'columns')),
+        _columns(_field<List<Object?>>(data, 'columns'), width),
       ),
       'guided' => GuidedRefill(
         _field<int>(data, 'seed'),
@@ -136,7 +152,7 @@ class PuzzleRules {
       refillLowerRow = _boundedInt(
         data['refillLowerRow'],
         1,
-        boardSide,
+        _refillReferenceRows,
         'refillLowerRow',
       ),
       refillLowerPairWeight = _boundedInt(
@@ -165,18 +181,32 @@ class PuzzleRules {
   final int refillLowerPairWeight;
   final int refillOtherPairWeight;
   final int refillAimWeight;
+
+  static const _refillReferenceRows = 6;
+
+  int firstLowerRow(BoardSize size) =>
+      (refillLowerRow - 1) * size.rows ~/ _refillReferenceRows;
+}
+
+class PuzzleTarget {
+  const PuzzleTarget(this.quota, this.fading, this.label);
+
+  final int quota;
+  final int fading;
+  final TargetLabel label;
 }
 
 class PuzzleDefinition {
   const PuzzleDefinition._({
     required this.id,
     required this.scene,
-    required this.text,
+    required this.textKey,
+    required this.size,
     required this.opening,
-    required this.marker,
-    required this.target,
+    required this.targets,
+    required this.masked,
+    required this.linksTargets,
     required this.scoringSuit,
-    required this.fading,
     required this.limit,
     required this.difficulty,
     required this.par,
@@ -187,12 +217,13 @@ class PuzzleDefinition {
 
   final String id;
   final PuzzleScene scene;
-  final Map<String, PuzzleWords> text;
+  final PuzzleTextKey textKey;
+  final BoardSize size;
   final List<Suit?> opening;
-  final int marker;
-  final int target;
+  final Map<int, PuzzleTarget> targets;
+  final Set<int> masked;
+  final bool linksTargets;
   final Suit scoringSuit;
-  final int fading;
   final int limit;
   final PuzzleDifficulty difficulty;
   final int par;
@@ -200,7 +231,12 @@ class PuzzleDefinition {
   final List<GuideMove> guide;
   final PuzzleRules rules;
 
-  PuzzleWords words(String language) => text[language] ?? text['en']!;
+  int get marker => targets.keys.first;
+  int get target => targets.values.first.quota;
+  int get fading => targets.values.first.fading;
+
+  bool holdsPiece(int cell) =>
+      !targets.containsKey(cell) && !masked.contains(cell);
 
   factory PuzzleDefinition._read(Map<String, Object?> data, PuzzleRules rules) {
     final id = _field<String>(data, 'id');
@@ -209,20 +245,55 @@ class PuzzleDefinition {
         ? _field<String>(data, 'difficulty')
         : 'normal';
     final rows = _field<List<Object?>>(data, 'board');
-    final target = _field<Map<String, Object?>>(data, 'target');
-    final marker = _cell(_field<String>(target, 'cell'));
-    if (rows.length != boardSide ||
-        rows.any((row) => row is! String || row.length != boardSide)) {
+    final firstRow = rows.firstOrNull;
+    if (firstRow is! String ||
+        firstRow.isEmpty ||
+        rows.any((row) => row is! String || row.length != firstRow.length)) {
       throw const FormatException(
-        'The board must have six rows of six symbols.',
+        'The board needs nonempty rows of equal width.',
       );
     }
+    final size = BoardSize(firstRow.length, rows.length);
     final symbols = rows.join().split('');
-    if (symbols[marker] != 'L' ||
-        symbols.where((symbol) => symbol == 'L').length != 1) {
-      throw const FormatException('The board needs one L at the target cell.');
+    final entries = data.containsKey('targets')
+        ? _field<List<Object?>>(
+            data,
+            'targets',
+          ).map((value) => _object(value, 'target'))
+        : [_field<Map<String, Object?>>(data, 'target')];
+    final targets = <int, PuzzleTarget>{};
+    Suit? scoringSuit;
+    for (final entry in entries) {
+      final cell = size.parseCell(_field<String>(entry, 'cell'));
+      if (symbols[cell] != 'L' || targets.containsKey(cell)) {
+        throw const FormatException('Each L needs exactly one target.');
+      }
+      final suit = Suit.read(_field<String>(entry, 'suit'));
+      if (scoringSuit != null && scoringSuit != suit) {
+        throw const FormatException('Targets must share a scoring suit.');
+      }
+      scoringSuit = suit;
+      targets[cell] = PuzzleTarget(
+        _boundedInt(entry['light'], 1, 999, 'target.light'),
+        _boundedInt(entry['fade'] ?? 0, 0, 999, 'target.fade'),
+        _named(
+          TargetLabel.values,
+          _field<String>(entry, 'label'),
+          (value) => value.name,
+          'target label',
+        ),
+      );
     }
-    final text = _field<Map<String, Object?>>(data, 'text');
+    if (scoringSuit == null ||
+        symbols.where((value) => value == 'L').length != targets.length) {
+      throw const FormatException(
+        'The board needs at least one target and one L per target.',
+      );
+    }
+    final masked = {
+      for (var cell = 0; cell < symbols.length; cell++)
+        if (symbols[cell] == '.') cell,
+    };
     final moveLimit = _boundedInt(data['moves'], 1, 999, 'moves');
     final guide = data['guide'] == null
         ? const <GuideMove>[]
@@ -230,7 +301,7 @@ class PuzzleDefinition {
             _field<List<Object?>>(
               data,
               'guide',
-            ).map((move) => GuideMove._read(_object(move, 'guide move'))),
+            ).map((move) => GuideMove._read(_object(move, 'guide move'), size)),
           );
     if (guide.length >= moveLimit) {
       throw const FormatException('The guide must leave free-play moves.');
@@ -238,17 +309,26 @@ class PuzzleDefinition {
     return PuzzleDefinition._(
       id: id,
       scene: _named(PuzzleScene.values, scene, (value) => value.name, 'scene'),
-      text: Map.unmodifiable({
-        for (final language in ['en', 'pt', 'es'])
-          language: _words(_field<Map<String, Object?>>(text, language)),
-      }),
-      opening: List.unmodifiable(
-        symbols.map((symbol) => symbol == 'L' ? null : Suit.read(symbol)),
+      textKey: _named(
+        PuzzleTextKey.values,
+        _field<String>(data, 'textKey'),
+        (value) => value.name,
+        'puzzle text key',
       ),
-      marker: marker,
-      target: _boundedInt(target['light'], 1, 999, 'target.light'),
-      scoringSuit: Suit.read(_field<String>(target, 'suit')),
-      fading: _boundedInt(target['fade'] ?? 0, 0, 999, 'target.fade'),
+      size: size,
+      opening: List.unmodifiable([
+        for (var cell = 0; cell < symbols.length; cell++)
+          if (targets.containsKey(cell) || masked.contains(cell))
+            null
+          else
+            Suit.read(symbols[cell]),
+      ]),
+      targets: Map.unmodifiable(targets),
+      masked: Set.unmodifiable(masked),
+      linksTargets:
+          data.containsKey('linksTargets') &&
+          _field<bool>(data, 'linksTargets'),
+      scoringSuit: scoringSuit,
       limit: moveLimit,
       difficulty: _named(
         PuzzleDifficulty.values,
@@ -257,7 +337,10 @@ class PuzzleDefinition {
         'difficulty',
       ),
       par: _boundedInt(data['par'], 1, moveLimit, 'par'),
-      refill: Refill._read(_field<Map<String, Object?>>(data, 'refill')),
+      refill: Refill._read(
+        _field<Map<String, Object?>>(data, 'refill'),
+        size.columns,
+      ),
       guide: guide,
       rules: rules,
     );
@@ -272,7 +355,7 @@ class PuzzleCatalog {
 
   factory PuzzleCatalog.parse(String source) {
     final data = _object(jsonDecode(source), 'catalog');
-    if (data['version'] != 1) {
+    if (data['version'] != 2) {
       throw const FormatException('Unknown puzzle format version.');
     }
     final rules = PuzzleRules._read(
@@ -310,31 +393,22 @@ class PuzzleCatalog {
       .clamp(0, puzzles.length - 1);
 }
 
-int _cell(String value) {
-  if (!RegExp(r'^[A-F][1-6]$').hasMatch(value)) {
-    throw FormatException('Invalid board coordinate: $value.');
-  }
-  return (int.parse(value[1]) - 1) * boardSide + value.codeUnitAt(0) - 65;
-}
-
-List<List<Suit>> _columns(List<Object?> values, {bool allowEmpty = false}) {
-  if (values.length != boardSide ||
+List<List<Suit>> _columns(
+  List<Object?> values,
+  int width, {
+  bool allowEmpty = false,
+}) {
+  if (values.length != width ||
       values.any(
         (value) => value is! String || (!allowEmpty && value.isEmpty),
       )) {
-    throw const FormatException('Supply must list six column strings.');
+    throw FormatException('Supply must list $width column strings.');
   }
   return List.unmodifiable([
     for (final column in values.cast<String>())
       List<Suit>.unmodifiable(column.split('').map(Suit.read)),
   ]);
 }
-
-PuzzleWords _words(Map<String, Object?> text) => (
-  title: _field<String>(text, 'title'),
-  objective: _field<String>(text, 'objective'),
-  target: _field<String>(text, 'target'),
-);
 
 T _field<T>(Map<String, Object?> data, String key) {
   final value = data[key];

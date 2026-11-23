@@ -4,22 +4,23 @@ import 'package:flutter/widgets.dart';
 
 import '../visuals.dart';
 import 'puzzle_deal.dart';
-import 'stroke.dart';
 
 class GuideHint extends StatelessWidget {
   const GuideHint({
     required this.placement,
+    required this.pitch,
     required this.explanation,
     super.key,
   });
 
   final HintPlacement placement;
+  final double pitch;
   final String explanation;
 
   @override
   Widget build(BuildContext context) {
     final (:x, :y, :tail) = placement;
-    final anchor = Offset(x, y);
+    final anchor = Offset(x * pitch, y * pitch);
     return IgnorePointer(
       child: CustomSingleChildLayout(
         delegate: _HintPosition(anchor, tail),
@@ -63,18 +64,17 @@ class _HintPosition extends SingleChildLayoutDelegate {
   BoxConstraints getConstraintsForChild(BoxConstraints constraints) {
     final board = constraints.biggest;
     final span = tail == HintTail.right
-        ? board.width * anchor.dx / boardSide - BoardStyle.hintMargin
+        ? anchor.dx - BoardStyle.hintMargin
         : board.width * .63;
     return BoxConstraints(
-      maxWidth: math.min(span, BoardStyle.hintWidth),
-      maxHeight: board.height - BoardStyle.hintMargin * 2,
+      maxWidth: math.max(0, math.min(span, BoardStyle.hintWidth)),
+      maxHeight: math.max(0, board.height - BoardStyle.hintMargin * 2),
     );
   }
 
   @override
   Offset getPositionForChild(Size size, Size childSize) {
-    final x = size.width * anchor.dx / boardSide;
-    final y = size.height * anchor.dy / boardSide;
+    final Offset(dx: x, dy: y) = anchor;
     final origin = switch (tail) {
       HintTail.top => Offset(x - childSize.width / 2, y),
       HintTail.right => Offset(x - childSize.width, y - childSize.height / 2),
@@ -83,11 +83,17 @@ class _HintPosition extends SingleChildLayoutDelegate {
     return Offset(
       origin.dx.clamp(
         BoardStyle.hintMargin,
-        size.width - childSize.width - BoardStyle.hintMargin,
+        math.max(
+          BoardStyle.hintMargin,
+          size.width - childSize.width - BoardStyle.hintMargin,
+        ),
       ),
       origin.dy.clamp(
         BoardStyle.hintMargin,
-        size.height - childSize.height - BoardStyle.hintMargin,
+        math.max(
+          BoardStyle.hintMargin,
+          size.height - childSize.height - BoardStyle.hintMargin,
+        ),
       ),
     );
   }

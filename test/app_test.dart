@@ -8,19 +8,32 @@ import 'package:tarot_squared/fool/tableau_art.dart';
 import 'package:tarot_squared/main.dart';
 
 import 'fool_deal_test.dart'
-    show catalog, cells, foolsStep, guidedRoutes, lampReplay;
+    show
+        catalog,
+        cells,
+        foolsStep,
+        guidedRoutes,
+        lampReplay,
+        lampSize,
+        openingSize,
+        tallCatalog,
+        wideCatalog;
 
 Future<void> dragStroke(
   WidgetTester tester,
   String route, {
   bool settle = true,
+  BoardSize size = openingSize,
 }) async {
   final board = tester.getRect(find.byKey(const Key('fool-grid')));
-  final pitch = board.width / 6;
-  final points = cells(route).map(
+  final pitch = board.width / size.columns;
+  final points = cells(route, size: size).map(
     (index) =>
         board.topLeft +
-        Offset((index % 6 + .5) * pitch, (index ~/ 6 + .5) * pitch),
+        Offset(
+          (size.columnOf(index) + .5) * pitch,
+          (size.rowOf(index) + .5) * pitch,
+        ),
   );
   final gesture = await tester.startGesture(points.first);
   for (final point in points.skip(1)) {
@@ -50,6 +63,43 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   late Artwork artwork;
   setUpAll(() async => artwork = await Artwork.load());
+  testWidgets('tall and wide boards draw and accept edge traces', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(360, 640);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    for (final (rectangular, route, marker, light) in [
+      (tallCatalog, 'D7 E7', 'F7', 2),
+      (wideCatalog, 'F1 G1', 'H1', 2),
+    ]) {
+      final size = rectangular.puzzles.single.size;
+      await tester.pumpWidget(
+        TarotSquaredApp(
+          key: ValueKey(marker),
+          catalog: rectangular,
+          artwork: artwork,
+          initialLanguage: 'en',
+        ),
+      );
+      await openPhase(tester, '002');
+      final grid = tester.getRect(find.byKey(const Key('fool-grid')));
+      expect(grid.width / grid.height, closeTo(size.aspectRatio, .0001));
+      expect(grid.top, greaterThan(0));
+      expect(grid.bottom, lessThan(640));
+      expect(find.bySemanticsLabel('$marker, Quay lamp 0/44'), findsOneWidget);
+      await dragStroke(tester, route, size: size);
+      expect(find.bySemanticsLabel('24 moves left'), findsOneWidget);
+      expect(
+        find.bySemanticsLabel('$marker, Quay lamp $light/44'),
+        findsOneWidget,
+      );
+      expect(tester.takeException(), isNull);
+    }
+  });
+
   testWidgets('campaign phases climb upward and open closable previews', (
     tester,
   ) async {
@@ -82,7 +132,7 @@ void main() {
     expect(tester.getSize(firstMarker), const Size.square(42));
     expect(tester.getSize(first).height, greaterThanOrEqualTo(44));
     expect(tester.getRect(first).overlaps(tester.getRect(next)), isFalse);
-    for (final (id, number) in [('001', '1'), ('002', '2')]) {
+    for (final (id, number) in [('001', '1'), ('002', '2'), ('003', '3')]) {
       final marker = find.byKey(Key('phase-medallion-$id'));
       final badge = tester.getRect(find.byKey(Key('phase-suit-$id')));
       final markerRect = tester.getRect(marker);
@@ -99,12 +149,25 @@ void main() {
     expect(find.byKey(const Key('phase-illustration')), findsOneWidget);
     expect(find.text('Fuel the quay lamp'), findsOneWidget);
     expect(find.text('Cups · 44 light'), findsOneWidget);
-    expect(find.text('25 moves'), findsOneWidget);
+    expect(find.text('22 moves'), findsOneWidget);
     expect(find.text('Normal'), findsOneWidget);
     final locked = tester.widget<FilledButton>(
       find.widgetWithText(FilledButton, 'Locked'),
     );
     expect(locked.onPressed, isNull);
+    await tester.tap(find.byTooltip('Close'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('phase-003')));
+    await tester.pumpAndSettle();
+    expect(find.text('High Water'), findsOneWidget);
+    expect(find.text('Cups · 32 units of water'), findsOneWidget);
+    expect(
+      tester
+          .widget<FilledButton>(find.widgetWithText(FilledButton, 'Locked'))
+          .onPressed,
+      isNull,
+    );
     await tester.tap(find.byTooltip('Close'));
     await tester.pumpAndSettle();
 
@@ -115,6 +178,8 @@ void main() {
     await tester.tap(find.text('Play'));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('fool-grid')), findsOneWidget);
+    expect(find.text('1'), findsOneWidget);
+    expect(find.bySemanticsLabel('Puzzle 1'), findsOneWidget);
     await tester.tap(find.byTooltip('Path'));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('campaign-path')), findsOneWidget);
@@ -132,6 +197,8 @@ void main() {
       ),
     );
     await openPhase(tester, '002');
+    expect(find.text('2'), findsOneWidget);
+    expect(find.bySemanticsLabel('Puzzle 2'), findsOneWidget);
     expect(find.text('Fuel the quay lamp'), findsOneWidget);
     expect(find.bySemanticsLabel('Cups'), findsOneWidget);
     expect(find.bySemanticsLabel('Wands'), findsNothing);
@@ -150,7 +217,7 @@ void main() {
     );
 
     expect(sceneLight(), 0);
-    await dragStroke(tester, lampReplay[0].$1, settle: false);
+    await dragStroke(tester, lampReplay[0].$1, size: lampSize, settle: false);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 250));
     expect(sceneLight(), inExclusiveRange(0, 4 / 44));
@@ -158,7 +225,7 @@ void main() {
     expect(sceneLight(), 4 / 44);
     expect(painter().light, 4 / 44);
     expect(painter().fadeProgress, 1);
-    await dragStroke(tester, lampReplay[1].$1, settle: false);
+    await dragStroke(tester, lampReplay[1].$1, size: lampSize, settle: false);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 90));
     expect(painter().fadeProgress, inExclusiveRange(0, 1));
@@ -200,8 +267,11 @@ void main() {
     expect(find.text('Jugar'), findsOneWidget);
     expect(saved, ['pt', 'es']);
     await openPhase(tester, '001', playLabel: 'Jugar');
+    expect(find.text('1'), findsOneWidget);
+    expect(find.bySemanticsLabel('Desafío 1'), findsOneWidget);
     expect(find.text('El paso del Loco'), findsWidgets);
     expect(find.text('Enciende la marca del sendero'), findsOneWidget);
+    expect(find.bySemanticsLabel('E4, Marca del sendero 0/30'), findsOneWidget);
     expect(
       find.text('Une piezas del mismo palo para eliminarlas.'),
       findsOneWidget,
@@ -209,6 +279,22 @@ void main() {
     expect(find.bySemanticsLabel('Bastos'), findsOneWidget);
     expect(find.text('Pista'), findsNothing);
     expect(find.text('Reiniciar'), findsNothing);
+  });
+
+  testWidgets('localizes each mooring cord and its progress', (tester) async {
+    await tester.pumpWidget(
+      TarotSquaredApp(
+        catalog: catalog,
+        artwork: artwork,
+        initialLanguage: 'pt',
+        unlockedPuzzle: '004',
+      ),
+    );
+    await openPhase(tester, '004', playLabel: 'Jogar');
+    expect(find.text('A Amarração'), findsOneWidget);
+    expect(find.text('Corte as duas amarras'), findsOneWidget);
+    expect(find.bySemanticsLabel('C3, Amarra da proa 0/24'), findsOneWidget);
+    expect(find.bySemanticsLabel('E5, Amarra da popa 0/24'), findsOneWidget);
   });
 
   testWidgets('touch traces teach and only offer retry after failure', (
@@ -353,19 +439,15 @@ void main() {
     for (final route in guidedRoutes) {
       replay.play(cells(route));
     }
+    final size = foolsStep.size;
     while (!replay.finished) {
       final setup = [
-        for (var cell = 0; cell < cellCount; cell++)
-          for (final next in neighbours(cell))
+        for (var cell = 0; cell < size.cellCount; cell++)
+          for (final next in size.neighbours(cell))
             if (replay.inspect([cell, next])?.light == 0) [cell, next],
       ].first;
       replay.play(setup);
-      final route = setup
-          .map(
-            (cell) =>
-                '${String.fromCharCode(65 + columnOf(cell))}${rowOf(cell) + 1}',
-          )
-          .join(' ');
+      final route = setup.map(size.cellLabel).join(' ');
       await dragStroke(tester, route);
     }
     expect(replay.lost, isTrue);
