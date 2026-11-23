@@ -2,7 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:tarot/main.dart' as app;
+import 'package:tarot_squared/main.dart' as app;
 
 import '../test/app_test.dart' show dragStroke;
 import '../test/fool_deal_test.dart'

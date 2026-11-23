@@ -2,7 +2,6 @@
 """Build an iOS archive for Tarot Squared."""
 
 import argparse
-import os
 from pathlib import Path
 import plistlib
 import re
@@ -12,6 +11,7 @@ import tempfile
 
 
 ROOT = Path(__file__).resolve().parents[1]
+APP_NAME = "Tarot Squared"
 BUNDLE_ID = "group.kleinfour.games.tarot"
 
 
@@ -34,7 +34,8 @@ def main():
     build_name, build_number = version.groups()
 
     run(
-        os.environ.get("FLUTTER", "flutter"), "build", "ios", "--release",
+        ROOT / "bin/flutter", "build", "ios", "--release",
+        "--flavor", APP_NAME,
         "--config-only", "--no-codesign", f"--build-name={build_name}",
         f"--build-number={build_number}",
     )
@@ -42,10 +43,10 @@ def main():
     archives = ROOT / "build/ios/archives"
     archives.mkdir(parents=True, exist_ok=True)
     archive_folder = Path(tempfile.mkdtemp(prefix=f"{build_name}+{build_number}-", dir=archives))
-    archive = archive_folder / "Tarot Squared.xcarchive"
+    archive = archive_folder / f"{APP_NAME}.xcarchive"
     command = [
-        "xcodebuild", "-quiet", "-workspace", "ios/Runner.xcworkspace",
-        "-scheme", "Runner", "-destination", "generic/platform=iOS",
+        "xcodebuild", "-quiet", "-workspace", f"ios/{APP_NAME}.xcworkspace",
+        "-scheme", APP_NAME, "-destination", "generic/platform=iOS",
         "-derivedDataPath", str(ROOT / "build/ios/archive-derived"),
         "-archivePath", str(archive),
     ]
@@ -53,7 +54,7 @@ def main():
         command.append("CODE_SIGNING_ALLOWED=NO")
     run(*command, "archive")
 
-    app = archive / "Products/Applications/Runner.app"
+    app = archive / "Products/Applications" / f"{APP_NAME}.app"
     with (app / "Info.plist").open("rb") as metadata:
         info = plistlib.load(metadata)
     for key, expected in {

@@ -1,11 +1,11 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart' show FilledButton;
-import 'package:tarot/artwork.dart';
-import 'package:tarot/fool/puzzle_deal.dart';
-import 'package:tarot/fool/stroke.dart';
-import 'package:tarot/fool/tableau_art.dart';
-import 'package:tarot/main.dart';
+import 'package:tarot_squared/artwork.dart';
+import 'package:tarot_squared/fool/puzzle_deal.dart';
+import 'package:tarot_squared/fool/stroke.dart';
+import 'package:tarot_squared/fool/tableau_art.dart';
+import 'package:tarot_squared/main.dart';
 
 import 'fool_deal_test.dart'
     show catalog, cells, foolsStep, guidedRoutes, lampReplay;

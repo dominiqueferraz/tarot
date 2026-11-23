@@ -2,9 +2,9 @@
 
 A tarot puzzle game for iOS and Android. The Flutter app lives at the repository root alongside the [product requirements](docs/product-requirements.md), [campaign plan](docs/campaign-001-220.md) and [deck artwork](deck/).
 
-The iOS bundle ID and Android application ID are both `group.kleinfour.games.tarot`. App versions and build numbers come from `pubspec.yaml`.
+The Dart package name is `tarot_squared`. The iOS bundle ID and Android application ID are both `group.kleinfour.games.tarot`. App versions and build numbers come from `pubspec.yaml`.
 
-Play opens an ascending campaign path. Tap a phase to see its illustration, scoring suit, objective, move limit and difficulty, then play it from the preview. The campaign opens with **The Fool’s Step**. The guide teaches matching traces, rectangles and wildcard corners in six strokes. Rectangles clear pieces of every suit inside and along their sides. Light the trail marker by aiming Wand traces at it or enclosing it in a Wand square or rectangle. Settings offers English, Brazilian Portuguese and Spanish. Edit the locale resources in `lib/l10n/` and run `flutter gen-l10n` to refresh the generated Dart code.
+Play opens an ascending campaign path. Tap a phase to see its illustration, scoring suit, objective, move limit and difficulty, then play it from the preview. The campaign opens with **The Fool’s Step**. The guide teaches matching traces, rectangles and wildcard corners in six strokes. Rectangles clear pieces of every suit inside and along their sides. Light the trail marker by aiming Wand traces at it or enclosing it in a Wand square or rectangle. Settings offers English, Brazilian Portuguese and Spanish. Edit the locale resources in `lib/l10n/` and run `bin/flutter gen-l10n` to refresh the generated Dart code.
 
 Clearing The Fool’s Step unlocks **Lamplighter**. Follow the trail to the quay and use Cups to fuel its lamp to 44 light. Both puzzles use the same square and rectangle rules.
 
@@ -21,24 +21,24 @@ Edit [the puzzle catalog](assets/puzzles/fool.json). Entries appear in campaign 
 
 ## Run and check
 
-Use Flutter 3.50 and run `flutter doctor` to check the Xcode and Android SDK toolchains. From the repository root, run the following commands.
+Use Flutter 3.50 and Python 3. Run `bin/flutter doctor` to check the Xcode and Android SDK toolchains. Use `bin/flutter` for commands in this repository so the generated iOS plugin registrar goes into the Tarot Squared target. The launcher uses the Flutter SDK on PATH or the directory specified by `FLUTTER_ROOT`. From the repository root, run the following commands.
 
 ```sh
-flutter pub get
-flutter gen-l10n
-flutter analyze
+bin/flutter pub get
+bin/flutter gen-l10n
+bin/flutter analyze
 bin/test
-flutter devices
-flutter run -d <device-id>
+bin/flutter devices
 ```
 
-The same run command works for an iOS simulator and an Android emulator or device. To build an Android debug APK, run `flutter build apk --debug`. Android release signing is pending.
+- On iOS, run `bin/flutter run --flavor 'Tarot Squared' -d <device-id>` to select the app's Xcode scheme.
+- On Android, run `bin/flutter run -d <device-id>`. To build a debug APK, run `bin/flutter build apk --debug`. Android release signing is pending.
 
-Run `bin/test integration_test/first_deal_test.dart -d <device-id>` to verify language persistence, the six guided strokes and the transition to Lamplighter on a simulator or device.
+On iOS, run `bin/test integration_test/first_deal_test.dart --flavor 'Tarot Squared' -d <device-id>` to verify language persistence, the six guided strokes and the transition to Lamplighter. On Android, run `bin/test integration_test/first_deal_test.dart -d <device-id>`.
 
 ## Archive for iOS
 
-Open `ios/Runner.xcworkspace` in Xcode. For device builds and signed archives, sign in to the Apple developer account in Xcode and add your development team ID to the ignored `ios/Flutter/Signing.local.xcconfig` file.
+Run `bin/flutter build ios --config-only --no-codesign --flavor 'Tarot Squared'` to prepare the workspace, then open `ios/Tarot Squared.xcworkspace` in Xcode and select the **Tarot Squared** scheme. For device builds and signed archives, sign in to the Apple developer account in Xcode and add your development team ID to the ignored `ios/Flutter/Signing.local.xcconfig` file.
 
 ```xcconfig
 DEVELOPMENT_TEAM = YOUR_TEAM_ID

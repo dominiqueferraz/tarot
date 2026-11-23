@@ -1,8 +1,8 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:tarot/fool/puzzle_deal.dart';
-import 'package:tarot/fool/stroke.dart';
+import 'package:tarot_squared/fool/puzzle_deal.dart';
+import 'package:tarot_squared/fool/stroke.dart';
 
 final catalog = PuzzleCatalog.parse(
   File(PuzzleCatalog.assetPath).readAsStringSync(),

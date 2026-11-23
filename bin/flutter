@@ -1,0 +1,108 @@
+#!/usr/bin/env python3
+"""Run Flutter with the iOS plugin registrar in the Tarot Squared target."""
+
+import fcntl
+import hashlib
+import json
+import os
+from pathlib import Path
+import shutil
+import subprocess
+import sys
+import tempfile
+from urllib.parse import urljoin
+
+
+ROOT = Path(__file__).resolve().parents[1]
+REGISTRAR_HOST = """  Directory get pluginRegistrantHost {
+    return isModule
+        ? _flutterLibRoot.childDirectory('Flutter').childDirectory('FlutterPluginRegistrant')
+        : hostAppRoot.childDirectory(XcodeBasedProject._defaultHostAppName);
+  }
+"""
+APP_REGISTRAR_HOST = REGISTRAR_HOST.replace(
+    "    return isModule",
+    """    if (!isModule && parent.manifest.appName == 'tarot_squared') {
+      return hostAppRoot.childDirectory('Tarot Squared');
+    }
+    return isModule""",
+)
+
+
+def flutter_root():
+    if configured_root := os.environ.get("FLUTTER_ROOT"):
+        return Path(configured_root).resolve()
+    executable = shutil.which(os.environ.get("FLUTTER", "flutter"))
+    if executable is None or Path(executable).resolve() == Path(__file__).resolve():
+        raise ValueError("Set FLUTTER_ROOT to the installed Flutter SDK directory.")
+    return Path(executable).resolve().parents[1]
+
+
+def prepare_tool(sdk, dart):
+    source = sdk / "packages/flutter_tools"
+    sdk_config = source / ".dart_tool/package_config.json"
+    if not dart.is_file() or not sdk_config.is_file():
+        subprocess.run([sdk / "bin/flutter", "--version"], cwd=sdk, check=True)
+
+    relative_project = Path("lib/src/xcode_project.dart")
+    xcode_project = (source / relative_project).read_text(encoding="utf-8")
+    if xcode_project.count(REGISTRAR_HOST) != 1:
+        raise ValueError("The Flutter SDK changed its iOS plugin registrar layout. Use Flutter 3.50.")
+
+    fingerprint = hashlib.sha256()
+    for data in (
+        Path(__file__).read_bytes(),
+        os.fsencode(sdk),
+        (sdk / "bin/cache/flutter_tools.stamp").read_bytes(),
+        sdk_config.read_bytes(),
+        xcode_project.encode(),
+    ):
+        fingerprint.update(data)
+
+    cache = ROOT / ".dart_tool/flutter-tool"
+    cache.mkdir(parents=True, exist_ok=True)
+    snapshot = cache / f"{fingerprint.hexdigest()}.dill"
+    with (cache / "build.lock").open("a") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        if snapshot.is_file():
+            return snapshot
+
+        with tempfile.TemporaryDirectory(dir=cache) as scratch:
+            overlay = Path(scratch)
+            shutil.copytree(source / "lib", overlay / "lib")
+            (overlay / relative_project).write_text(
+                xcode_project.replace(REGISTRAR_HOST, APP_REGISTRAR_HOST), encoding="utf-8",
+            )
+            entrypoint = overlay / "flutter_tools.dart"
+            shutil.copy2(source / "bin/flutter_tools.dart", entrypoint)
+
+            config = json.loads(sdk_config.read_bytes())
+            for package in config["packages"]:
+                package["rootUri"] = (
+                    overlay.as_uri() + "/" if package["name"] == "flutter_tools"
+                    else urljoin(sdk_config.parent.as_uri() + "/", package["rootUri"])
+                )
+            config_path = overlay / "package_config.json"
+            config_path.write_text(json.dumps(config), encoding="utf-8")
+            pending = overlay / "flutter_tools.dill"
+            subprocess.run(
+                [dart, "compile", "kernel", f"--packages={config_path}", "-o", pending, entrypoint],
+                check=True,
+            )
+            pending.replace(snapshot)
+    return snapshot
+
+
+if __name__ == "__main__":
+    try:
+        sdk = flutter_root()
+        dart = sdk / "bin/cache/dart-sdk/bin/dart"
+        snapshot = prepare_tool(sdk, dart)
+        os.execve(
+            dart, [str(dart), str(snapshot), *sys.argv[1:]],
+            {**os.environ, "FLUTTER_ROOT": str(sdk)},
+        )
+    except subprocess.CalledProcessError as error:
+        sys.exit(error.returncode)
+    except (OSError, ValueError) as error:
+        sys.exit(f"Flutter launcher failed: {error}")
