@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:math' as math;
+import 'dart:ui' show SemanticsAction;
 
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
@@ -620,6 +621,19 @@ void main() {
       final grid = tester.getRect(find.byKey(const Key('fool-grid')));
       expect(tester.getRect(panel).bottom, lessThan(grid.top));
       expect(grid.bottom, lessThan(640));
+      for (final cell in ['B7', 'F7']) {
+        final wall = find.bySemanticsLabel(
+          spanish.labelWithDetail(cell, spanish.wall),
+        );
+        expect(wall, findsOneWidget);
+        expect(
+          tester
+              .getSemantics(wall)
+              .getSemanticsData()
+              .hasAction(SemanticsAction.tap),
+          isFalse,
+        );
+      }
       await dragStroke(tester, 'E3 D3', size: marketDaySize);
       await dragStroke(tester, 'D3 E3', size: marketDaySize);
       expect(

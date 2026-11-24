@@ -1153,32 +1153,33 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
           ? strings.board
           : strings.labelWithDetail(strings.board, strings.gestureGuide),
       child: Stack(
-        children: [
-          for (var cell = 0; cell < _size.cellCount; cell++)
-            if (!_puzzle.masked.contains(cell))
-              Positioned(
-                left: _size.columnOf(cell) * pitch,
-                top: _size.rowOf(cell) * pitch,
-                width: pitch,
-                height: pitch,
-                child: Semantics(
-                  sortKey: OrdinalSortKey(cell.toDouble()),
-                  label: strings.labelWithDetail(
-                    _size.cellLabel(cell),
-                    labels[_deal.board[cell]] ?? _targetLabel(strings, cell),
-                  ),
-                  selected: _path.contains(cell),
-                  onTap: _acceptsInput ? () => _markCell(cell) : null,
-                  customSemanticsActions: _path.isEmpty
-                      ? null
-                      : {
-                          CustomSemanticsAction(label: strings.commit): _commit,
-                          CustomSemanticsAction(label: strings.cancel): _cancel,
-                        },
-                  child: const SizedBox.expand(),
-                ),
+        children: List.generate(_size.cellCount, (cell) {
+          final wall = _puzzle.masked.contains(cell);
+          return Positioned(
+            left: _size.columnOf(cell) * pitch,
+            top: _size.rowOf(cell) * pitch,
+            width: pitch,
+            height: pitch,
+            child: Semantics(
+              sortKey: OrdinalSortKey(cell.toDouble()),
+              label: strings.labelWithDetail(
+                _size.cellLabel(cell),
+                wall
+                    ? strings.wall
+                    : labels[_deal.board[cell]] ?? _targetLabel(strings, cell),
               ),
-        ],
+              selected: wall ? null : _path.contains(cell),
+              onTap: _acceptsInput && !wall ? () => _markCell(cell) : null,
+              customSemanticsActions: wall || _path.isEmpty
+                  ? null
+                  : {
+                      CustomSemanticsAction(label: strings.commit): _commit,
+                      CustomSemanticsAction(label: strings.cancel): _cancel,
+                    },
+              child: const SizedBox.expand(),
+            ),
+          );
+        }),
       ),
     );
   }

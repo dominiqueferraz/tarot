@@ -262,7 +262,12 @@ void main() {
         ),
         findsOneWidget,
       );
-      expect(find.bySemanticsLabel(RegExp(r'^(A1|G1),')), findsNothing);
+      for (final cell in ['A1', 'G1', 'A6', 'G6']) {
+        expect(
+          find.bySemanticsLabel(english.labelWithDetail(cell, english.wall)),
+          findsOneWidget,
+        );
+      }
       await screenshot(tester, 'tarot-squared-the-mooring');
       final bow = find.byKey(const Key('target-value-C3'));
       final stern = find.byKey(const Key('target-value-E5'));
@@ -321,7 +326,12 @@ void main() {
         ),
         findsOneWidget,
       );
-      expect(find.bySemanticsLabel(RegExp(r'^(B1|G1),')), findsNothing);
+      for (final cell in ['B1', 'G1']) {
+        expect(
+          find.bySemanticsLabel(english.labelWithDetail(cell, english.wall)),
+          findsOneWidget,
+        );
+      }
       await screenshot(tester, 'tarot-squared-ferrymans-fare');
       final west = find.byKey(const Key('target-value-C4'));
       final east = find.byKey(const Key('target-value-F4'));

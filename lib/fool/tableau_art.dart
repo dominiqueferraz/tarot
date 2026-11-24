@@ -907,17 +907,6 @@ class TableauPainter extends CustomPainter {
     final height = _tile * _size.rows;
     canvas.scale(size.width / width, size.height / height);
     canvas.clipRect(Rect.fromLTWH(0, 0, width, height));
-    final boardBounds = Path()
-      ..fillType = PathFillType.evenOdd
-      ..addRect(Rect.fromLTWH(0, 0, width, height));
-    for (final cell in puzzle.masked) {
-      boardBounds.addRect(
-        Rect.fromCenter(center: _center(cell), width: _tile, height: _tile),
-      );
-    }
-    canvas.save();
-    canvas.clipPath(boardBounds);
-    final activeTurn = turn;
     for (var cell = 0; cell < _size.cellCount; cell++) {
       final color = puzzle.targets.containsKey(cell)
           ? const Color(0xFFDDCCA3)
@@ -943,6 +932,19 @@ class TableauPainter extends CustomPainter {
       canvas.drawLine(Offset(0, y), Offset(width, y), gridLine);
     }
 
+    final pieceBounds = Path()
+      ..fillType = PathFillType.evenOdd
+      ..addRect(Rect.fromLTWH(0, 0, width, height));
+    for (final cell in puzzle.masked) {
+      final center = _center(cell);
+      pieceBounds.addRect(
+        Rect.fromCenter(center: center, width: _tile, height: _tile),
+      );
+      artwork.paint(canvas, Art.ruinedWall, origin: center);
+    }
+    canvas.save();
+    canvas.clipPath(pieceBounds);
+    final activeTurn = turn;
     if (activeTurn == null) {
       for (var cell = 0; cell < board.length; cell++) {
         final suit = board[cell];
@@ -1166,7 +1168,8 @@ class TableauPainter extends CustomPainter {
     final outline = _path(points);
     canvas.drawPath(outline, _pen(paper, width + 5));
     canvas.drawPath(outline, _pen(color, width));
-    for (final point in points) {
+    for (final (index, point) in points.indexed) {
+      if (puzzle.masked.contains(cells[index])) continue;
       canvas.drawCircle(point, 29, _pen(paper, 6));
       canvas.drawCircle(point, 29, _pen(color, 3));
     }
@@ -1174,7 +1177,7 @@ class TableauPainter extends CustomPainter {
 
   void _paintAim(Canvas canvas, Stroke stroke, Color color) {
     final aim = _size.aimOf(stroke.path);
-    if (aim != null) {
+    if (aim != null && !puzzle.masked.contains(aim)) {
       final blocked =
           puzzle.targets[aim]?.aimDirection != null &&
           !stroke.gains.containsKey(aim);

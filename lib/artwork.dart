@@ -23,6 +23,7 @@ enum Art {
   coin('coin', Offset(30, 30)),
   hand('hand', Offset(21, 6)),
   marker('marker', Offset(26, 26)),
+  ruinedWall('ruined-wall', Offset(68, 68)),
   lantern('lantern', Offset(24, 33));
 
   const Art(this.file, [this.pivot = Offset.zero]);

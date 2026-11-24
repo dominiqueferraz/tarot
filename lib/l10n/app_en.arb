@@ -79,6 +79,7 @@
   "commit": "Commit stroke",
   "cancel": "Cancel stroke",
   "board": "Puzzle board",
+  "wall": "Wall",
   "moon": "The Moon",
   "gestureGuide": "Gesture demonstration",
   "linkMovesRemaining": "{count, plural, =1{Link · 1 move} other{Link · {count} moves}}",

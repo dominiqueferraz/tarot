@@ -63,6 +63,7 @@
   "commit": "Confirmar trazo",
   "cancel": "Cancelar trazo",
   "board": "Tablero",
+  "wall": "Muro",
   "moon": "La Luna",
   "gestureGuide": "Demostración del gesto",
   "linkMovesRemaining": "{count, plural, =1{Enlace · 1 jugada} other{Enlace · {count} jugadas}}",

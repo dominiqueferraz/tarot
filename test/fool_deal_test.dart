@@ -548,6 +548,8 @@ void main() {
   test(
     'Market Day opens the stall after either setup and a missed opening',
     () {
+      final walls = cells('B7 F7', size: marketDaySize);
+      expect(marketDay.masked, unorderedEquals(walls));
       for (final replay in [
         marketDayReplay.map((move) => move.$1),
         [
@@ -573,6 +575,7 @@ void main() {
             reason: route,
           );
         }
+        expect(walls.map((cell) => deal.board[cell]), everyElement(isNull));
         expect(deal.won, isTrue);
         expect(deal.moves, 5);
       }
@@ -776,6 +779,10 @@ void main() {
     final lamp = size.parseCell('C5');
     final cord = size.parseCell('F5');
     final cuttingLine = cells('D5 E5', size: size);
+    expect(
+      nightFishing.masked,
+      unorderedEquals(cells('A3 H3 A6 H6', size: size)),
+    );
     expect(deal.inspect(cuttingLine)?.suit, Suit.wand);
     expect(deal.inspect(cuttingLine)?.gains, isEmpty);
     expect(deal.play(cells('E5 D5', size: size))?.stroke.gains, {lamp: 2});
@@ -980,7 +987,7 @@ void main() {
     final deal = PuzzleDeal(mooring);
     final bow = dockSize.parseCell('C3');
     final stern = dockSize.parseCell('E5');
-    final masked = cells('A1 G1', size: dockSize);
+    final masked = cells('A1 G1 A6 G6', size: dockSize);
     List<int> route(String trace) => cells(trace, size: dockSize);
 
     expect(mooring.targets.keys, [bow, stern]);

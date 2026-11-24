@@ -55,7 +55,7 @@
       "id": "004",
       "scene": "dock",
       "textKey": "mooring",
-      "board": [".WSSCO.", "WSSCSSO", "OSLSSWC", "SSWOSSS", "CSSSLSS", "OWSSOSW"],
+      "board": [".WSSCO.", "WSSCSSO", "OSLSSWC", "SSWOSSS", "CSSSLSS", ".WSSOS."],
       "targets": [
         {"cell": "C3", "suit": "S", "quota": 24, "kind": "cord", "label": "bowCord"},
         {"cell": "E5", "suit": "S", "quota": 24, "kind": "cord", "label": "sternCord"}
@@ -88,7 +88,7 @@
       "id": "006",
       "scene": "breadStall",
       "textKey": "marketDay",
-      "board": ["SWOCSOC", "OCSCCOW", "SOLWWLC", "COSOWOC", "WCOCSOW", "OWLOOWC", "CWSOOCS"],
+      "board": ["SWOCSOC", "OCSCCOW", "SOLWWLC", "COSOWOC", "WCOCSOW", "OWLOOWC", "C.SOO.S"],
       "targets": [
         {"cell": "C3", "suit": "W", "quota": 6, "kind": "lantern", "label": "marketLamp"},
         {"cell": "F3", "suit": "C", "quota": 6, "kind": "inlet", "label": "marketInlet"},
@@ -141,7 +141,7 @@
       "id": "010",
       "scene": "nightFishing",
       "textKey": "nightFishing",
-      "board": ["SCCOCWSS", "OCCOOWOO", "WOCOOSCC", "OCOSSWCW", "SCLWWLSS", "WCWSOWSC", "SWWWCCCC", "WWWSSSWO"],
+      "board": ["SCCOCWSS", "OCCOOWOO", ".OCOOSC.", "OCOSSWCW", "SCLWWLSS", ".CWSOWS.", "SWWWCCCC", "WWWSSSWO"],
       "targets": [
         {"cell": "C5", "suit": "W", "quota": 6, "label": "harbourLamp"},
         {"cell": "F5", "suit": "S", "quota": 6, "label": "mooringCord"}

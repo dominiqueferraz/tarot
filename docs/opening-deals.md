@@ -201,7 +201,7 @@ Guided refill weights Cups three times as heavily as each other suit. Following 
 
 ## Level 004 · The Mooring
 
-At the dusk dock, cut 24 strands from each of two cords in 26 moves, with a par of 15. The board is 7 × 6, with A1 and G1 masked. Only playable cells receive pieces. The bow cord at C3 and stern cord at E5 stand at opposite corners of a square.
+At the dusk dock, cut 24 strands from each of two cords in 26 moves, with a par of 15. The 7 × 6 board has stone walls at all four corners (A1, G1, A6 and G6). The bow cord at C3 and stern cord at E5 stand at opposite corners of a square.
 
 | Guided move | What the player sees |
 |---|---|
@@ -214,7 +214,7 @@ Guided refill weights Swords three times as heavily as each other suit. The boat
 
 ## Level 005 · The Ferryman’s Fare
 
-Clearing The Mooring unlocks the market landing. Fill the west pan at C4 and the east pan at F4 with 24 Coins each in 25 moves, with a par of 15. B1 and G1 are masked on the 8 × 8 board. Guided refill uses seed 571 and gives all four suits equal weight. The illustrated scale tips toward the fuller pan and balances when both are paid.
+Clearing The Mooring unlocks the market landing. Fill the west pan at C4 and the east pan at F4 with 24 Coins each in 25 moves, with a par of 15. Two stone walls frame the upper edge of the 8 × 8 board at B1 and G1. Guided refill uses seed 571 and gives all four suits equal weight. The illustrated scale tips toward the fuller pan and balances when both are paid.
 
 The last step of a Coin trace sets its direction. E4 → D4 deposits two Coins in the west pan, and D4 → E4 deposits two in the east pan. Either opening removes the same pair and leaves the same pieces after the fall. A rectangle or square with Coin corners can feed either or both pans under the shared scoring rules. The pans keep independent counters for subsequent moves, and each pan caps at 24.
 
@@ -230,7 +230,7 @@ The last step of a Coin trace sets its direction. E4 → D4 deposits two Coins i
 
 ## Level 006 · Market Day
 
-The ferry has crossed. On the far bank, the Fool stops at a baker’s shuttered stall before the market opens. Light the stall lantern at C3 with Wands so the baker can see, fill the water trough at F3 with Cups for the dough, and pay for a loaf by aiming Coins at C6. Each target needs 6 on the 7 × 7 board. The turn limit is 18, with a par of 12.
+The ferry has crossed. On the far bank, the Fool stops at a baker’s shuttered stall before the market opens. Light the stall lantern at C3 with Wands so the baker can see, fill the water trough at F3 with Cups for the dough, and pay for a loaf by aiming Coins at C6. Each target needs 6 on the 7 × 7 board. Stone walls flank the stall along the lower edge at B7 and F7. The turn limit is 18, with a par of 12.
 
 The lamp brightens, the water rises, and Coins stack in the pan as the player works. On a clear, the shutter opens and a loaf passes across the counter to the Fool.
 
@@ -291,7 +291,7 @@ A losing route makes the first pour from the right and spends the remaining move
 
 The full basin from 009 sits on the same pier. The fishing crew have their water and can set out once the harbour lamp at C5 has 6 light and the mooring cord at F5 has 6 cuts. Wands light the lamp and Swords cut the cord through shared aimed strokes and rectangles. The illustration shows the lamp brightening and the line thinning as their counters rise. The boat leaves the pier when both markers are complete.
 
-The 8 × 8 board has 20 moves and a par of 9. Guided refill gives Wands and Swords twice the weight of Cups or Coins. The two pieces between the markers can serve each goal on successive strokes.
+Stone walls shape both sides of the 8 × 8 board at A3, H3, A6 and H6. The board has 20 moves and a par of 9. Guided refill gives Wands and Swords twice the weight of Cups or Coins. The two pieces between the markers can serve each goal on successive strokes.
 
 | Approach | Opening decision and payoff | Clear |
 |---|---|---|

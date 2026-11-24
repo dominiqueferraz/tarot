@@ -538,6 +538,12 @@ Certificates rest on two invariants: *pieces never leave their column*, and *pie
 
 ---
 
+#### Future mechanic · Spreading water and rubble
+
+Prototype a hazard that starts at a marked source and claims adjacent cells one at a time. Water could spread from an overtopped basin along low ground. Crumbling masonry could deposit rubble in the next cell along a fault. Sketch one version first, with the next threatened cell visible and announced before the player commits a move. Resolve the spread after a paid stroke so the player has time to divert the water or clear a route through the rubble.
+
+Decide how affected cells treat the pieces already there and how they receive arrivals before authoring a deal. Playtest whether players can read the next step, use a move to intervene and recover after losing a cell.
+
 ### 9 · Layers: a puzzle within the board, and one above it
 
 Normal boards have one puzzle: the board. Harder boards add **layers**. Each layer is a second set of conditions coupled to the board.
