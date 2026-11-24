@@ -14,7 +14,7 @@ The PRD carries the current rules and decisions. Use these notes for playtest ob
 
 Automated checks cover seeded clears for all eight deals, bottom-row pairs through eight consecutive lower-field clears per deal, lozenge starts and directions, Far Wreath's teaching handoff and links with two to four targets. Browser play confirmed a two-turn link, shared progress and expiry on a spent move. Those checks establish that the rules work in those cases. The delight loop still needs observation with players who are seeing the boards for the first time. [Replay the archived checks](opening-deals.md#replaying-the-archived-prototypes)
 
-**Campaign consequence.** A release witness or required-card certificate must account for ordinary traces, area clears and progress from enclosed or linked targets. A two-move cardless clear on the legacy Fool 013 layout already bypasses the proposed Leap requirement. [Reproduced route](opening-deals.md#fool-013--one-impossible-step)
+**Campaign consequence.** A release witness or required-card certificate must account for ordinary traces, area clears and progress from enclosed or linked targets. A two-move cardless clear bypassed the Leap requirement on the archived drawbridge layout. The mobile drawbridge deal uses a row-one inlet and a refill strategy to enforce its final Leap. [Layout and archived route](opening-deals.md#fool-012--one-impossible-step)
 
 ## Finite-board review
 
@@ -645,14 +645,14 @@ Match the ordinary corners in one suit. In boards that teach mixed shapes, a sec
 
 **Registered for later: sealed chambers.** A fixture or shelf that *holds* the cells below it apart. Pieces under it still fall within their chamber, but nothing refills there, so the space becomes a finite, measured stock. Where it fits:
 - **The Emperor's shelves (IV).** Their rule is already "a fixed shelf divides a column into independent gravity chambers". Sealing belongs there first, as a printed, visible property.
-- **Sealed fixture variants.** For example, a basin that rests on the floor and holds what's above it. Use them only where a board needs a stack that stays put, as the earlier 013 layout did, and draw the seal as a visible ledge.
+- **Sealed fixture variants.** For example, a basin that rests on the floor and holds what's above it. Use them only where a board needs a stack that stays put, as the legacy Fool drawbridge layout did, and draw the seal as a visible ledge.
 - **Concept ledger.** Weight ½, as an extension of the support system. It breaks no invariant, but certificates must say which chambers are sealed.
 
-Boards that already assume sealing (013, and the first 001 greybox spec with dry ribbons) are flagged in [opening deals](opening-deals.md) for rework or for reuse with this mechanic.
+The archived drawbridge layout and the first 001 greybox with dry ribbons used seals. The Fool 012 refill strategy uses open columns. [Opening deals](opening-deals.md#fool-012--one-impossible-step)
 
 ### Falling Coin movement lesson
 
-Save the loose Coin for a puzzle that introduces moving pieces. Give it a distinct edge-on shape, then let it fall in its column when a stroke clears its supports. Draw the bell pan one cell below the catch point. When the Coin reaches that point, the bell rings, the ferry takes the fare and the vacated cell refills. The landing-bell brief in 014 is a candidate for this lesson.
+The prologue uses fixed markers. Coin traces and rectangles fill its pans and bells. In a future lesson on moving pieces, a distinct edge-on Coin could fall when a stroke clears its supports and ring a bell at its catch point.
 
 The earlier Broken Road study put the loose Coin at E2 above a bell at E6. A Cup trace across the bottom, then a Wand pair and a Cup pair at D5–E5, let it fall in three steps. The fixed-pair ferry study also records a one-stroke version. [Archived ferry study](opening-deals.md#archived-lamp-and-bell-deal)
 
@@ -704,6 +704,6 @@ Research question: can clearing be intrinsically interesting first, then support
 | First reading | Borrow the face-up card for one puzzle where it can solve a previously impossible position. On victory the card slides into the album. | Connects ownership to understanding. Adopt this as the acquisition event. The first Fool card lets the player join two separated survivors after learning why a singleton matters. |
 | Choose one after an encounter | Pick one of two known cards or blessings to carry into the next scene. | Interesting in a replayable side journey. Every selectable deal must be solvable with that choice, or offer a guaranteed loan at the next encounter. Reserve for later volumes after the fixed-hand campaign establishes the rules. |
 
-**Decision.** Combine the first two. Ordinary play fills the ten journey slots from phases 001–010. Prologue board 013 awards the abstract Fool card and Leap over the assembled journey. In chapters I–XXI the first reading awards the card at local slot six. The encounter at the end uses the acquired card to change a place in the world. A player arriving at Wheel of Fortune slot seven, for example, already owns the Wheel from slot six, can use it once without spending it, and can retry immediately. Optional prizes can add sketches or another character’s interpretation of the same image.
+**Decision.** Combine the first two. Ordinary play fills the ten journey slots from phases 001–010. Prologue board 012 awards the abstract Fool card and Leap over the assembled journey. In chapters I–XXI the first reading awards the card at local slot six. The encounter at the end uses the acquired card to change a place in the world. A player arriving at Wheel of Fortune slot seven, for example, already owns the Wheel from slot six, can use it once without spending it, and can retry immediately. Optional prizes can add sketches or another character’s interpretation of the same image.
 
-**Evidence limit.** These precedents demonstrate viable structures. They do not establish Arcana’s retention, willingness to pay, future release rate, or the difficulty of a proposed level. Test those independently with the twenty-board Fool prologue and later greyboxes.
+**Evidence limit.** These precedents demonstrate viable structures. They do not establish Arcana’s retention, willingness to pay, future release rate, or the difficulty of a proposed level. Test those independently with the nineteen-board Fool prologue and later greyboxes.

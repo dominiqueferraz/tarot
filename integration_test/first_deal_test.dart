@@ -16,6 +16,7 @@ import '../test/fool_deal_test.dart'
         cells,
         dockReplay,
         dockSize,
+        drawbridgeLeap,
         fairSplitReplay,
         fromBehindReplay,
         guidedRoutes,
@@ -483,7 +484,7 @@ void main() {
     },
   );
 
-  testWidgets('clears levels 006 through 011', (tester) async {
+  testWidgets('clears levels 006 through 012', (tester) async {
     final source = await rootBundle.loadString(PuzzleCatalog.assetPath);
     final catalog = PuzzleCatalog.parse(source);
     final split = catalog.puzzles.singleWhere((puzzle) => puzzle.id == '007');
@@ -740,7 +741,38 @@ void main() {
       );
     }
     expect(find.bySemanticsLabel(portuguese.starRating(3)), findsOneWidget);
-    expect(find.text(portuguese.continueJourney), findsOneWidget);
+    expect(find.text(portuguese.nextPuzzle), findsOneWidget);
     await screenshot(tester, 'tarot-squared-broken-road-complete');
+    await tester.tap(find.text(portuguese.nextPuzzle));
+    await tester.pumpAndSettle();
+    expect(find.text(portuguese.drawbridgeTitle), findsOneWidget);
+    await tester.ensureVisible(play);
+    await tester.tap(play);
+    await tester.pumpAndSettle();
+    final drawbridge = catalog.puzzles.singleWhere(
+      (puzzle) => puzzle.id == '012',
+    );
+    final marker = find.byKey(const Key('target-value-E1'));
+    final leap = find.byKey(const Key('arm-leap'));
+    final deck = find.byKey(const Key('open-power-deck'));
+    expect(deck, findsNothing);
+    await dragStroke(tester, 'A1 A2', size: drawbridge.size);
+    await dragStroke(tester, 'C1 D1', size: drawbridge.size);
+    expect(tester.widget<Text>(marker).data, portuguese.targetProgress(2, 6));
+    expect(find.text(portuguese.leapHint(portuguese.cups)), findsOneWidget);
+    await screenshot(tester, 'tarot-squared-drawbridge-teaching');
+    await dragStroke(tester, 'C1 C2', size: drawbridge.size);
+    await tester.tap(deck);
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('deck-fool-card')), findsOneWidget);
+    expect(find.text(portuguese.leapPower), findsOneWidget);
+    await tester.tap(leap);
+    await tester.pumpAndSettle();
+    await dragStroke(tester, drawbridgeLeap, size: drawbridge.size);
+    expect(find.byKey(const Key('leap-acquisition')), findsOneWidget);
+    expect(find.byKey(const Key('leap-title-box')), findsOneWidget);
+    expect(find.text(portuguese.leapUsesPerAttempt), findsOneWidget);
+    expect(find.byKey(const Key('fool-card-fragment-slots')), findsOneWidget);
+    await screenshot(tester, 'tarot-squared-leap-acquired');
   });
 }

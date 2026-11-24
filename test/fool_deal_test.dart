@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tarot_squared/fool/puzzle_deal.dart';
@@ -19,6 +20,8 @@ final fromBehind = catalog.puzzles[7];
 final keepMeAPartner = catalog.puzzles[8];
 final nightFishing = catalog.puzzles[9];
 final brokenRoad = catalog.puzzles[10];
+final drawbridge = catalog.puzzles[11];
+const drawbridgeLeap = 'A2 A1 B1 D1';
 const openingSize = BoardSize(6, 6);
 const lampSize = BoardSize(5, 6);
 const highWaterSize = BoardSize(6, 7);
@@ -982,6 +985,113 @@ void main() {
     },
   );
 
+  test('the drawbridge reserves the last pour for one scoring Leap', () {
+    final deal = PuzzleDeal(drawbridge);
+    final size = drawbridge.size;
+    final inlet = size.parseCell('E1');
+    final skip = size.parseCell('C1');
+    List<int> route(String trace) => cells(trace, size: size);
+    final opening = route('A2 A1 B1 C1 D1');
+    final jump = route(drawbridgeLeap);
+
+    expect(deal.leapHint, isNull);
+    expect(deal.inspect(jump, leap: true), isNull);
+    final first = deal.play(opening)!;
+    expect(first.stroke.gains, {inlet: 2});
+    expect(deal.progressAt(inlet), 2);
+    expect(deal.board[skip], Suit.sword);
+    expect(deal.leapHint?.path, jump);
+    expect(deal.leapHint?.gains, {inlet: 4});
+    expect(deal.play(jump), isNull);
+    expect(deal.play(route('B1 D1'), leap: true), isNull);
+    expect(deal.play(route('A1 B1'))?.stroke.gains, isEmpty);
+    expect(deal.play(route('C1 C2'))?.stroke.gains, isEmpty);
+    expect(deal.leapHint?.path, jump);
+    final last = deal.play(jump, leap: true)!;
+    expect(last.stroke.skippedCell, skip);
+    expect(last.stroke.cleared, isNot(contains(skip)));
+    expect(deal.won, isTrue);
+    expect(deal.leapAvailable, isFalse);
+    expect(deal.progressAt(inlet), 6);
+  });
+
+  test('ordinary routes keep the final pour available after activation', () {
+    final size = drawbridge.size;
+    final inlet = size.parseCell('E1');
+    final skip = size.parseCell('C1');
+    final random = Random(12);
+    final rectangles = [
+      for (var top = 0; top < size.rows - 1; top++)
+        for (var bottom = top + 1; bottom < size.rows; bottom++)
+          for (var left = 0; left < size.columns - 1; left++)
+            for (var right = left + 1; right < size.columns; right++)
+              [
+                size.cellAt(left, top)!,
+                size.cellAt(right, top)!,
+                size.cellAt(right, bottom)!,
+                size.cellAt(left, bottom)!,
+                size.cellAt(left, top)!,
+              ],
+    ];
+    final pairs = [
+      for (var cell = 0; cell < size.cellCount; cell++)
+        for (final next in size.neighbours(cell)) [cell, next],
+    ];
+    for (var delay = 0; delay < 7; delay++) {
+      final deal = PuzzleDeal(drawbridge);
+      void wander() {
+        final choices = [
+          ...rectangles,
+          ...pairs,
+        ].where((path) => deal.inspect(path)?.totalGain == 0).toList();
+        expect(deal.play(choices[random.nextInt(choices.length)]), isNotNull);
+      }
+
+      for (var i = 0; i < delay; i++) {
+        wander();
+        expect(deal.leapHint, isNull);
+      }
+      expect(deal.play(cells('C1 D1', size: size))?.stroke.gains, {inlet: 2});
+      while (deal.movesLeft > 1) {
+        wander();
+        expect(deal.board[skip], Suit.sword);
+        expect(deal.leapHint?.gains, {inlet: 4});
+      }
+      expect(deal.play(deal.leapHint!.path, leap: true), isNotNull);
+      expect(deal.won, isTrue);
+    }
+  });
+
+  test('a Leap finish composes with guided supply and a different suit', () {
+    final data = jsonDecode(
+      File(PuzzleCatalog.assetPath).readAsStringSync(),
+    ) as Map<String, Object?>;
+    final definition =
+        (data['puzzles'] as List<Object?>).last as Map<String, Object?>;
+    definition['board'] = [
+      for (final row in (definition['board'] as List<Object?>).cast<String>())
+        row.replaceAll('C', 'O'),
+    ];
+    (definition['target'] as Map<String, Object?>)['suit'] = 'O';
+    definition['refill'] = {
+      'type': 'guided',
+      'seed': 12,
+      'weights': {'W': 1},
+    };
+    data['puzzles'] = [definition];
+
+    final puzzle = PuzzleCatalog.parse(jsonEncode(data)).puzzles.single;
+    final deal = PuzzleDeal(puzzle);
+    final inlet = puzzle.size.parseCell('E1');
+    final opening = cells('A2 A1 B1 C1 D1', size: puzzle.size);
+    expect(deal.play(opening)?.stroke.gains, {inlet: 2});
+    expect(deal.leapHint?.suit, Suit.coin);
+    expect(deal.leapHint?.gains, {inlet: 4});
+    expect(deal.board[puzzle.size.parseCell('C1')], Suit.sword);
+    expect(deal.play(deal.leapHint!.path, leap: true), isNotNull);
+    expect(deal.won, isTrue);
+  });
+
   test('validates and replays every authored guide', () {
     expect(catalog.next(foolsStep), lamplighter);
     expect(catalog.next(lamplighter), highWater);
@@ -993,7 +1103,10 @@ void main() {
     expect(catalog.next(fromBehind), keepMeAPartner);
     expect(catalog.next(keepMeAPartner), nightFishing);
     expect(catalog.next(nightFishing), brokenRoad);
-    expect(catalog.next(brokenRoad), isNull);
+    expect(catalog.next(brokenRoad), drawbridge);
+    expect(catalog.next(drawbridge), isNull);
+    expect(catalog.progressAfter(drawbridge), 'cleared:012');
+    expect(catalog.unlockedIndex('cleared:011'), 11);
     expect(catalog.unlockedIndex('002'), 1);
     expect(catalog.unlockedIndex('003'), 2);
     expect(catalog.unlockedIndex('004'), 3);
@@ -1017,6 +1130,7 @@ void main() {
       14,
       20,
       14,
+      10,
     ]);
     expect(
       catalog.puzzles.map((puzzle) => (puzzle.size.columns, puzzle.size.rows)),
@@ -1032,6 +1146,7 @@ void main() {
         (7, 7),
         (8, 8),
         (6, 6),
+        (5, 5),
       ],
     );
     expect(catalog.unlockedIndex('missing'), 0);

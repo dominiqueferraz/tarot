@@ -56,6 +56,10 @@ import 'tableau_art.dart';
     title: strings.brokenRoadTitle,
     objective: strings.brokenRoadObjective,
   ),
+  PuzzleTextKey.drawbridge => (
+    title: strings.drawbridgeTitle,
+    objective: strings.drawbridgeObjective,
+  ),
 };
 
 String? puzzleOpeningStory(AppLocalizations strings, PuzzleTextKey key) =>
@@ -64,6 +68,7 @@ String? puzzleOpeningStory(AppLocalizations strings, PuzzleTextKey key) =>
       PuzzleTextKey.keepMeAPartner => strings.keepMeAPartnerStory,
       PuzzleTextKey.nightFishing => strings.nightFishingStory,
       PuzzleTextKey.brokenRoad => strings.brokenRoadStory,
+      PuzzleTextKey.drawbridge => strings.drawbridgeStory,
       _ => null,
     };
 
@@ -86,6 +91,7 @@ String targetName(AppLocalizations strings, TargetLabel label) =>
       TargetLabel.harbourLamp => strings.harbourLamp,
       TargetLabel.mooringCord => strings.mooringCord,
       TargetLabel.farBankBell => strings.farBankBell,
+      TargetLabel.drawbridgeInlet => strings.drawbridgeInlet,
     };
 
 String aimDirectionName(AppLocalizations strings, BoardDirection direction) =>
@@ -214,6 +220,11 @@ class PuzzleIllustration extends StatelessWidget {
           light: progressOf(TargetKind.lantern),
           cut: progressOf(TargetKind.cord),
           sail: motion,
+        ),
+        PuzzleScene.drawbridge => DrawbridgePainter(
+          artwork: artwork,
+          water: progressOf(TargetKind.inlet),
+          motion: motion,
         ),
         PuzzleScene.brokenRoad => BrokenRoadPainter(
           artwork: artwork,

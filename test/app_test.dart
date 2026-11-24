@@ -9,6 +9,7 @@ import 'package:material_ui/material_ui.dart' show FilledButton, Icons;
 import 'package:tarot_squared/artwork.dart';
 import 'package:tarot_squared/design_tokens.dart';
 import 'package:tarot_squared/dialogs.dart';
+import 'package:tarot_squared/fool/power_deck.dart';
 import 'package:tarot_squared/fool/puzzle_deal.dart';
 import 'package:tarot_squared/fool/stroke.dart';
 import 'package:tarot_squared/fool/tableau_art.dart';
@@ -22,6 +23,8 @@ import 'fool_deal_test.dart'
         brokenRoadReplay,
         catalog,
         cells,
+        drawbridge,
+        drawbridgeLeap,
         fairSplit,
         fairSplitReplay,
         foolsStep,
@@ -383,8 +386,114 @@ void main() {
       await dragStroke(tester, trace);
       expect(tester.widget<Text>(bell).data, english.targetProgress(total, 11));
     }
-    expect(find.text(english.continueJourney), findsOneWidget);
+    expect(find.text(english.nextPuzzle), findsOneWidget);
     expect(find.byKey(const Key('fragment-reward-box')), findsNothing);
+  });
+
+  testWidgets('teaches the final Leap and presents the Fool once', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(360, 720);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final saves = <String>[];
+    await tester.pumpWidget(
+      TarotSquaredApp(
+        catalog: catalog,
+        artwork: artwork,
+        unlockedPuzzle: 'cleared:011',
+        saveUnlock: (id) async => saves.add(id),
+      ),
+    );
+    await openPhase(tester, '012');
+    final leap = find.byKey(const Key('arm-leap'));
+    final reward = find.byKey(const Key('leap-acquisition'));
+    final deck = find.byKey(const Key('open-power-deck'));
+    final card = find.byKey(const Key('deck-fool-card'));
+    final grid = find.byKey(const Key('fool-grid'));
+    final marker = find.byKey(const Key('target-value-E1'));
+    expect(find.text(english.drawbridgeObjective), findsOneWidget);
+    expect(deck, findsNothing);
+    expect(leap, findsNothing);
+    final openingGrid = tester.getRect(grid);
+    await dragStroke(tester, 'A1 A2', size: drawbridge.size);
+    expect(leap, findsNothing);
+    await dragStroke(tester, 'C1 D1', size: drawbridge.size);
+    expect(tester.widget<Text>(marker).data, english.targetProgress(2, 6));
+    expect(tester.getRect(grid), openingGrid);
+    expect(tester.getRect(deck).bottom, lessThan(openingGrid.top));
+    final headerRule = find.byKey(const Key('fool-header-rule'));
+    expect(
+      tester.getRect(headerRule).right,
+      lessThanOrEqualTo(tester.getRect(deck).left),
+    );
+    expect(
+      tester.getRect(deck).right,
+      closeTo(openingGrid.right, BoardStyle.frameWidth + 1),
+    );
+    expect(leap, findsNothing);
+    expect(card, findsNothing);
+    expect(find.text(english.leapHint(english.cups)), findsOneWidget);
+    await dragStroke(tester, 'C1 C2', size: drawbridge.size);
+    expect(find.text(english.leapHint(english.cups)), findsOneWidget);
+    await tester.tap(deck);
+    await tester.pumpAndSettle();
+    expect(find.descendant(of: leap, matching: card), findsOneWidget);
+    expect(
+      find.descendant(of: leap, matching: find.text(english.leapPower)),
+      findsOneWidget,
+    );
+    await tester.tap(leap);
+    await tester.pumpAndSettle();
+    expect(card, findsNothing);
+    expect(find.text(english.leapArmedHint(english.cups)), findsOneWidget);
+    await dragStroke(tester, drawbridgeLeap, size: drawbridge.size);
+    expect(tester.widget<Text>(marker).data, english.targetProgress(6, 6));
+    expect(reward, findsOneWidget);
+    final title = find.byKey(const Key('leap-title-box'));
+    expect(
+      find.descendant(of: title, matching: find.text(english.leapPower)),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: title, matching: find.byType(LeapSymbol)),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: reward, matching: find.text(english.leapDescription)),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: reward,
+        matching: find.text(english.leapUsesPerAttempt),
+      ),
+      findsOneWidget,
+    );
+    expect(find.byKey(const Key('fool-card-fragment-slots')), findsOneWidget);
+    expect(find.byKey(const Key('abstract-fool-card')), findsOneWidget);
+    expect(saves, ['cleared:012']);
+    await tester.tap(find.text(english.close));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(english.continueJourney));
+    await tester.pumpAndSettle();
+
+    final play = find.text(english.play);
+    await tester.tap(find.byKey(const Key('phase-012')));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(play);
+    await tester.tap(play);
+    await tester.pumpAndSettle();
+    await dragStroke(tester, 'C1 D1', size: drawbridge.size);
+    await tester.tap(deck);
+    await tester.pumpAndSettle();
+    await tester.tap(leap);
+    await tester.pumpAndSettle();
+    await dragStroke(tester, drawbridgeLeap, size: drawbridge.size);
+    expect(reward, findsNothing);
+    expect(find.text(english.continueJourney), findsOneWidget);
+    expect(saves, ['cleared:012']);
   });
 
   testWidgets('shows the Cups suit and a brief, nonnumeric fading cue', (

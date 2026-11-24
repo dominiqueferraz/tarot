@@ -71,14 +71,23 @@ class BoardSize {
     final end = path.last;
     final previous = path[path.length - 2];
     return cellAt(
-      2 * columnOf(end) - columnOf(previous),
-      2 * rowOf(end) - rowOf(previous),
+      columnOf(end) + (columnOf(end) - columnOf(previous)).sign,
+      rowOf(end) + (rowOf(end) - rowOf(previous)).sign,
     );
   }
 
   bool aimsAlong(int previous, int end, BoardDirection direction) =>
-      columnOf(end) - columnOf(previous) == direction.dx &&
-      rowOf(end) - rowOf(previous) == direction.dy;
+      (columnOf(end) - columnOf(previous)).sign == direction.dx &&
+      (rowOf(end) - rowOf(previous)).sign == direction.dy;
+
+  int? jumpOver(int start, int end) {
+    final dx = columnOf(end) - columnOf(start);
+    final dy = rowOf(end) - rowOf(start);
+    if (!(dx.abs() == 2 && dy == 0 || dy.abs() == 2 && dx == 0)) {
+      return null;
+    }
+    return cellAt(columnOf(start) + dx ~/ 2, rowOf(start) + dy ~/ 2);
+  }
 
   bool coversCell(List<int> corners, int cell) {
     final a = corners[0];

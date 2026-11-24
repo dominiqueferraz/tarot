@@ -4,89 +4,134 @@ import 'package:material_ui/material_ui.dart';
 import '../artwork.dart';
 import '../dialogs.dart';
 import '../fool/fool_fragments.dart';
+import '../fool/power_deck.dart';
 import '../l10n/generated/app_localizations.dart';
 import '../tarot_card_face.dart';
 import '../visuals.dart';
 
 const _journeyArea = Rect.fromLTWH(14, 29, 212, 303);
 const _socket = Color(0xFFE8D6AA);
-const foolFirstReading = '013';
+const foolFirstReading = '012';
 
 Future<void> showFoolJourney(
   BuildContext context,
   Artwork artwork,
   Set<FoolFragment> earned, {
   bool leapAcquired = false,
+  bool acquiring = false,
 }) {
   final strings = AppLocalizations.of(context)!;
   final reducedMotion = MediaQuery.disableAnimationsOf(context);
   return showDialog<void>(
     context: context,
     builder: (context) => PaperDialog(
-      key: Key(leapAcquired ? 'leap-acquisition' : 'fool-journey'),
-      title: leapAcquired ? strings.leapAcquired : strings.foolChapter,
+      key: Key(acquiring ? 'leap-acquisition' : 'fool-journey'),
+      title: leapAcquired ? strings.leapPower : strings.foolChapter,
+      titleContent: leapAcquired
+          ? DecoratedBox(
+              key: const Key('leap-title-box'),
+              decoration: BoxDecoration(
+                color: parchment,
+                border: Border.all(color: ink),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 7,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  spacing: 8,
+                  children: [
+                    const LeapSymbol(),
+                    Flexible(
+                      child: Text(strings.leapPower, style: displayType(26)),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          : null,
       content: Column(
         mainAxisSize: MainAxisSize.min,
         spacing: 10,
         children: [
-          AspectRatio(
-            aspectRatio: _journeyArea.size.aspectRatio,
-            child: TweenAnimationBuilder<double>(
-              tween: Tween(begin: 0, end: 1),
-              duration: reducedMotion || earned.isEmpty
-                  ? Duration.zero
-                  : Duration(milliseconds: leapAcquired ? 1500 : 1050),
-              child: leapAcquired
-                  ? Align(
-                      alignment: const Alignment(.67, .03),
-                      child: FractionallySizedBox(
-                        widthFactor: .43,
-                        child: TarotCardFace(
-                          key: const Key('abstract-fool-card'),
-                          title: strings.foolChapter,
-                          illustration: SvgPicture.asset(
-                            AppAssets.foolCard,
-                            fit: BoxFit.cover,
-                            excludeFromSemantics: true,
-                          ),
-                        ),
-                      ),
-                    )
-                  : null,
-              builder: (context, progress, card) {
-                final assembly = leapAcquired
-                    ? (progress / .68).clamp(0.0, 1.0)
-                    : progress;
-                final reveal = Curves.easeOut.transform(
-                  ((progress - .68) / .32).clamp(0.0, 1.0),
-                );
-                return Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    CustomPaint(
-                      painter: _FoolJourneyPainter(artwork, earned, assembly),
+          if (leapAcquired) ...[
+            Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 156),
+                child: TarotCardFace(
+                  key: const Key('abstract-fool-card'),
+                  title: strings.foolChapter,
+                  illustration: TweenAnimationBuilder<double>(
+                    tween: Tween(begin: 0, end: 1),
+                    duration: acquiring && !reducedMotion && earned.isNotEmpty
+                        ? const Duration(milliseconds: 1850)
+                        : Duration.zero,
+                    child: SvgPicture.asset(
+                      AppAssets.foolCard,
+                      fit: BoxFit.cover,
+                      excludeFromSemantics: true,
                     ),
-                    if (card != null) ...[
-                      ColoredBox(color: paper.withValues(alpha: .24 * reveal)),
-                      Opacity(
-                        opacity: reveal,
-                        child: Transform.translate(
-                          offset: Offset(0, 10 * (1 - reveal)),
-                          child: card,
-                        ),
-                      ),
-                    ],
-                  ],
-                );
-              },
+                    builder: (context, progress, face) {
+                      final assembly = (progress / .68).clamp(0.0, 1.0);
+                      final reveal = Curves.easeInOut.transform(
+                        ((progress - .78) / .22).clamp(0.0, 1.0),
+                      );
+                      return Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          FittedBox(
+                            fit: BoxFit.cover,
+                            child: SizedBox.fromSize(
+                              size: _journeyArea.size,
+                              child: CustomPaint(
+                                key: const Key('fool-card-fragment-slots'),
+                                painter: _FoolJourneyPainter(
+                                  artwork,
+                                  earned,
+                                  assembly,
+                                ),
+                              ),
+                            ),
+                          ),
+                          Opacity(opacity: reveal, child: face),
+                        ],
+                      );
+                    },
+                  ),
+                ),
+              ),
             ),
-          ),
-          if (!leapAcquired)
+            Text(
+              strings.leapDescription,
+              textAlign: TextAlign.center,
+              style: labelType.copyWith(letterSpacing: 0, height: 1.25),
+            ),
+            Text(
+              strings.leapUsesPerAttempt,
+              textAlign: TextAlign.center,
+              style: labelType.copyWith(color: mutedInk, letterSpacing: 0),
+            ),
+          ] else ...[
+            AspectRatio(
+              aspectRatio: _journeyArea.size.aspectRatio,
+              child: TweenAnimationBuilder<double>(
+                tween: Tween(begin: 0, end: 1),
+                duration: reducedMotion || earned.isEmpty
+                    ? Duration.zero
+                    : const Duration(milliseconds: 1050),
+                builder: (context, progress, child) => CustomPaint(
+                  painter: _FoolJourneyPainter(artwork, earned, progress),
+                ),
+              ),
+            ),
             Text(
               strings.foolFragments(earned.length, FoolFragment.values.length),
               style: labelType,
               textAlign: TextAlign.center,
             ),
+          ],
         ],
       ),
       actions: [

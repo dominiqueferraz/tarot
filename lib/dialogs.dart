@@ -7,10 +7,12 @@ class PaperDialog extends StatelessWidget {
     required this.title,
     required this.content,
     required this.actions,
+    this.titleContent,
     super.key,
   });
 
   final String title;
+  final Widget? titleContent;
   final Widget content;
   final List<Widget> actions;
 
@@ -22,7 +24,7 @@ class PaperDialog extends StatelessWidget {
     child: DialogPanel(
       title: Semantics(
         header: true,
-        child: Text(title, style: displayType(30)),
+        child: titleContent ?? Text(title, style: displayType(30)),
       ),
       content: content,
       actions: actions,

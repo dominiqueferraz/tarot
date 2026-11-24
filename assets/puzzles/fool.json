@@ -161,6 +161,18 @@
       "difficulty": "normal",
       "par": 3,
       "refill": {"type": "ribbons", "columns": ["OWSC", "CWOS", "OSCW", "OSCW", "WOSC", "CSWO"]}
+    },
+    {
+      "id": "012",
+      "scene": "drawbridge",
+      "textKey": "drawbridge",
+      "board": ["CCCCL", "CWSS.", "OOSWS", "WSSOW", "SWSSO"],
+      "target": {"cell": "E1", "suit": "C", "quota": 6, "label": "drawbridgeInlet"},
+      "moves": 10,
+      "difficulty": "normal",
+      "par": 3,
+      "refill": {"type": "ribbons", "columns": ["C", "C", "C", "C", "SOWC"]},
+      "leapFinish": {"target": "E1", "startAt": 2, "path": "A2 A1 B1 D1", "skipSuit": "S"}
     }
   ]
 }

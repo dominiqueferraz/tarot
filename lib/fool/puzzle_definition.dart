@@ -27,6 +27,9 @@ enum PuzzleScene {
   fishingLanding,
   nightFishing,
   brokenRoad,
+  drawbridge;
+
+  bool get hasWaterGaps => this == brokenRoad || this == drawbridge;
 }
 
 enum PuzzleTextKey {
@@ -41,6 +44,7 @@ enum PuzzleTextKey {
   keepMeAPartner,
   nightFishing,
   brokenRoad,
+  drawbridge,
 }
 
 enum TargetKind { marker, lantern, inlet, cord, pan, bell }
@@ -62,7 +66,8 @@ enum TargetLabel {
   landingBasin(TargetKind.inlet),
   harbourLamp(TargetKind.lantern),
   mooringCord(TargetKind.cord),
-  farBankBell(TargetKind.bell);
+  farBankBell(TargetKind.bell),
+  drawbridgeInlet(TargetKind.inlet);
 
   const TargetLabel(this.defaultKind);
 
@@ -254,6 +259,95 @@ class PuzzleTarget {
   final BoardDirection? aimDirection;
 }
 
+class LeapFinish {
+  const LeapFinish._({
+    required this.target,
+    required this.startAt,
+    required this.skip,
+    required this.path,
+    required this.arrivals,
+    required this.hint,
+  });
+
+  final int target;
+  final int startAt;
+  final int skip;
+  final List<int> path;
+  final Map<int, Suit> arrivals;
+  final HintPlacement hint;
+
+  factory LeapFinish._read(
+    Map<String, Object?> data,
+    BoardSize size,
+    Map<int, PuzzleTarget> targets,
+    Set<int> masked,
+  ) {
+    final target = size.parseCell(_field<String>(data, 'target'));
+    final marker = targets[target];
+    if (marker == null || marker.fading != 0) {
+      throw const FormatException(
+        'A Leap finish needs a fixed, non-fading target.',
+      );
+    }
+    final startAt = _boundedInt(
+      data['startAt'],
+      1,
+      marker.quota - 2,
+      'finish progress',
+    );
+    final route = _field<String>(data, 'path').trim().split(RegExp(r'\s+'));
+    final path = route.map(size.parseCell).toList();
+    if (path.length < marker.quota - startAt ||
+        path.toSet().length != path.length ||
+        path.any(
+          (cell) => masked.contains(cell) || targets.containsKey(cell),
+        ) ||
+        size.aimOf(path) != target) {
+      throw const FormatException(
+        'The Leap finish path must reach its target.',
+      );
+    }
+    int? skip;
+    for (var i = 1; i < path.length; i++) {
+      if (size.neighbours(path[i - 1]).contains(path[i])) continue;
+      final gap = size.jumpOver(path[i - 1], path[i]);
+      if (gap == null || skip != null) {
+        throw const FormatException('A Leap finish must use one jump.');
+      }
+      skip = gap;
+    }
+    final direction = marker.aimDirection;
+    if (skip == null ||
+        path.contains(skip) ||
+        (direction != null &&
+            !size.aimsAlong(path[path.length - 2], path.last, direction))) {
+      throw const FormatException('A Leap finish needs a valid jump and aim.');
+    }
+    final blockedSuit = data['skipSuit'];
+    if (!masked.contains(skip) &&
+        (targets.containsKey(skip) ||
+            blockedSuit is! String ||
+            Suit.read(blockedSuit) == marker.suit)) {
+      throw const FormatException('The jumped cell needs a different suit.');
+    }
+    return LeapFinish._(
+      target: target,
+      startAt: startAt,
+      skip: skip,
+      path: List.unmodifiable(path),
+      arrivals: Map.unmodifiable({
+        for (final cell in path) cell: marker.suit,
+        if (!masked.contains(skip)) skip: Suit.read(blockedSuit as String),
+      }),
+      hint: (
+        x: size.columnOf(skip) + .5,
+        y: size.rowOf(skip) + 1.03,
+        tail: HintTail.top,
+      ),
+    );
+  }
+}
+
 class PuzzleDefinition {
   const PuzzleDefinition._({
     required this.id,
@@ -271,6 +365,7 @@ class PuzzleDefinition {
     required this.par,
     required this.refill,
     required this.guide,
+    required this.leapFinish,
     required this.rules,
   });
 
@@ -289,6 +384,7 @@ class PuzzleDefinition {
   final int par;
   final Refill refill;
   final List<GuideMove> guide;
+  final LeapFinish? leapFinish;
   final PuzzleRules rules;
 
   bool holdsPiece(int cell) =>
@@ -379,6 +475,19 @@ class PuzzleDefinition {
     if (guide.length >= moveLimit) {
       throw const FormatException('The guide must leave free-play moves.');
     }
+    final leapFinish = data['leapFinish'] == null
+        ? null
+        : LeapFinish._read(
+            _object(data['leapFinish'], 'leap finish'),
+            size,
+            targets,
+            masked,
+          );
+    if (leapFinish != null && (guide.isNotEmpty || targets.length != 1)) {
+      throw const FormatException(
+        'A Leap finish needs one target and free play.',
+      );
+    }
     return PuzzleDefinition._(
       id: id,
       scene: _named(PuzzleScene.values, scene, (value) => value.name, 'scene'),
@@ -418,6 +527,7 @@ class PuzzleDefinition {
         size.columns,
       ),
       guide: guide,
+      leapFinish: leapFinish,
       rules: rules,
     );
   }

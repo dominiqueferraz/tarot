@@ -4,6 +4,7 @@ import 'dart:math' as math;
 import 'package:flutter/gestures.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../artwork.dart';
@@ -11,9 +12,11 @@ import '../dialogs.dart';
 import '../l10n/generated/app_localizations.dart';
 import '../lives.dart';
 import '../lives_indicator.dart';
+import '../tarot_card_face.dart';
 import '../visuals.dart';
 import 'fool_fragments.dart';
 import 'guide_hint.dart';
+import 'power_deck.dart';
 import 'puzzle_deal.dart';
 import 'puzzle_presentation.dart';
 import 'stroke.dart';
@@ -27,6 +30,7 @@ class PuzzlePage extends StatefulWidget {
     required this.lives,
     this.onClear,
     this.fragmentReward,
+    this.onWinReward,
     this.continueLabel,
     this.onContinue,
     super.key,
@@ -38,6 +42,7 @@ class PuzzlePage extends StatefulWidget {
   final LifePool lives;
   final VoidCallback? onClear;
   final FoolFragment? fragmentReward;
+  final Future<void> Function(BuildContext)? onWinReward;
   final String? continueLabel;
   final void Function(BuildContext)? onContinue;
 
@@ -61,6 +66,8 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
   bool _reducedMotion = false;
   bool _ready = false;
   bool _confirmingExit = false;
+  bool _leapArmed = false;
+  bool _rewardPresented = false;
   Timer? _rejectTimer;
 
   late final _guideMotion = AnimationController(vsync: this);
@@ -72,7 +79,10 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
   late final _sceneMotion =
       AnimationController(vsync: this, duration: BoardMotion.scene)
         ..addStatusListener((status) {
-          if (status == AnimationStatus.completed) setState(() {});
+          if (status == AnimationStatus.completed) {
+            setState(() {});
+            _presentReward();
+          }
         });
 
   @override
@@ -86,7 +96,7 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
         _fallMotion.stop();
         _settled();
       }
-      _animateGuide(_demonstration ?? _deal.demonstration);
+      _animateGuide(_demonstration ?? _deal.demonstration ?? _deal.leapHint);
     }
   }
 
@@ -158,9 +168,21 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
   void _settled() {
     setState(() {
       _turn = null;
-      _animateGuide(_deal.demonstration);
+      _animateGuide(_deal.demonstration ?? _deal.leapHint);
       if (_deal.won && _animatesClear && !_reducedMotion) {
         _sceneMotion.forward(from: 0);
+      }
+    });
+    if (!_animatesClear || _reducedMotion) _presentReward();
+  }
+
+  void _presentReward() {
+    final present = widget.onWinReward;
+    if (!_deal.won || _rewardPresented || present == null) return;
+    _rewardPresented = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && ModalRoute.of(context)?.isCurrent == true) {
+        unawaited(present(context));
       }
     });
   }
@@ -172,6 +194,7 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
     _sceneMotion.reset();
     setState(() {
       _deal = PuzzleDeal(_puzzle);
+      _leapArmed = false;
       _turn = null;
       _keyboardCell = null;
       _clearGesture();
@@ -229,7 +252,7 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
 
   void _commit() {
     if (!_acceptsInput || _path.isEmpty) return;
-    final turn = _deal.play(_path);
+    final turn = _deal.play(_path, leap: _leapArmed);
     if (turn == null && _path.length > 1) {
       _rejectTimer?.cancel();
       setState(() => _rejected = true);
@@ -242,7 +265,10 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
     } else {
       setState(() {
         _clearGesture();
-        if (turn != null) _animateGuide(null);
+        if (turn != null) {
+          _animateGuide(null);
+          if (turn.stroke.skippedCell != null) _leapArmed = false;
+        }
         _turn = turn;
       });
       if (turn != null) {
@@ -261,6 +287,7 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
   }
 
   void _visit(int cell) {
+    if (_leapArmed && _path.isNotEmpty && cell == _deal.leapGap) return;
     if (_path.isEmpty) {
       _path = [cell];
     } else if (_path.last == cell) {
@@ -275,7 +302,7 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
     } else if (!_path.contains(cell)) {
       _path.add(cell);
     }
-    _preview = _deal.inspect(_path);
+    _preview = _deal.inspect(_path, leap: _leapArmed);
   }
 
   int? _hit(Offset point, double pitch, {bool centered = true}) {
@@ -369,10 +396,19 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
       _ => (0, 0),
     };
     if (dx != 0 || dy != 0) {
-      final neighbour = _size.cellAt(
+      var neighbour = _size.cellAt(
         _size.columnOf(cell) + dx,
         _size.rowOf(cell) + dy,
       );
+      if (_leapArmed &&
+          neighbour != null &&
+          neighbour == _deal.leapGap &&
+          _puzzle.masked.contains(neighbour)) {
+        neighbour = _size.cellAt(
+          _size.columnOf(cell) + 2 * dx,
+          _size.rowOf(cell) + 2 * dy,
+        );
+      }
       setState(() {
         _keyboardCell =
             current == null ||
@@ -384,6 +420,9 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
       return KeyEventResult.handled;
     }
     switch (key) {
+      case LogicalKeyboardKey.keyL:
+        if (!_deal.leapAvailable) return KeyEventResult.ignored;
+        _toggleLeap();
       case LogicalKeyboardKey.space:
         _markCell(cell);
       case LogicalKeyboardKey.enter:
@@ -588,15 +627,28 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
     );
   }
 
+  void _toggleLeap() {
+    if (!_acceptsInput || !_deal.leapAvailable || _path.isNotEmpty) return;
+    setState(() => _leapArmed = !_leapArmed);
+  }
+
   Widget _navigation(AppLocalizations strings, EdgeInsets sides) {
     final link = _visibleLink;
+    final showDeck = _turn == null && _deal.leapAvailable;
+    final trailingInset = Directionality.of(context) == TextDirection.ltr
+        ? sides.right
+        : sides.left;
     return Stack(
       alignment: Alignment.center,
       children: [
-        const Positioned(
-          left: 0,
-          right: 0,
-          child: Divider(key: Key('fool-header-rule'), height: 1, color: rule),
+        PositionedDirectional(
+          start: 0,
+          end: showDeck ? trailingInset + kMinInteractiveDimension : 0,
+          child: const Divider(
+            key: Key('fool-header-rule'),
+            height: 1,
+            color: rule,
+          ),
         ),
         Padding(
           padding: sides,
@@ -675,6 +727,29 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
                               ),
                             ),
                           ),
+                        ),
+                      if (showDeck)
+                        PowerDeck(
+                          key: const Key('open-power-deck'),
+                          label: strings.powerDeck,
+                          powers: [
+                            DeckPower(
+                              key: const Key('arm-leap'),
+                              command: strings.leapPower,
+                              symbol: const LeapSymbol(),
+                              card: TarotCardFace(
+                                key: const Key('deck-fool-card'),
+                                title: strings.foolChapter,
+                                illustration: SvgPicture.asset(
+                                  AppAssets.foolCard,
+                                  fit: BoxFit.cover,
+                                  excludeFromSemantics: true,
+                                ),
+                              ),
+                              selected: _leapArmed,
+                              onSelected: _toggleLeap,
+                            ),
+                          ],
                         ),
                     ],
                   ),
@@ -820,6 +895,7 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
                         'night-fishing-scene',
                       ),
                       PuzzleScene.brokenRoad => const Key('broken-road-scene'),
+                      PuzzleScene.drawbridge => const Key('drawbridge-scene'),
                     },
                     height: panelHeight,
                     child: AnimatedBuilder(
@@ -908,6 +984,18 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
                   ),
                   for (final cell in _puzzle.targets.keys)
                     _targetValue(strings, cell, pitch),
+                  if (guide?.skippedCell != null && _path.isEmpty)
+                    Positioned.fill(
+                      child: GuideHint(
+                        pitch: pitch,
+                        placement: _puzzle.leapFinish!.hint,
+                        explanation: _leapArmed
+                            ? strings.leapArmedHint(
+                                suitName(strings, guide!.suit),
+                              )
+                            : strings.leapHint(suitName(strings, guide!.suit)),
+                      ),
+                    ),
                   if (guide != null && lesson != null && _path.isEmpty)
                     Positioned.fill(
                       child: GuideHint(
@@ -1081,7 +1169,7 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
       Suit.sword: strings.sword,
       Suit.coin: strings.coin,
     };
-    final blockerLabel = _puzzle.scene == PuzzleScene.brokenRoad
+    final blockerLabel = _puzzle.scene.hasWaterGaps
         ? strings.roadGap
         : strings.wall;
     return Semantics(

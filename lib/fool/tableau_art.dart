@@ -219,6 +219,61 @@ class FishingLandingPainter extends CustomPainter {
       oldDelegate.walk != walk;
 }
 
+class DrawbridgePainter extends CustomPainter {
+  const DrawbridgePainter({
+    required this.artwork,
+    required this.water,
+    required this.motion,
+  });
+
+  final Artwork artwork;
+  final double water;
+  final double motion;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    canvas.save();
+    canvas.scale(
+      size.width / SceneLayout.width,
+      size.height / SceneLayout.height,
+    );
+    canvas.clipRect(
+      const Rect.fromLTWH(0, 0, SceneLayout.width, SceneLayout.height),
+    );
+    artwork.paint(canvas, Art.quaySky);
+    _rect(canvas, 0, 72, SceneLayout.width, 38, blue);
+    _polygon(canvas, [0, 63, 252, 63, 237, 87, 0, 107], ink);
+    _polygon(canvas, [600, 63, 397, 63, 410, 85, 600, 106], ink);
+    for (final (x, y) in [(260.0, 92.0), (314.0, 81.0), (349.0, 101.0)]) {
+      canvas.drawLine(Offset(x, y), Offset(x + 36, y), _pen(_waterline, 1.4));
+    }
+    _inlet(canvas, const Offset(480, 56), .85, water, marked: true);
+    final walk = Curves.easeInOut.transform(motion);
+    artwork.paint(
+      canvas,
+      Art.fool,
+      origin: Offset(206 + 225 * walk, 63),
+      scale: .82,
+    );
+    canvas.save();
+    canvas.translate(398, 62);
+    canvas.rotate(.41 * (1 - water.clamp(0.0, 1.0)));
+    _rect(canvas, -146, -4, 146, 8, gold);
+    canvas.drawLine(const Offset(-146, 4), const Offset(0, 4), _pen(ink, 3));
+    for (var x = -136.0; x < 0; x += 13) {
+      canvas.drawLine(Offset(x, -3), Offset(x, 3), _pen(ink, 1));
+    }
+    canvas.restore();
+    canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(DrawbridgePainter oldDelegate) =>
+      artwork != oldDelegate.artwork ||
+      water != oldDelegate.water ||
+      motion != oldDelegate.motion;
+}
+
 class BrokenRoadPainter extends CustomPainter {
   const BrokenRoadPainter({
     required this.artwork,
@@ -1029,7 +1084,7 @@ class TableauPainter extends CustomPainter {
       final center = _center(cell);
       final gap = Rect.fromCenter(center: center, width: _tile, height: _tile);
       pieceBounds.addRect(gap);
-      if (puzzle.scene == PuzzleScene.brokenRoad) {
+      if (puzzle.scene.hasWaterGaps) {
         canvas.drawRect(gap, Paint()..color = blue);
         canvas.drawLine(
           center.translate(-30, -16),
@@ -1100,8 +1155,13 @@ class TableauPainter extends CustomPainter {
       }
       if (path.isNotEmpty) {
         canvas.save();
-        canvas.clipPath(pieceBounds);
-        _paintStroke(canvas, preview?.path ?? path, rejected ? rust : blue, 5);
+        if (preview?.skippedCell == null) canvas.clipPath(pieceBounds);
+        _paintStroke(
+          canvas,
+          preview?.path ?? path,
+          rejected ? rust : blue,
+          skipped: preview?.skippedCell,
+        );
         canvas.restore();
         final stroke = preview;
         if (stroke != null && !stroke.isRectangle) {
@@ -1219,7 +1279,7 @@ class TableauPainter extends CustomPainter {
 
   void _paintDemonstration(Canvas canvas, Stroke clue) {
     final points = clue.path.map(_center).toList();
-    final guide = _path(points);
+    final guide = _traceOutline(clue.path, clue.skippedCell);
     final metric = guide.computeMetrics().single;
     final guideInk = _pen(blue.withValues(alpha: .68), 4);
     for (var index = 0.0; index < metric.length; index += 20) {
@@ -1230,6 +1290,8 @@ class TableauPainter extends CustomPainter {
     }
     final corners = clue.isRectangle
         ? points.take(points.length - 1)
+        : clue.skippedCell != null
+        ? points
         : [points.first, points.last];
     for (final corner in corners) {
       canvas.drawCircle(corner, 35, _pen(blue.withValues(alpha: .55), 2.6));
@@ -1239,16 +1301,24 @@ class TableauPainter extends CustomPainter {
         : ((guideTime - BoardMotion.guideLead) /
                   ((points.length - 1) * BoardMotion.guideStep))
               .clamp(0.0, 1.0);
-    final segment = math.min(
-      points.length - 2,
-      (progress * (points.length - 1)).floor(),
-    );
-    final tip = Offset.lerp(
-      points[segment],
-      points[segment + 1],
-      progress * (points.length - 1) - segment,
-    )!;
-    final active = _path([...points.take(segment + 1), tip]);
+    final Offset tip;
+    final Path active;
+    if (clue.skippedCell != null) {
+      final distance = progress * metric.length;
+      tip = metric.getTangentForOffset(distance)!.position;
+      active = metric.extractPath(0, distance);
+    } else {
+      final segment = math.min(
+        points.length - 2,
+        (progress * (points.length - 1)).floor(),
+      );
+      tip = Offset.lerp(
+        points[segment],
+        points[segment + 1],
+        progress * (points.length - 1) - segment,
+      )!;
+      active = _path([...points.take(segment + 1), tip]);
+    }
     canvas.drawPath(active, _pen(blue, 6));
     if (!clue.isRectangle && clue.gains.isNotEmpty) {
       _paintAim(canvas, clue, rust);
@@ -1269,11 +1339,36 @@ class TableauPainter extends CustomPainter {
     canvas.restore();
   }
 
-  void _paintStroke(Canvas canvas, List<int> cells, Color color, double width) {
+  Path _traceOutline(List<int> cells, int? skipped) {
+    if (skipped == null) return _path(cells.map(_center).toList());
+    final outline = Path()
+      ..moveTo(_center(cells.first).dx, _center(cells.first).dy);
+    for (var i = 1; i < cells.length; i++) {
+      final start = _center(cells[i - 1]);
+      final end = _center(cells[i]);
+      if (_size.jumpOver(cells[i - 1], cells[i]) == skipped) {
+        final center = _center(skipped);
+        final control =
+            center +
+            (start.dy == end.dy ? const Offset(0, -68) : const Offset(68, 0));
+        outline.quadraticBezierTo(control.dx, control.dy, end.dx, end.dy);
+      } else {
+        outline.lineTo(end.dx, end.dy);
+      }
+    }
+    return outline;
+  }
+
+  void _paintStroke(
+    Canvas canvas,
+    List<int> cells,
+    Color color, {
+    int? skipped,
+  }) {
     final points = cells.map(_center).toList();
-    final outline = _path(points);
-    canvas.drawPath(outline, _pen(paper, width + 5));
-    canvas.drawPath(outline, _pen(color, width));
+    final outline = _traceOutline(cells, skipped);
+    canvas.drawPath(outline, _pen(paper, 10));
+    canvas.drawPath(outline, _pen(color, 5));
     for (final point in points) {
       canvas.drawCircle(point, 29, _pen(paper, 6));
       canvas.drawCircle(point, 29, _pen(color, 3));

@@ -104,19 +104,25 @@ class _CampaignPageState extends State<CampaignPage> {
         lives: widget.lives,
         onClear: () => widget.onClear(puzzle),
         fragmentReward: fragmentReward,
-        continueLabel: earnsLeap
-            ? AppLocalizations.of(context)!.viewLeap
-            : assemblesJourney
+        onWinReward: earnsLeap
+            ? (context) => showFoolJourney(
+                context,
+                widget.artwork,
+                _earnedFragments(),
+                leapAcquired: true,
+                acquiring: true,
+              )
+            : null,
+        continueLabel: assemblesJourney
             ? AppLocalizations.of(context)!.viewFoolJourney
             : null,
-        onContinue: hasNext || assemblesJourney || earnsLeap
+        onContinue: hasNext || assemblesJourney
             ? (context) async {
-                if (assemblesJourney || earnsLeap) {
+                if (assemblesJourney) {
                   await showFoolJourney(
                     context,
                     widget.artwork,
                     _earnedFragments(),
-                    leapAcquired: earnsLeap,
                   );
                   if (!context.mounted) return;
                 }

@@ -1,44 +1,12 @@
 import 'dart:math' as math;
 
 import 'puzzle_definition.dart';
-import 'stroke.dart';
+import 'puzzle_refill.dart';
+import 'stroke_checker.dart';
 
 export 'puzzle_definition.dart';
-
-class Stroke {
-  const Stroke(
-    this.suit,
-    this.path,
-    this.cleared,
-    this.gains, {
-    this.isRectangle = false,
-    this.linkedTargets = const {},
-  });
-
-  final Suit suit;
-  final List<int> path;
-  final Set<int> cleared;
-  final Map<int, int> gains;
-  int get totalGain => gains.values.fold(0, (total, value) => total + value);
-  final bool isRectangle;
-  final Set<int> linkedTargets;
-}
-
-class Fall {
-  const Fall(this.suit, this.column, this.fromRow, this.toRow);
-
-  final Suit suit;
-  final int column;
-  final int fromRow;
-  final int toRow;
-}
-
-class TargetLink {
-  const TargetLink(this.cells, this.movesLeft);
-
-  final Set<int> cells;
-  final int movesLeft;
-}
+export 'puzzle_refill.dart' show Fall;
+export 'stroke_checker.dart' show Stroke, TargetLink;
 
 class Turn {
   const Turn(
@@ -58,7 +26,7 @@ class Turn {
 
 class PuzzleDeal {
   PuzzleDeal(this.puzzle) : _board = puzzle.opening {
-    if (!_hasLegalStroke(_board)) {
+    if (!_checker.hasLegalStroke(_board)) {
       throw FormatException(
         'Puzzle ${puzzle.id} needs a legal opening stroke.',
       );
@@ -67,9 +35,8 @@ class PuzzleDeal {
 
   final PuzzleDefinition puzzle;
   List<Suit?> _board;
-  late final _ribbonCursors = List<int>.filled(_size.columns, 0);
-  BoardSize get _size => puzzle.size;
-  late final _random = math.Random((puzzle.refill as GuidedRefill).seed);
+  late final _checker = StrokeChecker(puzzle);
+  late final _refill = PuzzleRefill(puzzle, _checker);
   int _moves = 0;
   Map<int, int> _progress = const {};
   Map<int, int> _faded = const {};
@@ -96,93 +63,38 @@ class PuzzleDeal {
             ? 3
             : (moves <= (puzzle.par + puzzle.limit + 1) ~/ 2 ? 2 : 1));
 
-  Stroke? inspect(List<int> path) {
-    if (path.length < 2 ||
-        path.any((cell) => cell < 0 || cell >= _size.cellCount)) {
-      return null;
-    }
-    if (path.first == path.last) {
-      final corners = _size.rectangleCorners(path);
-      return corners == null ? null : _rectangle(corners);
-    }
-    final suit = board[path.first];
-    if (suit == null || path.toSet().length != path.length) return null;
-    for (var i = 1; i < path.length; i++) {
-      if (board[path[i]] != suit ||
-          !_size.neighbours(path[i - 1]).contains(path[i])) {
-        return null;
-      }
-    }
-    final aim = _size.aimOf(path);
-    final targets = !_acceptsAim(aim, suit, path[path.length - 2], path.last)
-        ? const <int>{}
-        : (_link?.cells.contains(aim) ?? false)
-        ? _link!.cells
-        : {aim!};
-    return Stroke(
-      suit,
-      List.unmodifiable(path),
-      path.toSet(),
-      Map.unmodifiable({for (final cell in targets) cell: path.length}),
-    );
+  bool get finishingWithLeap {
+    final plan = puzzle.leapFinish;
+    return plan != null && progressAt(plan.target) >= plan.startAt;
   }
 
-  bool _acceptsAim(int? cell, Suit suit, int previous, int end) {
-    final target = puzzle.targets[cell];
-    if (target == null || target.suit != suit) return false;
-    final direction = target.aimDirection;
-    return direction == null || _size.aimsAlong(previous, end, direction);
-  }
+  bool get leapAvailable => finishingWithLeap && !finished;
 
-  Suit? _rectangleSuit(List<Suit?> layout, List<int> corners) {
-    if (puzzle.masked.any(
-      (cell) => _size.onRectanglePerimeter(corners, cell),
-    )) {
-      return null;
+  int? get leapGap => leapAvailable ? puzzle.leapFinish!.skip : null;
+
+  Stroke? get leapHint =>
+      leapAvailable ? inspect(puzzle.leapFinish!.path, leap: true) : null;
+
+  Stroke? inspect(List<int> path, {bool leap = false}) {
+    final plan = puzzle.leapFinish;
+    final stroke = _checker.inspect(
+      board,
+      path,
+      link: link,
+      leapOver: leap ? leapGap : null,
+    );
+    if (stroke == null || plan == null) return stroke;
+    final gain = stroke.gains[plan.target] ?? 0;
+    if (stroke.skippedCell != null) {
+      return gain >=
+              puzzle.targets[plan.target]!.quota - progressAt(plan.target)
+          ? stroke
+          : null;
     }
-    final suits = corners.map((cell) => layout[cell]).whereType<Suit>().toSet();
-    return suits.length == 1 ? suits.single : null;
-  }
-
-  Stroke? _rectangle(List<int> corners) {
-    final cornerSuit = _rectangleSuit(board, corners);
-    if (cornerSuit == null) return null;
-    final cleared = {
-      for (var cell = 0; cell < _size.cellCount; cell++)
-        if (board[cell] != null && _size.coversCell(corners, cell)) cell,
-    };
-    final cornerGain = math.max(
-      puzzle.rules.cornerProgressPerPiece,
-      cleared.where((cell) => board[cell] == cornerSuit).length *
-          puzzle.rules.cornerProgressPerPiece,
-    );
-    final gains = {
-      for (final entry in puzzle.targets.entries)
-        if (entry.value.suit == cornerSuit &&
-            entry.value.aimDirection == null &&
-            _size.coversCell(corners, entry.key))
-          entry.key: corners.contains(entry.key)
-              ? cornerGain
-              : puzzle.rules.shapeProgress,
-    };
-    final a = corners[0];
-    final b = corners[2];
-    final square =
-        (_size.columnOf(a) - _size.columnOf(b)).abs() ==
-        (_size.rowOf(a) - _size.rowOf(b)).abs();
-    final linkedTargets = puzzle.linksTargets && square
-        ? corners.where(gains.containsKey).toSet()
-        : const <int>{};
-    return Stroke(
-      cornerSuit,
-      [...corners, corners.first],
-      cleared,
-      Map.unmodifiable(gains),
-      isRectangle: true,
-      linkedTargets: linkedTargets.length < 2
-          ? const {}
-          : Set.unmodifiable(linkedTargets),
-    );
+    if (gain == 0) return stroke;
+    final available = math.max(0, plan.startAt - progressAt(plan.target));
+    final allowed = math.min(available, gain);
+    return stroke.withGains({if (allowed > 0) plan.target: allowed});
   }
 
   bool _matchesGuide(Stroke stroke, GuideMove guide) {
@@ -203,9 +115,9 @@ class PuzzleDeal {
         stroke.path.last == guide.path.first;
   }
 
-  Turn? play(List<int> path) {
+  Turn? play(List<int> path, {bool leap = false}) {
     if (finished) return null;
-    final stroke = inspect(path);
+    final stroke = inspect(path, leap: leap);
     final lesson = guide;
     if (stroke == null || (lesson != null && !_matchesGuide(stroke, lesson))) {
       return null;
@@ -213,29 +125,6 @@ class PuzzleDeal {
     final before = board;
     final progressBefore = _progress;
     final linkBefore = _link;
-    final next = List<Suit?>.filled(_size.cellCount, null);
-    final falls = <Fall>[];
-    final vacancies = <int>[];
-    for (var column = 0; column < _size.columns; column++) {
-      final slots = [
-        for (var row = _size.rows - 1; row >= 0; row--)
-          if (puzzle.holdsPiece(row * _size.columns + column)) row,
-      ];
-      var destination = 0;
-      for (final row in slots) {
-        final index = row * _size.columns + column;
-        if (stroke.cleared.contains(index)) continue;
-        final suit = before[index]!;
-        final toRow = slots[destination++];
-        final to = toRow * _size.columns + column;
-        next[to] = suit;
-        falls.add(Fall(suit, column, row, toRow));
-      }
-      while (destination < slots.length) {
-        vacancies.add(slots[destination++] * _size.columns + column);
-      }
-    }
-    _refill(next, vacancies, falls, lesson);
     _moves++;
     if (stroke.linkedTargets.isNotEmpty) {
       _link = TargetLink(stroke.linkedTargets, stroke.linkedTargets.length);
@@ -272,135 +161,19 @@ class PuzzleDeal {
       }
     }
     _progress = Map.unmodifiable(progress);
-    if (guide == null && movesLeft > 0 && !won) {
-      _keepBoardPlayable(next, falls, stroke);
-    }
-    _board = List.unmodifiable(next);
-    return Turn(stroke, before, falls, progressBefore, linkBefore);
-  }
-
-  void _refill(
-    List<Suit?> next,
-    List<int> vacancies,
-    List<Fall> falls,
-    GuideMove? lesson,
-  ) {
-    final arrivals = List<int>.filled(_size.columns, 0);
-    final refill = puzzle.refill;
-    if (lesson == null && refill is GuidedRefill) {
-      _guidedFill(next, vacancies, refill.supply);
-    }
-    for (final cell in vacancies) {
-      final column = _size.columnOf(cell);
-      final arrival = arrivals[column]++;
-      final Suit suit;
-      if (lesson != null) {
-        suit = lesson.arrivals[column][arrival];
-      } else if (refill is RibbonRefill) {
-        final ribbon = refill.columns[column];
-        suit = ribbon[_ribbonCursors[column]++ % ribbon.length];
-      } else {
-        suit = next[cell]!;
-      }
-      next[cell] = suit;
-      falls.add(Fall(suit, column, -arrival - 1, _size.rowOf(cell)));
-    }
-  }
-
-  void _guidedFill(List<Suit?> next, List<int> vacancies, List<Suit> supply) {
-    var bestScore = -1;
-    final candidate = List<Suit?>.of(next);
-    for (var sample = 0; sample < puzzle.rules.refillSamples; sample++) {
-      for (final cell in vacancies) {
-        candidate[cell] = supply[_random.nextInt(supply.length)];
-      }
-      final score = _refillScore(candidate);
-      if (score <= bestScore) continue;
-      bestScore = score;
-      for (final cell in vacancies) {
-        next[cell] = candidate[cell];
-      }
-    }
-  }
-
-  void _keepBoardPlayable(List<Suit?> next, List<Fall> falls, Stroke stroke) {
-    if (_hasLegalStroke(next)) return;
-    for (final (index, fall) in falls.indexed) {
-      if (fall.fromRow >= 0) continue;
-      final cell = fall.toRow * _size.columns + fall.column;
-      for (final neighbour in _size.neighbours(cell)) {
-        final suit = next[neighbour];
-        if (suit == null) continue;
-        next[cell] = suit;
-        falls[index] = Fall(suit, fall.column, fall.fromRow, fall.toRow);
-        return;
-      }
-    }
-
-    final match = stroke.path.take(stroke.isRectangle ? 4 : 2).toSet();
-    for (final (index, fall) in falls.indexed) {
-      final cell = fall.toRow * _size.columns + fall.column;
-      if (!match.contains(cell) || fall.suit == stroke.suit) continue;
-      next[cell] = stroke.suit;
-      falls[index] = Fall(stroke.suit, fall.column, fall.fromRow, fall.toRow);
-    }
-  }
-
-  int _refillScore(List<Suit?> layout) {
-    final rules = puzzle.rules;
-    final lowerRow = rules.firstLowerRow(_size);
-    var score = layout.whereType<Suit>().toSet().length;
-    for (var cell = 0; cell < _size.cellCount; cell++) {
-      final suit = layout[cell];
-      if (suit == null) continue;
-      for (final neighbour in _size.neighbours(cell)) {
-        if (layout[neighbour] != suit) continue;
-        if (cell < neighbour) {
-          score += _size.rowOf(cell) >= lowerRow
-              ? rules.refillLowerPairWeight
-              : rules.refillOtherPairWeight;
-        }
-        if (_acceptsAim(
-          _size.aimOf([cell, neighbour]),
-          suit,
-          cell,
-          neighbour,
-        )) {
-          score += rules.refillAimWeight;
-        }
-      }
-    }
-    return score;
+    final settled = _refill.settle(
+      before,
+      stroke,
+      lesson: lesson,
+      keepPlayable: guide == null && !finished,
+      arrivals: finishingWithLeap ? puzzle.leapFinish!.arrivals : const {},
+    );
+    _board = settled.board;
+    return Turn(stroke, before, settled.falls, progressBefore, linkBefore);
   }
 
   Stroke? get demonstration {
     final lesson = guide;
     return lesson == null ? null : inspect(lesson.path);
-  }
-
-  bool _hasLegalStroke(List<Suit?> layout) {
-    for (var cell = 0; cell < _size.cellCount; cell++) {
-      final suit = layout[cell];
-      if (suit != null &&
-          _size.neighbours(cell).any((next) => layout[next] == suit)) {
-        return true;
-      }
-    }
-    for (var top = 0; top < _size.rows - 1; top++) {
-      for (var bottom = top + 1; bottom < _size.rows; bottom++) {
-        for (var left = 0; left < _size.columns - 1; left++) {
-          for (var right = left + 1; right < _size.columns; right++) {
-            final corners = [
-              top * _size.columns + left,
-              top * _size.columns + right,
-              bottom * _size.columns + right,
-              bottom * _size.columns + left,
-            ];
-            if (_rectangleSuit(layout, corners) != null) return true;
-          }
-        }
-      }
-    }
-    return false;
   }
 }

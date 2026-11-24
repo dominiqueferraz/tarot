@@ -4,7 +4,7 @@
 
 The mobile tutorial uses the six guided strokes below. It teaches play using paths, a pointer, suit marks and aim arrows printed over the board. Each guided move opens a paper hint bubble on the board with one short explanation of the stroke’s effect. The subtitle states the objective. The Wand symbol, scoring suit and fixed trail marker with its light counter appear from the start. The guidance ends after the sixth stroke. The retry control appears only after a failure. The archived web study used the title **The First Step** and revealed the marker after move three.
 
-The Fool's first puzzle teaches single-suit shapes and how to light one objective. The animated pointer hand draws each gesture on the live 6 × 6 board. The player repeats it and watches the pieces settle. The [campaign atlas](campaign-001-220.md#0--the-fool--prologue-001020) describes the rest of the Fool's prologue.
+The Fool's first puzzle teaches single-suit shapes and how to light one objective. The animated pointer hand draws each gesture on the live 6 × 6 board. The player repeats it and watches the pieces settle. The [campaign atlas](campaign-001-220.md#0--the-fool--prologue-001019) describes the rest of the Fool's prologue.
 
 The Fool waits below a ridge with a staff and a bundle. The dark slope, gold circle and broken diagonal take their shapes from the card. As the trail marker gains light, the same progress reveals the path in the illustration. When it reaches 30 light, the trail becomes continuous and the Fool takes the first step. [The Fool card artwork](../deck/rider-waite-smith/svg/majors/00-the-fool.svg)
 
@@ -303,7 +303,7 @@ A losing route fills the lamp and spends the remaining strokes away from the moo
 
 ## Level 011 · The Broken Road
 
-After Night Fishing, water cuts through the road. The bell at E4 needs 11 Coins to call the ferry. Aim Coin traces into the bell or reach it with a Coin rectangle. The bell uses the same scoring rules as the other targets.
+After Night Fishing, water cuts through the road. The bell at E4 needs 11 Coins to call the ferry. Aim Coin traces into the bell or reach it with a Coin rectangle. The bell uses the same scoring rules as the other targets. The next planned deal, [One Impossible Step](#fool-012--one-impossible-step), loans Leap at the drawbridge.
 
 The 6 × 6 board uses repeating ribbons, with a three-move par and a 14-move limit. Water occupies C1–C4 and blocks traces and all parts of a rectangle outline. The bottom two rows connect the banks. The upper illustration shows the ferry approaching when the bell fills.
 
@@ -343,9 +343,42 @@ An opening Hint on a replay can restart the guide. Once its four steps are finis
 
 **Greyboxing the prologue.** The five archived briefs have recorded clears. Re-author subsequent mobile layouts for rectangles, and give each brief a shared deal on which different decisions can pay off. Replay each approach against the same supply, including an attempt that changes plans after a weak stroke. When a layout relies on a stranded pair, check whether a rectangle can clear its support or directly reach its goal. [Campaign atlas](campaign-001-220.md)
 
-## Fool 013 · One impossible step
+## Fool 012 · One Impossible Step
 
-**Raise the drawbridge by pouring two units into its inlet.** The legacy deal below starts with an empty inlet, one charge of Leap, three moves and a 6 × 6 field. The only Cups are in column D. A Wand sits between them. There is a second Wand across the gap. Both Cups and Wands can make use of the same card. The mobile training brief is a 10-move candidate, pending a rebuilt layout, a new card certificate and playtesting. [Campaign brief](campaign-001-220.md#0--the-fool--prologue-001020)
+Fill the drawbridge inlet at E1 with six units of water. The 5 × 5 board has a par of three moves and a limit of ten. The water at E2 and the top-right board edge leave one direction of approach. Every rectangle that touches the inlet would cross E2.
+
+```
+      A B C D E
+  1   C C C C I
+  2   C W S S #
+  3   O O S W S
+  4   W S S O W
+  5   S W S S O
+```
+
+I is the fixed Cup inlet, and # is water. The base ribbons from A through E are `C`, `C`, `C`, `C`, and `SOWC`.
+
+| Marker progress | What the player can do | What the board supplies |
+|---|---|---|
+| 0/6 | Aim C1 → D1 to fill the first two units. Longer aimed traces open the same stage. | The base ribbons restore the opening Cups even if the player clears them along the way. |
+| 2/6 | Open the deck in the puzzle header and choose Leap on the Fool card. Trace A2 → A1 → B1, then jump to D1 and aim east. Ordinary strokes remain available. | The finish strategy supplies a Sword at C1 and Cups at the four path cells when those cells refill. Every initial pour vacates C1 and D1. The protected Cups in A and B complete the rest of the path. |
+| 6/6 | Cross the drawbridge and earn the Fool on the first clear. | The card reveal assembles the collected journey fragments into their slots, then reveals the abstract face. The dialog names Leap, explains its jump and shows one use per attempt. |
+
+The board checks the current trace against the marker stage. A short or misdirected Leap leaves the charge available. On the final stage the board shows the live path, the aim arrow and a teaching bubble. The bubble disappears as soon as tracing starts. A later ordinary stroke runs the same refill and checker again, so the example path remains available regardless of the player's setup sequence.
+
+**Required card · Reach, any length.** Before the finish, progress stops at 2/6. From that refill onward, E2 still blocks the northbound approach and the rectangle outlines, while the Sword at C1 breaks the only ordinary Cup approach. Leap clears the four Cups and skips the Sword. Top-up refills restore the same finish even if an ordinary trace clears the Sword or a Cup in the meantime. Repeated misses can still use up the move limit.
+
+### Author a reusable Leap finish
+
+Add `leapFinish` beside the base `refill` in the catalog. Set `target`, `startAt` and a valid example `path` spanning one cell with Leap. Use `skipSuit` for a skipped cell that holds a piece. The configured target must be fixed, non-fading and the only target in the deal.
+
+The stroke checker inspects the real board. The deal caps ordinary progress at the threshold, and the threshold-crossing stroke activates the strategy for its own refill. The shared refill generates its usual supply and applies the strategy's suit overrides only to newly arriving pieces. Later ordinary strokes use the same strategy and checks. The checker verifies the example against the settled board before showing the Leap hint. It accepts a loaned Leap only if the trace finishes the marker. The successful stroke spends the charge and clears the deal together.
+
+Author the transition so its legal scoring strokes vacate any cells that need to change suit. Verify that the base supply preserves any occupied cells needed for the witness, that the barriers rule out alternate approaches, and that other legal strokes leave the final trace available after refill. Levels without a finish strategy keep their regular scoring and refill.
+
+### Archived drawbridge study
+
+The archived 6 × 6 version gives three moves and one charge of Leap. The Cups sit in column D with a Wand between them and another Wand across the water.
 
 ```
       A B C D E F
@@ -357,7 +390,7 @@ An opening Hint on a replay can restart the guide. Once its four steps are finis
   6   O S O S O O
 ```
 
-**Needs rework under the current refill rule.** This layout assumes fixtures seal the cells below them. With everything refilling, the D-column stack no longer rests on the inlet, and pieces fall past the gap. Rebuild it, or keep it for the [sealed-chamber proposal](design-notes.md#refill-around-fixtures-decided-for-now-sealing-kept-for-later).
+**Archived refill.** The old layout assumes the inlet seals the D-column stack. The mobile rules refill past fixtures and gaps. Sealed fixtures are a [separate proposal](design-notes.md#refill-around-fixtures-decided-for-now-sealing-kept-for-later).
 
 I is the fixed inlet and # is a fixed gap. Each column has a short, dry ribbon. From A to F the ribbons are SO, OS, SO, OS, SO, OS in arrival order. In the earlier model, the inlet seals the cells beneath it into a separate chamber. Leap skips one intervening cell on one straight segment. If that segment ends the trace, aim one cell ahead from the landing piece in the direction travelled.
 
@@ -369,9 +402,7 @@ I is the fixed inlet and # is a fixed gap. Each column has a short, dry ribbon. 
 
 **What the original certificate assumed.** The fixed inlet supported the D-column stack and the only other Wand sat two columns away. The two intended traces above teach different uses of Leap. An upward Cup jump spends both Cups and misses the inlet.
 
-**Cardless clear in the archived playtest.** With the listed layout and ribbons in the web build, clear A5 → A6 and then draw the four-Sword lozenge C1 → F4 → D6 → A3 → C1. It surrounds the inlet and feeds it 4, meeting the two-unit quota in two moves without Leap. Re-author and verify the mobile layout against traces and rectangles for the required-card certificate.
-
-**Playtest question for a revised layout.** Do newcomers see the Wand as a support they can remove? Watch which suit they choose before showing a hint. Test both intended uses of Leap and how often players discover each one.
+**Cardless clear in the archived playtest.** With the listed layout and ribbons in the web build, clear A5 → A6 and then draw the four-Sword lozenge C1 → F4 → D6 → A3 → C1. It surrounds the inlet and feeds it 4, meeting the two-unit quota in two moves without Leap. The current mobile deal uses a first pour and a separate Leap finish.
 
 ## Earlier finite-board studies (before refill)
 
