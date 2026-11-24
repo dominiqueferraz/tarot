@@ -30,6 +30,7 @@ import 'fool_deal_test.dart'
         marketDaySize,
         marketDayVariant,
         marketSize,
+        nightFishingReplay,
         openingSize,
         tallCatalog,
         wideCatalog;
@@ -277,6 +278,70 @@ void main() {
     await tester.tap(find.text(english.returnToPath));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('campaign-path')), findsOneWidget);
+  });
+
+  testWidgets('the win dialog shows a fragment only when it is earned', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(360, 640);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final night = catalog.puzzles.singleWhere((puzzle) => puzzle.id == '010');
+    final saves = <String>[];
+    Future<void> start(String saved) => tester.pumpWidget(
+      TarotSquaredApp(
+        key: ValueKey(saved),
+        catalog: catalog,
+        artwork: artwork,
+        unlockedPuzzle: saved,
+        saveUnlock: (id) async => saves.add(id),
+      ),
+    );
+
+    final reward = find.bySemanticsLabel(english.journeyFragmentFound);
+    final box = find.byKey(const Key('fragment-reward-box'));
+    await start(night.id);
+    await openPhase(tester, night.id);
+    expect(reward, findsNothing);
+    for (final (trace, _, _) in nightFishingReplay) {
+      await dragStroke(tester, trace, size: night.size);
+    }
+    expect(reward, findsOneWidget);
+    expect(
+      find.descendant(
+        of: box,
+        matching: find.text('You obtained a piece of a card'),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: box, matching: find.byType(CustomPaint)),
+      findsOneWidget,
+    );
+    final stars = find.bySemanticsLabel(english.starRating(3));
+    expect(tester.getBottomLeft(box).dy, lessThan(tester.getTopLeft(stars).dy));
+    await tester.tap(find.text(english.viewFoolJourney));
+    await tester.pumpAndSettle();
+    expect(find.text(english.foolFragments(10, 10)), findsOneWidget);
+    expect(saves, ['cleared:010']);
+
+    await start(saves.single);
+    await openPhase(tester, night.id);
+    for (final (trace, _, _) in nightFishingReplay) {
+      await dragStroke(tester, trace, size: night.size);
+    }
+    expect(find.text(english.continueJourney), findsOneWidget);
+    expect(reward, findsNothing);
+    expect(box, findsNothing);
+    expect(saves, ['cleared:010']);
+
+    await tester.tap(find.text(english.continueJourney));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('view-fool-journey')));
+    await tester.pumpAndSettle();
+    expect(find.text(english.foolFragments(10, 10)), findsOneWidget);
   });
 
   testWidgets('shows the Cups suit and a brief, nonnumeric fading cue', (
@@ -1076,6 +1141,7 @@ void main() {
       matching: find.byType(Text),
     );
     expect(tester.widgetList<Text>(resultText).map((text) => text.data), [
+      english.journeyFragmentFound,
       english.continueJourney,
     ]);
     expect(saves, 5);

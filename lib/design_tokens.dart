@@ -48,12 +48,6 @@ abstract final class CampaignStyle {
   static const suitBadgeOverhang = 13.0;
   static const suitBadgeRadius =
       (medallion - suitBadge) / 2 + suitBadgeOverhang;
-  static const fragmentWidthFraction = .21;
-  static const fragmentMaxWidth = 90.0;
-  static const fragmentDrop = 5.0;
-  static const fragmentCycle = 4;
-  static const fragmentInset = 4.0;
-  static const fragmentAspect = 126 / 232;
   static const previewAspect = 3.2;
 }
 

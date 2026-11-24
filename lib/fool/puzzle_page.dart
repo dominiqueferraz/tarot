@@ -12,9 +12,10 @@ import '../l10n/generated/app_localizations.dart';
 import '../lives.dart';
 import '../lives_indicator.dart';
 import '../visuals.dart';
+import 'fool_fragments.dart';
+import 'guide_hint.dart';
 import 'puzzle_deal.dart';
 import 'puzzle_presentation.dart';
-import 'guide_hint.dart';
 import 'stroke.dart';
 import 'tableau_art.dart';
 
@@ -25,6 +26,8 @@ class PuzzlePage extends StatefulWidget {
     required this.artwork,
     required this.lives,
     this.onClear,
+    this.fragmentReward,
+    this.continueLabel,
     this.onContinue,
     super.key,
   });
@@ -34,6 +37,8 @@ class PuzzlePage extends StatefulWidget {
   final Artwork artwork;
   final LifePool lives;
   final VoidCallback? onClear;
+  final FoolFragment? fragmentReward;
+  final String? continueLabel;
   final void Function(BuildContext)? onContinue;
 
   @override
@@ -1213,6 +1218,69 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
         .join(nameTargets ? '\n' : strings.progressSeparator);
   }
 
+  Widget _winResult(AppLocalizations strings) => Column(
+    mainAxisSize: MainAxisSize.min,
+    spacing: 10,
+    children: [
+      if (widget.fragmentReward case final reward?)
+        Semantics(
+          container: true,
+          label: strings.journeyFragmentFound,
+          excludeSemantics: true,
+          child: DecoratedBox(
+            key: const Key('fragment-reward-box'),
+            decoration: BoxDecoration(
+              color: parchment,
+              border: Border.all(color: rule),
+              borderRadius: BorderRadius.circular(3),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              child: Row(
+                spacing: 10,
+                children: [
+                  SizedBox(
+                    width: 52,
+                    height: 44,
+                    child: CustomPaint(
+                      painter: _FragmentRewardPainter(widget.artwork, reward),
+                    ),
+                  ),
+                  Expanded(
+                    child: Text(
+                      strings.journeyFragmentFound,
+                      style: labelType.copyWith(
+                        letterSpacing: 0,
+                        fontSize: 14,
+                        height: 1.2,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      Semantics(
+        label: strings.starRating(_deal.stars),
+        excludeSemantics: true,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            for (var i = 0; i < 3; i++)
+              Icon(
+                i < _deal.stars
+                    ? Icons.star_rounded
+                    : Icons.star_border_rounded,
+                color: i < _deal.stars ? rust : rule,
+                size: 27,
+              ),
+          ],
+        ),
+      ),
+    ],
+  );
+
   Widget _result(AppLocalizations strings) {
     return ColoredBox(
       color: ink.withValues(alpha: .26),
@@ -1221,23 +1289,7 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
           padding: const EdgeInsets.all(12),
           child: DialogPanel(
             content: _deal.won
-                ? Semantics(
-                    label: strings.starRating(_deal.stars),
-                    excludeSemantics: true,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        for (var i = 0; i < 3; i++)
-                          Icon(
-                            i < _deal.stars
-                                ? Icons.star_rounded
-                                : Icons.star_border_rounded,
-                            color: i < _deal.stars ? rust : rule,
-                            size: 27,
-                          ),
-                      ],
-                    ),
-                  )
+                ? _winResult(strings)
                 : Column(
                     mainAxisSize: MainAxisSize.min,
                     spacing: 8,
@@ -1254,9 +1306,11 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
             actions: [
               if (_deal.won)
                 DialogAction(
-                  label: widget.onContinue == null
-                      ? strings.continueJourney
-                      : strings.nextPuzzle,
+                  label:
+                      widget.continueLabel ??
+                      (widget.onContinue == null
+                          ? strings.continueJourney
+                          : strings.nextPuzzle),
                   onPressed: () {
                     final continuePuzzle = widget.onContinue;
                     if (continuePuzzle == null) {
@@ -1282,4 +1336,43 @@ class _PuzzlePageState extends State<PuzzlePage> with TickerProviderStateMixin {
       ),
     );
   }
+}
+
+class _FragmentRewardPainter extends CustomPainter {
+  _FragmentRewardPainter(this.artwork, this.fragment) : shape = fragment.path;
+
+  final Artwork artwork;
+  final FoolFragment fragment;
+  final Path shape;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final bounds = shape.getBounds();
+    final scale = math.min(
+      (size.width - 6) / bounds.width,
+      (size.height - 6) / bounds.height,
+    );
+    final origin = size.center(Offset.zero) - bounds.center * scale;
+    canvas.save();
+    canvas.translate(origin.dx, origin.dy);
+    canvas.scale(scale);
+    canvas.drawPath(
+      shape.shift(Offset(1 / scale, 2 / scale)),
+      Paint()..color = ink,
+    );
+    paintFoolFragment(canvas, artwork, shape);
+    canvas.drawPath(
+      shape,
+      Paint()
+        ..color = ink
+        ..style = PaintingStyle.stroke
+        ..strokeJoin = StrokeJoin.round
+        ..strokeWidth = 2 / scale,
+    );
+    canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(_FragmentRewardPainter oldDelegate) =>
+      artwork != oldDelegate.artwork || fragment != oldDelegate.fragment;
 }

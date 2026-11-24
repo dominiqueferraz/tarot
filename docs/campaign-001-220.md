@@ -131,7 +131,7 @@ It also teaches gaps and Leap. Shelves, carts, rails and runaway Coins wait for 
 - **Board sizes.** 001 starts at 6 × 6, 002 narrows to 5 × 6, 003 stands tall at 6 × 7, 004 opens out to 7 × 6 and 005 expands to 8 × 8.
 - **Tiers.** 008 teaches the directional lamp at Normal. Its opening scores after one setup stroke. 012 is the first remaining Hard candidate on the main route.
 - **The designed first failure** is 012.
-- **Fragments.** Five card fragments are revealed on 001, 003, 006, 009 and 012. The assembled card is awarded at the first reading, 013.
+- **Fragments.** The first clear of each phase from 001 through 010 awards one fragment of the Fool’s journey. Show that fragment in the win dialog. Clearing 010 completes the journey illustration. The first reading on 013 awards the abstract Fool card and Leap.
 
 **Tableau rule.** A Wand can support a loose Coin above a pan. In 011 a gap first interrupts a delivery; in 012 it strands a partner; in 013 it interrupts the trace itself.
 
@@ -161,6 +161,25 @@ It also teaches gaps and Leap. Shelves, carts, rails and runaway Coins wait for 
 | 018 | Don't jump | Measured · 6 × 6 · budget pending | N · twist | Pour exactly 2 into the float | Leap is dealt. The obvious leap joins a third Cup and overfills. Leap *over* the third Cup instead, so that only two pour. Misbelief: "Leap is for joining". **Payoff:** a leap that leaves a piece out. |
 | 019 | Slack water | Open · 6 × 6 · 16 | N · rest | Raise the float to 6 and light the lamp with 4 | A named rest board with generous slack and no hidden traps. **Losing line:** spending the long Cup groups on strokes that don't end facing the inlet runs out the moves. **Payoff:** any long stroke. |
 | 020 | Encounter · The traveller | Two phases · 7 × 8 | H | Take the traveller across the river | **Phase 1, open supply, 12 moves:** raise the gangplank float to 6 so the traveller can board. A checkpoint follows. **Phase 2, measured supply, budget pending:** leap the gap in the Sword line to cut the mooring cord, then clear the Wand support so the gold Coin falls onto the bell pan. **Payoff:** the bell calls the loaded ferry home. |
+
+### The Fool's fragments
+
+The journey depicts the traveller stepping across a dark ridge above the river, with a staff, a shoulder bundle and an animal at their heels. Ochre disks, ink-blue facets and a broken path keep the illustration in the abstract deck’s visual language. The win dialog displays the scene cutout earned by that phase. Each cutout fits into one slot in the journey.
+
+| Phase | Deal | Fragment |
+|---|---|---|
+| 001 | The Fool’s Step | A gold trail mark where the broken path starts |
+| 002 | Lamplighter | The ochre sun and its ring, echoing the quay lamp |
+| 003 | High Water | A turning eddy in the millstream |
+| 004 | The Mooring | The looped cord beside the traveller’s staff |
+| 005 | The Ferryman’s Fare | The gold fare at the landing |
+| 006 | Market Day | The traveller’s ochre bundle |
+| 007 | The Fair Split | Two water lines converging in one channel |
+| 008 | From Behind | A four-point light on the far bank |
+| 009 | Keep me a partner | The small dog keeping pace with the traveller |
+| 010 | Night fishing | A sail on the dark water |
+
+The Leap acquisition uses the original Marseille Fool motifs inside a 70 × 120 card frame. [Journey artwork](../assets/art/fool-journey.svg) · [Abstract face](../assets/art/fool-card-face.svg)
 
 ## I · The Magician · 011–020
 

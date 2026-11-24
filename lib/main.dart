@@ -7,6 +7,7 @@ import 'campaign/campaign_page.dart';
 import 'fool/puzzle_definition.dart';
 import 'l10n/generated/app_localizations.dart';
 import 'lives.dart';
+import 'tarot_card_face.dart';
 import 'visuals.dart';
 
 const _languageKey = 'language';
@@ -122,12 +123,12 @@ class _TarotSquaredAppState extends State<TarotSquaredApp> {
     }
   }
 
-  Future<void> _unlock(PuzzleDefinition next) async {
-    final index = widget.catalog.puzzles.indexOf(next);
-    if (index <= _unlockedIndex.value) return;
-    _unlockedIndex.value = index;
+  Future<void> _recordClear(PuzzleDefinition puzzle) async {
+    final index = widget.catalog.puzzles.indexOf(puzzle);
+    if (index != _unlockedIndex.value) return;
+    _unlockedIndex.value = index + 1;
     try {
-      await widget.saveUnlock?.call(next.id);
+      await widget.saveUnlock?.call(widget.catalog.progressAfter(puzzle));
     } on PlatformException catch (error) {
       debugPrint('Could not save puzzle progress: ${error.code}');
     }
@@ -165,7 +166,7 @@ class _TarotSquaredAppState extends State<TarotSquaredApp> {
               artwork: widget.artwork,
               lives: _lives,
               unlockedIndex: _unlockedIndex,
-              onUnlock: _unlock,
+              onClear: _recordClear,
             ),
           ),
         ),
@@ -299,57 +300,26 @@ class _HomeCover extends StatelessWidget {
       height: maxHeight,
       child: LayoutBuilder(
         builder: (context, box) {
-          final cardWidth = (box.maxHeight * .36).clamp(
+          final cardWidth = (box.maxHeight * TarotCardFace.aspectRatio).clamp(
             0.0,
-            box.maxWidth * .44,
+            box.maxWidth * .52,
           );
           final remaining = box.maxWidth - cardWidth - 4;
           return Stack(
             alignment: Alignment.centerLeft,
             children: [
               Positioned(
-                top: 0,
                 right: 0,
-                bottom: 0,
                 width: cardWidth,
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    color: parchment,
-                    border: Border.all(color: ink, width: 1.4),
-                    boxShadow: const [
-                      BoxShadow(color: Color(0xFFC4B595), offset: Offset(4, 5)),
-                    ],
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(5),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Expanded(
-                          child: ClipRect(
-                            child: Image.asset(
-                              AppAssets.cover,
-                              fit: BoxFit.cover,
-                              alignment: Alignment.topCenter,
-                              excludeFromSemantics: true,
-                            ),
-                          ),
-                        ),
-                        const Divider(height: 1, color: ink),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(
-                            vertical: 8,
-                            horizontal: 3,
-                          ),
-                          child: Text(
-                            cardName.toUpperCase(),
-                            style: displayType(15),
-                            textAlign: TextAlign.center,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
+                child: TarotCardFace(
+                  key: const Key('moon-cover-card'),
+                  title: cardName,
+                  illustration: ColoredBox(
+                    color: const Color(0xFFF2DCAF),
+                    child: Image.asset(
+                      AppAssets.cover,
+                      fit: BoxFit.contain,
+                      excludeFromSemantics: true,
                     ),
                   ),
                 ),

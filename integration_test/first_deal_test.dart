@@ -686,10 +686,18 @@ void main() {
         await screenshot(tester, 'tarot-squared-night-fishing-setup');
       }
     }
-    expect(find.text(portuguese.continueJourney), findsOneWidget);
+    expect(find.text(portuguese.viewFoolJourney), findsOneWidget);
+    expect(
+      find.bySemanticsLabel(portuguese.journeyFragmentFound),
+      findsOneWidget,
+    );
     expect(find.bySemanticsLabel(portuguese.starRating(3)), findsOneWidget);
     await screenshot(tester, 'tarot-squared-night-fishing-complete');
-    await tester.tap(find.text(portuguese.continueJourney));
+    await tester.tap(find.text(portuguese.viewFoolJourney));
+    await tester.pumpAndSettle();
+    expect(find.text(portuguese.foolFragments(10, 10)), findsOneWidget);
+    await screenshot(tester, 'tarot-squared-fool-journey');
+    await tester.tap(find.text(portuguese.close));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('campaign-path')), findsOneWidget);
   });

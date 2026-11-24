@@ -5,6 +5,7 @@ import 'package:flutter/semantics.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../artwork.dart';
+import '../fool/fool_fragments.dart';
 import '../fool/puzzle_definition.dart';
 import '../fool/puzzle_page.dart';
 import '../fool/puzzle_presentation.dart';
@@ -13,6 +14,7 @@ import '../l10n/generated/app_localizations.dart';
 import '../lives.dart';
 import '../lives_indicator.dart';
 import '../visuals.dart';
+import 'fool_journey.dart';
 import 'phase_preview.dart';
 
 class CampaignPage extends StatefulWidget {
@@ -21,7 +23,7 @@ class CampaignPage extends StatefulWidget {
     required this.artwork,
     required this.lives,
     required this.unlockedIndex,
-    required this.onUnlock,
+    required this.onClear,
     super.key,
   });
 
@@ -29,7 +31,7 @@ class CampaignPage extends StatefulWidget {
   final Artwork artwork;
   final LifePool lives;
   final ValueListenable<int> unlockedIndex;
-  final void Function(PuzzleDefinition) onUnlock;
+  final void Function(PuzzleDefinition) onClear;
 
   @override
   State<CampaignPage> createState() => _CampaignPageState();
@@ -45,7 +47,11 @@ class _CampaignPageState extends State<CampaignPage> {
       if (!_scroll.hasClients) return;
       _scroll.jumpTo(
         math.min(
-          widget.unlockedIndex.value * CampaignStyle.phaseSpacing,
+          math.min(
+                widget.unlockedIndex.value,
+                widget.catalog.puzzles.length - 1,
+              ) *
+              CampaignStyle.phaseSpacing,
           _scroll.position.maxScrollExtent,
         ),
       );
@@ -76,21 +82,52 @@ class _CampaignPageState extends State<CampaignPage> {
     ),
   );
 
+  Set<FoolFragment> _earnedFragments() => {
+    for (final puzzle in widget.catalog.puzzles.take(
+      widget.unlockedIndex.value,
+    ))
+      ?FoolFragment.byPhase[puzzle.id],
+  };
+
   MaterialPageRoute<void> _puzzleRoute(int phase) {
     final puzzle = widget.catalog.puzzles[phase];
-    final next = widget.catalog.next(puzzle);
+    final hasNext = widget.catalog.next(puzzle) != null;
+    final firstClear = phase == widget.unlockedIndex.value;
+    final fragmentReward = firstClear ? FoolFragment.byPhase[puzzle.id] : null;
+    final assemblesJourney = fragmentReward == FoolFragment.values.last;
+    final earnsLeap = firstClear && puzzle.id == foolFirstReading;
     return MaterialPageRoute(
       builder: (context) => PuzzlePage(
         puzzle: puzzle,
         phaseNumber: phase + 1,
         artwork: widget.artwork,
         lives: widget.lives,
-        onClear: next == null ? null : () => widget.onUnlock(next),
-        onContinue: next == null
-            ? null
-            : (context) =>
-                  Navigator.of(context)
-                      .pushReplacement(_previewRoute(phase + 1)),
+        onClear: () => widget.onClear(puzzle),
+        fragmentReward: fragmentReward,
+        continueLabel: earnsLeap
+            ? AppLocalizations.of(context)!.viewLeap
+            : assemblesJourney
+            ? AppLocalizations.of(context)!.viewFoolJourney
+            : null,
+        onContinue: hasNext || assemblesJourney || earnsLeap
+            ? (context) async {
+                if (assemblesJourney || earnsLeap) {
+                  await showFoolJourney(
+                    context,
+                    widget.artwork,
+                    _earnedFragments(),
+                    leapAcquired: earnsLeap,
+                  );
+                  if (!context.mounted) return;
+                }
+                final navigator = Navigator.of(context);
+                if (hasNext) {
+                  navigator.pushReplacement(_previewRoute(phase + 1));
+                } else {
+                  navigator.pop();
+                }
+              }
+            : null,
       ),
     );
   }
@@ -125,10 +162,36 @@ class _CampaignPageState extends State<CampaignPage> {
                     Expanded(
                       child: Semantics(
                         header: true,
-                        child: Text(
-                          strings.foolChapter,
-                          textAlign: TextAlign.center,
-                          style: displayType(33),
+                        child: TextButton(
+                          key: const Key('view-fool-journey'),
+                          style: TextButton.styleFrom(
+                            minimumSize: const Size(0, 48),
+                            padding: const EdgeInsets.symmetric(horizontal: 4),
+                          ),
+                          onPressed: () => showFoolJourney(
+                            context,
+                            widget.artwork,
+                            _earnedFragments(),
+                            leapAcquired: puzzles
+                                .take(widget.unlockedIndex.value)
+                                .any((puzzle) => puzzle.id == foolFirstReading),
+                          ),
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              spacing: 6,
+                              children: [
+                                Text(
+                                  strings.foolChapter,
+                                  style: displayType(33),
+                                ),
+                                const ExcludeSemantics(
+                                  child: Icon(Icons.style_outlined, size: 18),
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
                       ),
                     ),
@@ -176,14 +239,6 @@ class _CampaignPageState extends State<CampaignPage> {
                                   painter: _TrailPainter(stops, unlocked),
                                 ),
                                 for (final (index, puzzle) in puzzles.indexed)
-                                  if (index % CampaignStyle.fragmentCycle < 2)
-                                    _fragment(
-                                      puzzle,
-                                      width,
-                                      stops[index],
-                                      index.isEven,
-                                    ),
-                                for (final (index, puzzle) in puzzles.indexed)
                                   _phase(
                                     strings,
                                     puzzle,
@@ -201,58 +256,6 @@ class _CampaignPageState extends State<CampaignPage> {
                 ),
               ),
             ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _fragment(
-    PuzzleDefinition puzzle,
-    double width,
-    Offset stop,
-    bool right,
-  ) {
-    final fragmentWidth = math.min(
-      width * CampaignStyle.fragmentWidthFraction,
-      CampaignStyle.fragmentMaxWidth,
-    );
-    const margin = CampaignStyle.fragmentInset * 2;
-    final fragmentHeight =
-        (fragmentWidth - margin) / CampaignStyle.fragmentAspect + margin;
-    final center = width * (right ? .82 : .17);
-    return Positioned(
-      left: center - fragmentWidth / 2,
-      top: stop.dy + CampaignStyle.fragmentDrop - fragmentHeight / 2,
-      width: fragmentWidth,
-      child: IgnorePointer(
-        child: ExcludeSemantics(
-          child: Transform.rotate(
-            angle: right ? .12 : -.13,
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                color: parchment,
-                border: Border.all(color: mutedInk),
-                borderRadius: BorderRadius.circular(2),
-                boxShadow: const [BoxShadow(color: rule, offset: Offset(3, 4))],
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(CampaignStyle.fragmentInset),
-                child: AspectRatio(
-                  aspectRatio: CampaignStyle.fragmentAspect,
-                  child: ClipRect(
-                    child: CustomPaint(
-                      painter: _DeckFragment(
-                        widget.artwork,
-                        puzzle.scoringSuits.contains(Suit.cup)
-                            ? Art.cupsFragment
-                            : Art.foolFragment,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
           ),
         ),
       ),
@@ -403,21 +406,6 @@ class _CampaignPageState extends State<CampaignPage> {
       ],
     );
   }
-}
-
-class _DeckFragment extends CustomPainter {
-  const _DeckFragment(this.artwork, this.art);
-
-  final Artwork artwork;
-  final Art art;
-
-  @override
-  void paint(Canvas canvas, Size size) =>
-      artwork.paint(canvas, art, scale: size.width / 126);
-
-  @override
-  bool shouldRepaint(_DeckFragment oldDelegate) =>
-      oldDelegate.artwork != artwork || oldDelegate.art != art;
 }
 
 class _TrailPainter extends CustomPainter {

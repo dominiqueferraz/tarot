@@ -428,6 +428,7 @@ class PuzzleCatalog {
   const PuzzleCatalog._(this.puzzles);
 
   static const assetPath = 'assets/puzzles/fool.json';
+  static const _clearedPrefix = 'cleared:';
   final List<PuzzleDefinition> puzzles;
 
   factory PuzzleCatalog.parse(String source) {
@@ -465,9 +466,15 @@ class PuzzleCatalog {
     return index >= 0 && index + 1 < puzzles.length ? puzzles[index + 1] : null;
   }
 
-  int unlockedIndex(String? id) => puzzles
-      .indexWhere((puzzle) => puzzle.id == id)
-      .clamp(0, puzzles.length - 1);
+  String progressAfter(PuzzleDefinition puzzle) =>
+      next(puzzle)?.id ?? '$_clearedPrefix${puzzle.id}';
+
+  int unlockedIndex(String? progress) {
+    final cleared = progress?.startsWith(_clearedPrefix) ?? false;
+    final id = cleared ? progress!.substring(_clearedPrefix.length) : progress;
+    final index = puzzles.indexWhere((puzzle) => puzzle.id == id);
+    return index < 0 ? 0 : index + (cleared ? 1 : 0);
+  }
 }
 
 List<List<Suit>> _columns(

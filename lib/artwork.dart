@@ -4,6 +4,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 class AppAssets {
   static const cover = 'assets/the-moon.webp';
   static const paper = 'assets/paper-grain.png';
+  static const foolCard = 'assets/art/fool-card-face.svg';
 }
 
 enum Art {
@@ -11,8 +12,7 @@ enum Art {
   quaySky('quay-sky'),
   quayPier('quay-pier'),
   mill('mill'),
-  foolFragment('fool-fragment'),
-  cupsFragment('cups-fragment'),
+  foolJourney('fool-journey'),
   fool('fool', Offset(32, 56)),
   mooredBoat('moored-boat', Offset(8, 12)),
   wand('wand', Offset(30, 30)),
