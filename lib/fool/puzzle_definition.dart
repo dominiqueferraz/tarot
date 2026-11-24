@@ -26,6 +26,7 @@ enum PuzzleScene {
   lampPath,
   fishingLanding,
   nightFishing,
+  brokenRoad,
 }
 
 enum PuzzleTextKey {
@@ -39,9 +40,10 @@ enum PuzzleTextKey {
   fromBehind,
   keepMeAPartner,
   nightFishing,
+  brokenRoad,
 }
 
-enum TargetKind { marker, lantern, inlet, cord, pan }
+enum TargetKind { marker, lantern, inlet, cord, pan, bell }
 
 enum TargetLabel {
   trailMarker(TargetKind.marker),
@@ -59,7 +61,8 @@ enum TargetLabel {
   westFacingLamp(TargetKind.lantern),
   landingBasin(TargetKind.inlet),
   harbourLamp(TargetKind.lantern),
-  mooringCord(TargetKind.cord);
+  mooringCord(TargetKind.cord),
+  farBankBell(TargetKind.bell);
 
   const TargetLabel(this.defaultKind);
 
@@ -140,9 +143,6 @@ sealed class Refill {
     return switch (_field<String>(data, 'type')) {
       'ribbons' => RibbonRefill(
         _columns(_field<List<Object?>>(data, 'columns'), width),
-        showArrivals:
-            data.containsKey('showArrivals') &&
-            _field<bool>(data, 'showArrivals'),
       ),
       'guided' => GuidedRefill(
         _field<int>(data, 'seed'),
@@ -163,9 +163,8 @@ sealed class Refill {
 }
 
 class RibbonRefill extends Refill {
-  const RibbonRefill(this.columns, {this.showArrivals = false});
+  const RibbonRefill(this.columns);
   final List<List<Suit>> columns;
-  final bool showArrivals;
 }
 
 class GuidedRefill extends Refill {

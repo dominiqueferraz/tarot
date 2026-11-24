@@ -124,7 +124,7 @@
       "moves": 18,
       "difficulty": "normal",
       "par": 14,
-      "refill": {"type": "ribbons", "showArrivals": true, "columns": ["OCOSC", "WSWCW", "WOWSW", "OCSWC", "OWSCW", "CSOWS"]}
+      "refill": {"type": "ribbons", "columns": ["OCOSC", "WSWCW", "WOWSW", "OCSWC", "OWSCW", "CSOWS"]}
     },
     {
       "id": "009",
@@ -150,6 +150,17 @@
       "difficulty": "normal",
       "par": 9,
       "refill": {"type": "guided", "seed": 1021, "weights": {"W": 2, "S": 2, "C": 1, "O": 1}}
+    },
+    {
+      "id": "011",
+      "scene": "brokenRoad",
+      "textKey": "brokenRoad",
+      "board": ["SO.OOC", "SW.COW", "OS.OOO", "WO.SLS", "OOOOOS", "WSOOOC"],
+      "target": {"cell": "E4", "suit": "O", "quota": 11, "label": "farBankBell"},
+      "moves": 14,
+      "difficulty": "normal",
+      "par": 3,
+      "refill": {"type": "ribbons", "columns": ["OWSC", "CWOS", "OSCW", "OSCW", "WOSC", "CSWO"]}
     }
   ]
 }

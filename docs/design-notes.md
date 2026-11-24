@@ -618,7 +618,7 @@ Volume 2 chapters (about 24 boards) add two more reprises and two more combinati
 
 The notes below record the older web experiments with area clears. The mobile opening teaches squares and rectangles with those powers. A later puzzle group introduces lozenges with a separate combo set. [Current gesture rules](product-requirements.md#what-happens-under-the-finger)
 
-Ordinary traces stay horizontal and vertical, and the last segment aims. The design supports lozenges, squares and triangles as closed shapes with the same area clear and scoring rules. A lozenge closes four diagonal sides around an area. The turns define a shape's corners, so a player can start midway along a side or at a corner and take either direction. Sides can pass over targets. A target at a turn normally counts as the suit it accepts. The trail marker in The First Step can match any suit at a corner and gains light only from Wand shapes. [Opening rules and playtest status](opening-deals.md#rules-in-play)
+Ordinary traces stay horizontal and vertical, and the last segment aims. The design supports lozenges, squares and triangles as closed shapes with the same area clear and scoring rules. A lozenge closes four diagonal sides around an area. The turns define a shape's corners, so a player can start midway along a side or at a corner and take either direction. Sides can pass over targets. Keep the outline clear of blocked cells. A target at a turn normally counts as the suit it accepts. The trail marker in The First Step can match any suit at a corner and gains light only from Wand shapes. [Opening rules and playtest status](opening-deals.md#rules-in-play)
 
 Match the ordinary corners in one suit. In boards that teach mixed shapes, a second rule admits uneven mixes of goal suits and every corner order. Far Wreath uses Wands and Cups because its goals are the lamp and inlet. [Core rules](product-requirements.md#what-happens-under-the-finger)
 
@@ -639,7 +639,7 @@ Match the ordinary corners in one suit. In boards that teach mixed shapes, a sec
 
 #### Refill around fixtures: decided for now, sealing kept for later
 
-**Now: everything refills.** Ordinary pieces fall past lamps, inlets, pans and gaps, so every open cell refills from the top. The pan catches only the loose gold Coin, which is taken as the fare once it rings the bell. Under this rule:
+**Now: everything refills.** Ordinary pieces fall past lamps, inlets, pans and gaps, so every open cell refills from the top. Under this rule:
 - cells refill while ribbons last;
 - the lozenge stays available around mid-board fixtures.
 
@@ -649,6 +649,12 @@ Match the ordinary corners in one suit. In boards that teach mixed shapes, a sec
 - **Concept ledger.** Weight ½, as an extension of the support system. It breaks no invariant, but certificates must say which chambers are sealed.
 
 Boards that already assume sealing (013, and the first 001 greybox spec with dry ribbons) are flagged in [opening deals](opening-deals.md) for rework or for reuse with this mechanic.
+
+### Falling Coin movement lesson
+
+Save the loose Coin for a puzzle that introduces moving pieces. Give it a distinct edge-on shape, then let it fall in its column when a stroke clears its supports. Draw the bell pan one cell below the catch point. When the Coin reaches that point, the bell rings, the ferry takes the fare and the vacated cell refills. The landing-bell brief in 014 is a candidate for this lesson.
+
+The earlier Broken Road study put the loose Coin at E2 above a bell at E6. A Cup trace across the bottom, then a Wand pair and a Cup pair at D5–E5, let it fall in three steps. The fixed-pair ferry study also records a one-stroke version. [Archived ferry study](opening-deals.md#archived-lamp-and-bell-deal)
 
 The cadence figures are illustrative targets. The draft trump and figure examples still need testing on paper and in playtests. The PRD records the adopted split into three volumes and the current rules for pieces and trumps.
 

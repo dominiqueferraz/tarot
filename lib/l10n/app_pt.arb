@@ -86,6 +86,11 @@
   "nightFishingTitle": "Pesca Noturna",
   "nightFishingObjective": "Acenda a lamparina e solte o barco",
   "nightFishingStory": "A tripulação já tem água para a noite. Acenda a lamparina do porto e corte a amarra para que o barco possa partir.",
+  "brokenRoadTitle": "A Estrada Partida",
+  "brokenRoadObjective": "Toque o sino da outra margem com Moedas",
+  "brokenRoadStory": "A água cortou a estrada. Ligue Moedas abaixo da fenda e aponte para o sino da outra margem para chamar a balsa.",
+  "farBankBell": "Sino da outra margem",
+  "roadGap": "Água",
   "harbourLamp": "Lamparina do porto",
   "mooringCord": "Amarra do barco",
   "westFacingLamp": "Lamparina voltada para oeste",
@@ -93,7 +98,6 @@
   "aimRight": "Recebe traços apontados para a direita",
   "aimDown": "Recebe traços apontados para baixo",
   "aimLeft": "Recebe traços apontados para a esquerda",
-  "incomingSuits": "Peças que chegam acima de {cell}: {suits}",
   "westFloat": "Boia oeste",
   "eastFloat": "Boia leste",
   "fillTogetherHint": "A boia transbordou. Encha as duas com um retângulo de Copas ou um despejo interligado.",
@@ -115,6 +119,6 @@
   "guideLinkedAim": "Mire {suit} em um alvo ligado para somar +{amount} a cada um.",
   "guideAim": "O último passo define a direção de {suit}.",
   "guideEnclose": "Um retângulo de {suit} pode somar pontos aos alvos que cobre.",
-  "guideRectangle": "O retângulo remove peças de qualquer naipe, no interior e nas bordas.",
+  "guideRectangle": "Contorne sem passar por bloqueios. Remova peças de todos os naipes dentro e nas bordas.",
   "guideWildcard": "Um alvo pode combinar com qualquer naipe num canto."
 }

@@ -18,7 +18,7 @@ The mobile opening teaches horizontal and vertical traces, squares and rectangle
 
 **Ordinary traces.** Connect two or more pieces of one suit through horizontal or vertical neighbours. The trace can turn and visit each cell once. Drag back over the previous piece to shorten the trace. Returning to the origin of an unfinished gesture should let the player choose another direction within the same drag. Release commits a valid stroke. An incomplete or cancelled gesture spends zero moves.
 
-**Squares and rectangles.** Draw four straight sides along the rows and columns and close the outline. A square is a rectangle with equal sides. Start at a corner or along a side and draw in either direction. The ordinary corner pieces must share a suit. The trail marker can stand in for any suit at a corner and stays on the board. The sides can pass over other pieces and the marker. On release, pieces of every suit clear inside and along the outline, and any light earned from the rectangle goes to the marker. See the [shared gesture rules](product-requirements.md#what-happens-under-the-finger).
+**Squares and rectangles.** Draw four straight sides along the rows and columns and close the outline. A square is a rectangle with equal sides. Start at a corner or along a side and draw in either direction. The ordinary corner pieces must share a suit. The trail marker can stand in for any suit at a corner and stays on the board. The sides can pass over other pieces and the marker. The outline must stay clear of blocked cells and can enclose them. On release, pieces of every suit clear inside and along the outline, and any light earned from the rectangle goes to the marker. See the [shared gesture rules](product-requirements.md#what-happens-under-the-finger).
 
 | Stroke | Light gained |
 |---|---|
@@ -220,9 +220,9 @@ The last step of a Coin trace sets its direction. E4 → D4 deposits two Coins i
 
 | Reference approach | Result |
 |---|---|
-| E4 → D4, then build toward the west pan | West fills first. Both pans are paid in 14 moves. |
-| D4 → E4, then build toward the east pan | East fills first. Both pans are paid in 14 moves. |
-| A2 → A3 spends two Coins without a deposit | Switch to the west opening after the fall. Both pans are paid in 18 moves. |
+| E4 → D4, then build toward the west pan | West fills first. Both pans are paid in 11 moves. |
+| D4 → E4, then build toward the east pan | East fills first. Both pans are paid in 11 moves. |
+| A2 → A3 spends two Coins without a deposit | Switch to the west opening after the fall. Both pans are paid in 16 moves. |
 | Fill the west pan, then spend the remaining moves without feeding the east | The deal fails at 24 west and 14 east. |
 | Open east and build a sequence of Coin squares and rectangles | Both pans are paid in six moves. The C1–F4 square pays seven Coins into each pan. |
 
@@ -263,7 +263,7 @@ Build the two water levels with aimed Cup traces and Cup rectangles. A float tha
 
 The west-facing lamp at D4 needs 32 light. A Wand trace scores one light per Wand when its last step is B4 → C4, aimed east into the lamp. A westbound trace from F4 → E4 still clears both Wands. A rectangle can clear around the lamp and use it as a wildcard corner. The arrow on the lamp marks the scoring side.
 
-The 6 × 6 deal has an 18-move limit and a par of 14. Each column repeats its authored ribbon. The strip shows its next three arrivals, from left to right, with the first landing in the lowest vacancy. The lamp opens at 0/32 and the path lights up as the player feeds it. [Board and ribbons](../assets/puzzles/fool.json)
+The 6 × 6 deal has an 18-move limit and a par of 14. Each column repeats its authored ribbon. New pieces appear when a stroke resolves, with the first arrival landing in the lowest vacancy. The lamp opens at 0/32 and the path lights up as the player feeds it. [Board and ribbons](../assets/puzzles/fool.json)
 
 | Approach | Opening decision and payoff | Clear |
 |---|---|---|
@@ -300,6 +300,19 @@ Stone walls shape both sides of the 8 × 8 board at A3, H3, A6 and H6. The board
 | Recover from a missed spark | Aim D5 → E5 with Wands. The stroke still drops the Sword pair. Cut with that pair and find a longer Wand approach from below. | 7 moves |
 
 A losing route fills the lamp and spends the remaining strokes away from the mooring. At the move limit the crew are still tied to the pier. [Board and refill](../assets/puzzles/fool.json) · [Reference replays](../test/fool_deal_test.dart)
+
+## Level 011 · The Broken Road
+
+After Night Fishing, water cuts through the road. The bell at E4 needs 11 Coins to call the ferry. Aim Coin traces into the bell or reach it with a Coin rectangle. The bell uses the same scoring rules as the other targets.
+
+The 6 × 6 board uses repeating ribbons, with a three-move par and a 14-move limit. Water occupies C1–C4 and blocks traces and all parts of a rectangle outline. The bottom two rows connect the banks. The upper illustration shows the ferry approaching when the bell fills.
+
+| Approach | Opening decision and payoff | Clear |
+|---|---|---|
+| Trace below the water | Aim A5 → B5 → C5 → C6 → D6 → E6 → E5 north into the bell for 7. The refill gives C6 → D6 → E6 → E5 for the remaining 4. | 2 moves |
+| Recover from a miss | Clear A1 → A2, then aim the seven-Coin trace below the water. Close D1 → E1 → E4 → D4 → D1 to finish. | 3 moves |
+
+In the losing replay, strokes that never reach the bell spend all 14 moves. [Board and refill](../assets/puzzles/fool.json) · [Reference replays](../test/fool_deal_test.dart)
 
 ## Lozenge playtest routes
 

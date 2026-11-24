@@ -96,18 +96,6 @@ class PuzzleDeal {
             ? 3
             : (moves <= (puzzle.par + puzzle.limit + 1) ~/ 2 ? 2 : 1));
 
-  Iterable<Suit> upcomingArrivals(int column) sync* {
-    final refill = puzzle.refill;
-    if (refill is! RibbonRefill || !refill.showArrivals || guide != null) {
-      return;
-    }
-    final ribbon = refill.columns[column];
-    final cursor = _ribbonCursors[column];
-    for (var index = 0; index < ribbon.length; index++) {
-      yield ribbon[(cursor + index) % ribbon.length];
-    }
-  }
-
   Stroke? inspect(List<int> path) {
     if (path.length < 2 ||
         path.any((cell) => cell < 0 || cell >= _size.cellCount)) {
@@ -146,14 +134,18 @@ class PuzzleDeal {
     return direction == null || _size.aimsAlong(previous, end, direction);
   }
 
-  Suit? _cornerSuit(List<Suit?> layout, List<int> corners) {
-    if (corners.any(puzzle.masked.contains)) return null;
+  Suit? _rectangleSuit(List<Suit?> layout, List<int> corners) {
+    if (puzzle.masked.any(
+      (cell) => _size.onRectanglePerimeter(corners, cell),
+    )) {
+      return null;
+    }
     final suits = corners.map((cell) => layout[cell]).whereType<Suit>().toSet();
     return suits.length == 1 ? suits.single : null;
   }
 
   Stroke? _rectangle(List<int> corners) {
-    final cornerSuit = _cornerSuit(board, corners);
+    final cornerSuit = _rectangleSuit(board, corners);
     if (cornerSuit == null) return null;
     final cleared = {
       for (var cell = 0; cell < _size.cellCount; cell++)
@@ -404,7 +396,7 @@ class PuzzleDeal {
               bottom * _size.columns + right,
               bottom * _size.columns + left,
             ];
-            if (_cornerSuit(layout, corners) != null) return true;
+            if (_rectangleSuit(layout, corners) != null) return true;
           }
         }
       }

@@ -121,8 +121,7 @@ Trace a single suit through horizontal or vertical neighbours and aim with the l
 - Wands light the lamp.
 - Cups pour oil into the quay lamp or fill an inlet and raise its float.
 - Swords cut a cord.
-- Coins load a pan.
-- The later falling-Coin lesson introduces a loose Coin that rings a bell when its support clears. The first five deals teach target actions without a bell objective.
+- Coins load a pan and use the same rule to ring the far-bank bell in 011.
 
 It also teaches gaps and Leap. Shelves, carts, rails and runaway Coins wait for their own chapters.
 
@@ -133,7 +132,7 @@ It also teaches gaps and Leap. Shelves, carts, rails and runaway Coins wait for 
 - **The designed first failure** is 012.
 - **Fragments.** The first clear of each phase from 001 through 010 awards one fragment of the Fool’s journey. Show that fragment in the win dialog. Clearing 010 completes the journey illustration. The first reading on 013 awards the abstract Fool card and Leap.
 
-**Tableau rule.** A Wand can support a loose Coin above a pan. In 011 a gap first interrupts a delivery; in 012 it strands a partner; in 013 it interrupts the trace itself.
+**Tableau rule.** Water blocks traces. In 011 the Coin path can go around the gap, in 012 the gap strands a partner, and in 013 Leap crosses it. Save the [falling Coin](design-notes.md#falling-coin-movement-lesson) for a later puzzle that introduces moving pieces.
 
 **Card.** Leap lets the next trace jump one intervening cell in a straight line to a matching piece. The jumped cell is untouched, whatever it holds.
 
@@ -151,10 +150,10 @@ It also teaches gaps and Leap. Shelves, carts, rails and runaway Coins wait for 
 | 008 | From Behind | Measured · 6 × 6 · 14 / 18 | N | Send 32 light into the west-facing lamp | The lamp at D4 takes eastbound Wand hits. Clear B5 → B6 to drop Wands into the approach on the left, or reshape the approach with a rectangle. **Payoff.** A nine-Wand trace loops from the right and finishes by stepping east from B4 to C4. **Losing line.** Keep clearing available groups without preparing Wands left of the lamp. [Authored deal](opening-deals.md#level-008--from-behind) |
 | 009 | Keep Me a Partner | Open · 7 × 7 · 9 / 14 | N | Fill the landing basin with 30 water | The night crew stops for fresh water before fishing. Clear the Wands and Swords beneath the left Cups or open the right approach in one stroke. **Payoff.** The falling Cups meet beside the basin marker at D7 and pour into it. **Losing line.** Spend too many strokes clearing groups away from the basin. [Authored deal](opening-deals.md#level-009--keep-me-a-partner) |
 | 010 | Night Fishing | Open · 8 × 8 with mirrored side walls · 9 / 20 | N | Cut 6 strands at the mooring and send 6 light into the harbour lamp | The crew have water and need a lit passage and a free boat. **Payoff.** E5 → D5 lights the lamp at C5 and drops Swords into the same cells. Aim back through D5 → E5 to cut the mooring at F5. **Losing line.** Finish the lamp and keep spending strokes away from the mooring. [Authored deal](opening-deals.md#level-010--night-fishing) |
-| 011 | The broken road | Measured · 6 × 6 · budget pending | N | Ring the far-bank bell | A gap splits the upper field. The loose Coin's support on the far bank can only be cleared by a trace that runs *under* the gap. **Payoff:** that under-gap trace drops the Coin onto its pan. |
+| 011 | The Broken Road | Measured · 6 × 6 · 3 / 14 | N · training | Ring the far-bank bell with 11 Coins | Water occupies C1–C4. Join Coins below the gap and turn north into the bell at E4. **Payoff.** Filling the bell calls the ferry. **Recovery.** Finish with a Coin rectangle on the far bank after a missed stroke. [Authored deal](opening-deals.md#level-011--the-broken-road) |
 | 012 | Stranded | Measured · 5 × 6 · budget pending | H | Raise the landing float | This is the planned first likely failure. The tempting opening separates the Cups that could feed the float. Author the ribbons so recovering that approach takes more moves than remain. **Payoff.** A Cup pair meets under the gap and pours into the float. |
 | 013 | One impossible step | Measured · 6 × 6 · 10 candidate | N · training | Lift the little drawbridge by pouring two | Borrow Leap. The intended choices are an immediate Cup jump or a Wand jump that clears their support. Award the Fool either way. Keep the 10-move limit if the authored deal gives players room to try Leap and recover from a weak move. *Required-card certificate pending:* the legacy layout admits a two-move cardless clear with a Sword lozenge. Rebuild the layout and recheck ordinary traces, rectangle clears and indirect target progress. [Layout and reproduced route](opening-deals.md#fool-013--one-impossible-step) |
-| 014 | Over someone's head | Measured · 6 × 6 · budget pending | N | Ring the landing bell | First independent use of Leap. Leap over a Coin to pour from the far Cup into the float. The Coin that was jumped then drops onto the bell pan. **Payoff:** the leaped pour rings the bell. |
+| 014 | Over someone's head | Measured · 6 × 6 · budget pending | N | Ring the landing bell | First independent use of Leap. Candidate for introducing the [falling Coin](design-notes.md#falling-coin-movement-lesson). Leap over a Coin to pour from the far Cup into the float. The Coin that was jumped then drops onto the bell pan. **Payoff:** the leaped pour rings the bell. |
 | 015 | Across the weir | Open · 7 × 8 · 18 | N | Pour 10 water into the far-bank inlet | Leap is dealt. Cups lie on both banks of a gap column. Without the leap only short near-bank pours reach. **Payoff:** saving the leap for the longest Cup run across the gap. |
 | 016 | Far bank | Measured · 6 × 6 · budget pending | H · optional | Load the far pan with 4 to call the skiff | Join Coins across a broken floor. The vertical leap is tempting but spends the jump too early. **Payoff:** the leap halfway through a horizontal Coin trace. |
 | 017 | The long detour | Measured · 6 × 6 · budget pending | SH · optional | Ring both bells | Two loose Coins wait above two bell pans, on opposite sides of a gap. The far Coin's support can only be reached after the near Coin has fallen. Save the single leap for it. **Payoff:** the final leap rings the second bell. |

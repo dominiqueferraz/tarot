@@ -86,6 +86,11 @@
   "nightFishingTitle": "Pesca Nocturna",
   "nightFishingObjective": "Enciende la lámpara y suelta el barco",
   "nightFishingStory": "La tripulación ya tiene agua para la noche. Enciende la lámpara del puerto y corta la amarra para que puedan zarpar.",
+  "brokenRoadTitle": "El Camino Roto",
+  "brokenRoadObjective": "Toca la campana de la otra orilla con Monedas",
+  "brokenRoadStory": "El agua ha cortado el camino. Conecta Monedas por debajo de la abertura y apunta a la campana de la otra orilla para llamar al transbordador.",
+  "farBankBell": "Campana de la otra orilla",
+  "roadGap": "Agua",
   "harbourLamp": "Lámpara del puerto",
   "mooringCord": "Amarra del barco",
   "westFacingLamp": "Lámpara orientada al oeste",
@@ -93,7 +98,6 @@
   "aimRight": "Recibe trazos que apuntan hacia la derecha",
   "aimDown": "Recibe trazos que apuntan hacia abajo",
   "aimLeft": "Recibe trazos que apuntan hacia la izquierda",
-  "incomingSuits": "Piezas que llegan por encima de {cell}: {suits}",
   "westFloat": "Flotador oeste",
   "eastFloat": "Flotador este",
   "fillTogetherHint": "Ese flotador se desbordó. Llena ambos con un rectángulo de Copas o un vertido enlazado.",
@@ -115,6 +119,6 @@
   "guideLinkedAim": "Apunta con {suit} a un objetivo enlazado para sumar +{amount} a cada uno.",
   "guideAim": "El último paso fija la dirección de {suit}.",
   "guideEnclose": "Un rectángulo de {suit} puede sumar puntos a los objetivos que cubre.",
-  "guideRectangle": "El rectángulo elimina fichas de cualquier palo, dentro y en los bordes.",
+  "guideRectangle": "Traza el contorno sin cruzar bloqueos. Elimina todos los palos dentro y en los bordes.",
   "guideWildcard": "Un objetivo puede combinar con cualquier palo en una esquina."
 }

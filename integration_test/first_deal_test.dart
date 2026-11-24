@@ -12,6 +12,7 @@ import '../test/app_test.dart'
     show dragStroke, english, portuguese, previewTarget, targetSemantics;
 import '../test/fool_deal_test.dart'
     show
+        brokenRoadReplay,
         cells,
         dockReplay,
         dockSize,
@@ -482,7 +483,7 @@ void main() {
     },
   );
 
-  testWidgets('clears levels 006 through 010', (tester) async {
+  testWidgets('clears levels 006 through 011', (tester) async {
     final source = await rootBundle.loadString(PuzzleCatalog.assetPath);
     final catalog = PuzzleCatalog.parse(source);
     final split = catalog.puzzles.singleWhere((puzzle) => puzzle.id == '007');
@@ -598,7 +599,7 @@ void main() {
     await tester.tap(play);
     await tester.pumpAndSettle();
     final lamp = find.byKey(const Key('target-value-D4'));
-    expect(find.byKey(const Key('arrival-ribbons')), findsOneWidget);
+    expect(find.byKey(const Key('arrival-ribbons')), findsNothing);
     expect(find.text(portuguese.fromBehindObjective), findsOneWidget);
     expect(
       find.bySemanticsLabel(
@@ -709,6 +710,37 @@ void main() {
     await screenshot(tester, 'tarot-squared-fool-journey');
     await tester.tap(find.text(portuguese.close));
     await tester.pumpAndSettle();
-    expect(find.byKey(const Key('campaign-path')), findsOneWidget);
+    expect(find.text(portuguese.brokenRoadTitle), findsOneWidget);
+    expect(find.text(portuguese.brokenRoadStory), findsOneWidget);
+    await tester.ensureVisible(play);
+    await tester.tap(play);
+    await tester.pumpAndSettle();
+    final bell = find.byKey(const Key('target-value-E4'));
+    expect(find.text(portuguese.brokenRoadObjective), findsOneWidget);
+    expect(find.byKey(const Key('broken-road-scene')), findsOneWidget);
+    expect(find.byKey(const Key('arrival-ribbons')), findsNothing);
+    expect(
+      find.bySemanticsLabel(
+        portuguese.labelWithDetail('C2', portuguese.roadGap),
+      ),
+      findsOneWidget,
+    );
+    await screenshot(tester, 'tarot-squared-broken-road-opening');
+    await dragStroke(tester, 'B1 E1 E4 B4 B1');
+    expect(
+      find.bySemanticsLabel(portuguese.movesRemaining(14)),
+      findsOneWidget,
+    );
+    expect(tester.widget<Text>(bell).data, portuguese.targetProgress(0, 11));
+    for (final (trace, total) in brokenRoadReplay) {
+      await dragStroke(tester, trace);
+      expect(
+        tester.widget<Text>(bell).data,
+        portuguese.targetProgress(total, 11),
+      );
+    }
+    expect(find.bySemanticsLabel(portuguese.starRating(3)), findsOneWidget);
+    expect(find.text(portuguese.continueJourney), findsOneWidget);
+    await screenshot(tester, 'tarot-squared-broken-road-complete');
   });
 }

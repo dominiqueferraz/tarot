@@ -87,6 +87,18 @@ class BoardSize {
         _between(rowOf(cell), rowOf(a), rowOf(b));
   }
 
+  bool onRectanglePerimeter(List<int> corners, int cell) {
+    if (!coversCell(corners, cell)) return false;
+    final a = corners[0];
+    final b = corners[2];
+    final column = columnOf(cell);
+    final row = rowOf(cell);
+    return column == columnOf(a) ||
+        column == columnOf(b) ||
+        row == rowOf(a) ||
+        row == rowOf(b);
+  }
+
   List<int>? rectangleCorners(List<int> path) {
     if (path.length < 5 || path.first != path.last) return null;
     final sides = <(int, int)>[];

@@ -18,11 +18,14 @@ final fairSplit = catalog.puzzles[6];
 final fromBehind = catalog.puzzles[7];
 final keepMeAPartner = catalog.puzzles[8];
 final nightFishing = catalog.puzzles[9];
+final brokenRoad = catalog.puzzles[10];
 const openingSize = BoardSize(6, 6);
 const lampSize = BoardSize(5, 6);
 const highWaterSize = BoardSize(6, 7);
 const dockSize = BoardSize(7, 6);
 const marketSize = BoardSize(8, 8);
+
+const brokenRoadReplay = [('A5 B5 C5 C6 D6 E6 E5', 7), ('C6 D6 E6 E5', 11)];
 
 const nightFishingReplay = [
   ('E5 D5', 2, 0),
@@ -108,13 +111,10 @@ const westFareReplay = [
   ('F6 F5', 9, 6),
   ('B3 D3 D8 B8 B3', 9, 6),
   ('D8 E8 E7 D7 D6 C6 C5', 16, 6),
-  ('E1 H1 H7 E7 E1', 16, 10),
-  ('C1 H1 H4 C4 C1', 24, 14),
-  ('E6 D6 D5 D4 E4', 24, 19),
-  ('A3 C3 C4 A4 A3', 24, 19),
-  ('A1 H1 H5 A5 A1', 24, 19),
-  ('B3 H3 H5 B5 B3', 24, 23),
-  ('F3 G3 G4 F4 F3', 24, 24),
+  ('E2 F2 F3 E3', 16, 6),
+  ('C1 F1 F4 C4 C1', 24, 14),
+  ('C5 D5 D4 E4', 24, 18),
+  ('C1 F1 F4 C4 C1', 24, 24),
 ];
 
 const eastFareReplay = [
@@ -123,15 +123,12 @@ const eastFareReplay = [
   ('C6 C5', 6, 6),
   ('D4 F4 F6 D6 D4', 6, 6),
   ('B4 F4 F6 B6 B4', 10, 10),
-  ('C1 H1 H8 C8 C1', 14, 14),
-  ('G3 G2 F2 F3', 14, 18),
-  ('C1 F1 F4 C4 C1', 14, 18),
-  ('E2 F2 F3', 14, 21),
-  ('C4 H4 H6 C6 C4', 14, 21),
-  ('A4 G4 G6 A6 A4', 14, 21),
-  ('C5 H5 H7 C7 C5', 14, 21),
-  ('C1 H1 H4 C4 C1', 21, 24),
-  ('E5 E4 D4', 24, 24),
+  ('A3 H3 H4 A4 A3', 10, 10),
+  ('C1 F1 F4 C4 C1', 18, 18),
+  ('D3 F3 F6 D6 D3', 18, 22),
+  ('F2 E2 E3 E4 D4', 23, 22),
+  ('E3 H3 H8 E8 E3', 23, 24),
+  ('C4 E4 E8 C8 C4', 24, 24),
 ];
 
 const _fareRecovery = [
@@ -143,16 +140,14 @@ const _fareRecovery = [
   ('A4 E4 E8 A8 A4', 14, 12),
   ('A4 B4', 16, 12),
   ('A2 F2 F8 A8 A2', 16, 12),
-  ('A1 F1 F7 A7 A1', 16, 12),
-  ('A3 D3 D7 A7 A3', 20, 12),
-  ('B2 F2 F5 B5 B2', 20, 12),
-  ('C4 E4 E5 C5 C4', 24, 12),
-  ('E1 F1 F6 E6 E1', 24, 12),
-  ('F6 F5', 24, 14),
-  ('D1 H1 H5 D5 D1', 24, 14),
-  ('C7 D7 D6 D5 D4 E4', 24, 20),
-  ('A2 H2 H6 A6 A2', 24, 20),
-  ('E4 H4 H8 E8 E4', 24, 24),
+  ('E1 F1 F7 E7 E1', 16, 12),
+  ('C2 F2 F4 C4 C2', 21, 17),
+  ('A2 F2 F6 A6 A2', 24, 21),
+  ('F6 F5', 24, 23),
+  ('C4 D4 D8 C8 C4', 24, 23),
+  ('C2 F2 F3 C3 C2', 24, 23),
+  ('D4 F4 F7 D7 D4', 24, 23),
+  ('C1 F1 F4 C4 C1', 24, 24),
 ];
 
 const guidedRoutes = [
@@ -367,28 +362,66 @@ String layout(PuzzleDeal deal) => [
 
 void main() {
   test('refill keeps a jammed ribbon board playable until moves run out', () {
-    for (final (board, target, ribbons, route) in [
-      (['WWL'], 'C1', ['C', 'S', 'O'], 'A1 B1'),
-      (['W.L', '...', 'W.W'], 'C1', ['CO', 'W', 'S'], 'A1 C1 C3 A3 A1'),
-    ]) {
-      final puzzle = rectangularCatalog(
-        board,
-        target,
-        ribbons: ribbons,
-      ).puzzles.single;
-      final deal = PuzzleDeal(puzzle);
-      final stroke = cells(route, size: puzzle.size);
-      for (var move = 1; move <= puzzle.limit; move++) {
-        final turn = deal.play(stroke);
-        expect(turn, isNotNull, reason: '$route on move $move');
-        expect(deal.finished, move == puzzle.limit);
-        for (final fall in turn!.falls) {
-          final cell = fall.toRow * puzzle.size.columns + fall.column;
-          expect(deal.board[cell], fall.suit);
-        }
+    final puzzle = rectangularCatalog(
+      ['WWL'],
+      'C1',
+      ribbons: ['C', 'S', 'O'],
+    ).puzzles.single;
+    final deal = PuzzleDeal(puzzle);
+    final stroke = cells('A1 B1', size: puzzle.size);
+    for (var move = 1; move <= puzzle.limit; move++) {
+      final turn = deal.play(stroke);
+      expect(turn, isNotNull, reason: 'Move $move');
+      expect(deal.finished, move == puzzle.limit);
+      for (final fall in turn!.falls) {
+        final cell = fall.toRow * puzzle.size.columns + fall.column;
+        expect(deal.board[cell], fall.suit);
       }
-      expect(deal.lost, isTrue);
     }
+    expect(deal.lost, isTrue);
+  });
+
+  test('a blocked outline does not count toward opening playability', () {
+    final puzzle = rectangularCatalog(
+      ['W.L', '...', 'W.W'],
+      'C1',
+      ribbons: ['CO', 'W', 'S'],
+    ).puzzles.single;
+    expect(() => PuzzleDeal(puzzle), throwsFormatException);
+  });
+
+  test('closed shapes can surround blockers with a clear perimeter', () {
+    final puzzle = rectangularCatalog([
+      'WWCW',
+      'CLSC',
+      'W.CW',
+      'WWCW',
+    ], 'B2').puzzles.single;
+    final deal = PuzzleDeal(puzzle);
+    final blocker = puzzle.size.parseCell('B3');
+    final original = deal.board;
+
+    for (final route in [
+      'A3 D3 D4 A4 A3',
+      'B1 D1 D4 B4 B1',
+      'D3 A3 A4 D4 D3',
+      'C3 D3 D4 A4 A3 C3',
+      'A1 C1 C4 D4 D2 B2 B1 A1',
+    ]) {
+      final path = cells(route, size: puzzle.size);
+      expect(deal.inspect(path), isNull, reason: route);
+      expect(deal.play(path), isNull, reason: route);
+    }
+    expect(deal.moves, 0);
+    expect(deal.board, original);
+
+    final route = cells('B1 D1 D4 A4 A1 B1', size: puzzle.size);
+    final clear = deal.play(route)!.stroke;
+    expect(clear.isRectangle, isTrue);
+    expect(clear.cleared, hasLength(14));
+    expect(clear.cleared, isNot(contains(blocker)));
+    expect(deal.board[blocker], isNull);
+    expect(deal.moves, 1);
   });
 
   test('every campaign deal can finish without an early loss', () {
@@ -643,14 +676,13 @@ void main() {
     final rectangle = deal.inspect(cells('C3 E3 E4 C4 C3'))!;
     expect(rectangle.isRectangle, isTrue);
     expect(rectangle.totalGain, 0);
-    expect(deal.upcomingArrivals(1).take(3), [
-      Suit.wand,
-      Suit.sword,
-      Suit.wand,
-    ]);
-    expect(deal.play(cells('B5 B6')), isNotNull);
-    expect(deal.upcomingArrivals(1).take(3), [Suit.wand, Suit.cup, Suit.wand]);
-    expect(deal.upcomingArrivals(0).take(3), [Suit.coin, Suit.cup, Suit.coin]);
+    final setup = deal.play(cells('B5 B6'))!;
+    expect(
+      setup.falls
+          .where((fall) => fall.fromRow < 0)
+          .map((fall) => (fall.column, fall.toRow, fall.suit)),
+      [(1, 1, Suit.wand), (1, 0, Suit.sword)],
+    );
     expect(deal.inspect(cells(fromBehindReplay[1].$1))?.gains, {lamp: 9});
   });
 
@@ -860,6 +892,96 @@ void main() {
     expect(deal.progressAt(size.parseCell('F5')), 0);
   });
 
+  test('The Broken Road detours around water to score at the bell', () {
+    final deal = PuzzleDeal(brokenRoad);
+    final size = brokenRoad.size;
+    final bell = size.parseCell('E4');
+    final water = {for (var row = 1; row <= 4; row++) size.parseCell('C$row')};
+
+    expect(brokenRoad.masked, water);
+    expect(deal.inspect(cells('B1 C1 D1')), isNull);
+    expect(deal.inspect(cells('B1 C1 C5 B5 B1')), isNull);
+    expect(deal.play(cells('B1 E1 E4 B4 B1')), isNull);
+    expect(deal.moves, 0);
+    expect(deal.inspect(cells('E5 E6'))?.gains, isEmpty);
+
+    var previous = 0;
+    for (final (trace, total) in brokenRoadReplay) {
+      final turn = deal.play(cells(trace))!;
+      expect(turn.stroke.gains, {bell: total - previous});
+      expect(deal.progressAt(bell), total);
+      expect(water.map((cell) => deal.board[cell]), everyElement(isNull));
+      previous = total;
+    }
+    expect(deal.won, isTrue);
+    expect(deal.stars, 3);
+  });
+
+  test('The Broken Road supports a rectangle and recovery after a miss', () {
+    final bell = brokenRoad.size.parseCell('E4');
+    final deal = PuzzleDeal(brokenRoad);
+    for (final (trace, total) in [
+      ('A1 A2', 0),
+      brokenRoadReplay.first,
+      ('D1 E1 E4 D4 D1', 11),
+    ]) {
+      expect(deal.won, isFalse);
+      expect(deal.play(cells(trace)), isNotNull, reason: trace);
+      expect(deal.progressAt(bell), total);
+    }
+    expect(deal.won, isTrue);
+    expect(deal.stars, 3);
+  });
+
+  test(
+    'The Broken Road has no opening clear and can end with a silent bell',
+    () {
+      final size = brokenRoad.size;
+      final opening = PuzzleDeal(brokenRoad);
+      for (var top = 0; top < size.rows - 1; top++) {
+        for (var bottom = top + 1; bottom < size.rows; bottom++) {
+          for (var left = 0; left < size.columns - 1; left++) {
+            for (var right = left + 1; right < size.columns; right++) {
+              final start = size.cellAt(left, top)!;
+              final route = [
+                start,
+                size.cellAt(right, top)!,
+                size.cellAt(right, bottom)!,
+                size.cellAt(left, bottom)!,
+                start,
+              ];
+              if (opening.inspect(route) != null) {
+                final deal = PuzzleDeal(brokenRoad)..play(route);
+                expect(
+                  deal.won,
+                  isFalse,
+                  reason: route.map(size.cellLabel).join(' '),
+                );
+              }
+            }
+          }
+        }
+      }
+
+      const misses = [
+        'A5 B5 C5 D5 E5',
+        'E2 E3 F3',
+        'B5 C5 C6 D6 E6',
+        'E1 F1',
+        'A2 A3',
+        'D2 D3',
+      ];
+      for (final trace in [
+        ...misses,
+        ...List.filled(brokenRoad.limit - misses.length, 'D1 E1'),
+      ]) {
+        expect(opening.play(cells(trace)), isNotNull, reason: trace);
+      }
+      expect(opening.lost, isTrue);
+      expect(opening.progressAt(size.parseCell('E4')), 0);
+    },
+  );
+
   test('validates and replays every authored guide', () {
     expect(catalog.next(foolsStep), lamplighter);
     expect(catalog.next(lamplighter), highWater);
@@ -870,7 +992,8 @@ void main() {
     expect(catalog.next(fairSplit), fromBehind);
     expect(catalog.next(fromBehind), keepMeAPartner);
     expect(catalog.next(keepMeAPartner), nightFishing);
-    expect(catalog.next(nightFishing), isNull);
+    expect(catalog.next(nightFishing), brokenRoad);
+    expect(catalog.next(brokenRoad), isNull);
     expect(catalog.unlockedIndex('002'), 1);
     expect(catalog.unlockedIndex('003'), 2);
     expect(catalog.unlockedIndex('004'), 3);
@@ -880,6 +1003,8 @@ void main() {
     expect(catalog.unlockedIndex('008'), 7);
     expect(catalog.unlockedIndex('009'), 8);
     expect(catalog.unlockedIndex('010'), 9);
+    expect(catalog.unlockedIndex('011'), 10);
+    expect(catalog.unlockedIndex('cleared:010'), 10);
     expect(catalog.puzzles.map((puzzle) => puzzle.limit), [
       25,
       22,
@@ -891,6 +1016,7 @@ void main() {
       18,
       14,
       20,
+      14,
     ]);
     expect(
       catalog.puzzles.map((puzzle) => (puzzle.size.columns, puzzle.size.rows)),
@@ -905,6 +1031,7 @@ void main() {
         (6, 6),
         (7, 7),
         (8, 8),
+        (6, 6),
       ],
     );
     expect(catalog.unlockedIndex('missing'), 0);

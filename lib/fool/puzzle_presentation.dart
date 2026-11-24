@@ -52,6 +52,10 @@ import 'tableau_art.dart';
     title: strings.nightFishingTitle,
     objective: strings.nightFishingObjective,
   ),
+  PuzzleTextKey.brokenRoad => (
+    title: strings.brokenRoadTitle,
+    objective: strings.brokenRoadObjective,
+  ),
 };
 
 String? puzzleOpeningStory(AppLocalizations strings, PuzzleTextKey key) =>
@@ -59,6 +63,7 @@ String? puzzleOpeningStory(AppLocalizations strings, PuzzleTextKey key) =>
       PuzzleTextKey.marketDay => strings.marketDayStory,
       PuzzleTextKey.keepMeAPartner => strings.keepMeAPartnerStory,
       PuzzleTextKey.nightFishing => strings.nightFishingStory,
+      PuzzleTextKey.brokenRoad => strings.brokenRoadStory,
       _ => null,
     };
 
@@ -80,6 +85,7 @@ String targetName(AppLocalizations strings, TargetLabel label) =>
       TargetLabel.landingBasin => strings.landingBasin,
       TargetLabel.harbourLamp => strings.harbourLamp,
       TargetLabel.mooringCord => strings.mooringCord,
+      TargetLabel.farBankBell => strings.farBankBell,
     };
 
 String aimDirectionName(AppLocalizations strings, BoardDirection direction) =>
@@ -95,7 +101,7 @@ String targetAmount(AppLocalizations strings, TargetKind kind, int amount) =>
       TargetKind.marker || TargetKind.lantern => strings.lightGoal(amount),
       TargetKind.inlet => strings.waterGoal(amount),
       TargetKind.cord => strings.strandAmount(amount),
-      TargetKind.pan => strings.coinAmount(amount),
+      TargetKind.pan || TargetKind.bell => strings.coinAmount(amount),
     };
 
 String suitName(AppLocalizations strings, Suit suit) => switch (suit) {
@@ -208,6 +214,11 @@ class PuzzleIllustration extends StatelessWidget {
           light: progressOf(TargetKind.lantern),
           cut: progressOf(TargetKind.cord),
           sail: motion,
+        ),
+        PuzzleScene.brokenRoad => BrokenRoadPainter(
+          artwork: artwork,
+          rung: progressOf(TargetKind.bell) >= 1,
+          motion: motion,
         ),
       },
     );

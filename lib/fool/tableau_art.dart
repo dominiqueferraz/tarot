@@ -219,6 +219,96 @@ class FishingLandingPainter extends CustomPainter {
       oldDelegate.walk != walk;
 }
 
+class BrokenRoadPainter extends CustomPainter {
+  const BrokenRoadPainter({
+    required this.artwork,
+    required this.rung,
+    required this.motion,
+  });
+
+  final Artwork artwork;
+  final bool rung;
+  final double motion;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    canvas.save();
+    canvas.scale(
+      size.width / SceneLayout.width,
+      size.height / SceneLayout.height,
+    );
+    canvas.clipRect(
+      const Rect.fromLTWH(0, 0, SceneLayout.width, SceneLayout.height),
+    );
+    artwork.paint(canvas, Art.quaySky);
+    _rect(canvas, 0, 67, SceneLayout.width, 43, blue);
+    _polygon(canvas, [0, 63, 258, 63, 249, 74, 260, 81, 237, 88, 0, 104], ink);
+    _polygon(canvas, [
+      600,
+      60,
+      383,
+      60,
+      394,
+      72,
+      381,
+      81,
+      402,
+      88,
+      600,
+      105,
+    ], ink);
+    canvas.drawPath(
+      _path(const [Offset(0, 63), Offset(258, 63), Offset(249, 74)]),
+      _pen(const Color(0xFFB39D73), 3.5),
+    );
+    canvas.drawPath(
+      _path(const [Offset(394, 72), Offset(383, 60), Offset(600, 60)]),
+      _pen(const Color(0xFFB39D73), 3.5),
+    );
+    for (final (x, y, width) in [
+      (268.0, 80.0, 30.0),
+      (329.0, 90.0, 37.0),
+      (243.0, 101.0, 60.0),
+      (385.0, 103.0, 50.0),
+    ]) {
+      canvas.drawLine(
+        Offset(x, y),
+        Offset(x + width, y),
+        _pen(_waterline.withValues(alpha: .55), 1.5),
+      );
+    }
+    final boatX = 361 - 58 * Curves.easeInOut.transform(motion);
+    artwork.paint(
+      canvas,
+      Art.mooredBoat,
+      origin: Offset(boatX, 97),
+      scale: .72,
+    );
+    artwork.paint(
+      canvas,
+      Art.fool,
+      origin: Offset(196 + 30 * motion, 62),
+      scale: .86,
+    );
+    canvas.drawLine(const Offset(480, 23), const Offset(480, 60), _pen(ink, 5));
+    canvas.drawLine(const Offset(451, 23), const Offset(482, 23), _pen(ink, 5));
+    _bell(
+      canvas,
+      const Offset(451, 45),
+      scale: .84,
+      rung: rung,
+      swing: math.sin(motion * 6 * math.pi) * (1 - motion) * .39,
+    );
+    canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(BrokenRoadPainter oldDelegate) =>
+      artwork != oldDelegate.artwork ||
+      rung != oldDelegate.rung ||
+      motion != oldDelegate.motion;
+}
+
 class NightFishingPainter extends CustomPainter {
   const NightFishingPainter({
     required this.artwork,
@@ -937,10 +1027,23 @@ class TableauPainter extends CustomPainter {
       ..addRect(Rect.fromLTWH(0, 0, width, height));
     for (final cell in puzzle.masked) {
       final center = _center(cell);
-      pieceBounds.addRect(
-        Rect.fromCenter(center: center, width: _tile, height: _tile),
-      );
-      artwork.paint(canvas, Art.ruinedWall, origin: center);
+      final gap = Rect.fromCenter(center: center, width: _tile, height: _tile);
+      pieceBounds.addRect(gap);
+      if (puzzle.scene == PuzzleScene.brokenRoad) {
+        canvas.drawRect(gap, Paint()..color = blue);
+        canvas.drawLine(
+          center.translate(-30, -16),
+          center.translate(8, -16),
+          _pen(_waterline.withValues(alpha: .5), 2),
+        );
+        canvas.drawLine(
+          center.translate(-8, 16),
+          center.translate(32, 16),
+          _pen(_waterline.withValues(alpha: .4), 2),
+        );
+      } else {
+        artwork.paint(canvas, Art.ruinedWall, origin: center);
+      }
     }
     canvas.save();
     canvas.clipPath(pieceBounds);
@@ -996,7 +1099,10 @@ class TableauPainter extends CustomPainter {
         _paintDemonstration(canvas, demonstration!);
       }
       if (path.isNotEmpty) {
+        canvas.save();
+        canvas.clipPath(pieceBounds);
         _paintStroke(canvas, preview?.path ?? path, rejected ? rust : blue, 5);
+        canvas.restore();
         final stroke = preview;
         if (stroke != null && !stroke.isRectangle) {
           _paintAim(canvas, stroke, blue);
@@ -1168,8 +1274,7 @@ class TableauPainter extends CustomPainter {
     final outline = _path(points);
     canvas.drawPath(outline, _pen(paper, width + 5));
     canvas.drawPath(outline, _pen(color, width));
-    for (final (index, point) in points.indexed) {
-      if (puzzle.masked.contains(cells[index])) continue;
+    for (final point in points) {
       canvas.drawCircle(point, 29, _pen(paper, 6));
       canvas.drawCircle(point, 29, _pen(color, 3));
     }
@@ -1261,6 +1366,8 @@ void _paintFixture(
       );
     case TargetKind.pan:
       _scalePan(canvas, center, amount);
+    case TargetKind.bell:
+      _bell(canvas, center, rung: amount >= 1);
   }
   final aim = target.aimDirection;
   if (aim != null) {
@@ -1282,6 +1389,51 @@ Art _suitArt(Suit suit) => switch (suit) {
   Suit.sword => Art.sword,
   Suit.coin => Art.coin,
 };
+
+void _bell(
+  Canvas canvas,
+  Offset center, {
+  double scale = 1,
+  required bool rung,
+  double swing = 0,
+}) {
+  canvas.save();
+  canvas.translate(center.dx, center.dy);
+  canvas.scale(scale);
+  if (rung) {
+    for (final side in [-1.0, 1.0]) {
+      canvas.drawLine(
+        Offset(24 * side, -7),
+        Offset(31 * side, -11),
+        _pen(gold, 3),
+      );
+      canvas.drawLine(
+        Offset(25 * side, 4),
+        Offset(33 * side, 5),
+        _pen(gold, 3),
+      );
+    }
+  }
+  canvas.translate(0, -22);
+  canvas.rotate(swing);
+  canvas.translate(0, 22);
+  canvas.drawCircle(const Offset(0, -23), 4, _pen(ink, 2.5));
+  canvas.drawCircle(const Offset(0, 15), 5, Paint()..color = ink);
+  final shell = Path()
+    ..moveTo(-20, 12)
+    ..quadraticBezierTo(-13, 5, -12, -7)
+    ..quadraticBezierTo(-11, -19, 0, -19)
+    ..quadraticBezierTo(11, -19, 12, -7)
+    ..quadraticBezierTo(13, 5, 20, 12)
+    ..close();
+  canvas.drawPath(shell, Paint()..color = rung ? paleGold : gold);
+  canvas.drawPath(shell, _pen(ink, 2.5));
+  canvas.drawPath(
+    _path(const [Offset(-7, -11), Offset(-9, -2), Offset(-11, 5)]),
+    _pen(paleGold, 2.5),
+  );
+  canvas.restore();
+}
 
 void _marker(
   Canvas canvas,

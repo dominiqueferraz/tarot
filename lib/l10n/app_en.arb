@@ -103,6 +103,11 @@
   "nightFishingTitle": "Night Fishing",
   "nightFishingObjective": "Light the lamp and free the boat",
   "nightFishingStory": "The crew has water for the night. Light the harbour lamp and cut the mooring so they can set out.",
+  "brokenRoadTitle": "The Broken Road",
+  "brokenRoadObjective": "Ring the far-bank bell with Coins",
+  "brokenRoadStory": "Water has cut through the road. Connect Coins below the gap and aim at the far-bank bell to call the ferry.",
+  "farBankBell": "Far-bank bell",
+  "roadGap": "Water",
   "harbourLamp": "Harbour lamp",
   "mooringCord": "Mooring cord",
   "westFacingLamp": "West-facing lamp",
@@ -110,8 +115,6 @@
   "aimRight": "Accepts traces pointing right",
   "aimDown": "Accepts traces pointing down",
   "aimLeft": "Accepts traces pointing left",
-  "incomingSuits": "Arrivals above {cell}: {suits}",
-  "@incomingSuits": {"placeholders": {"cell": {"type": "String"}, "suits": {"type": "String"}}},
   "westFloat": "West float",
   "eastFloat": "East float",
   "fillTogetherHint": "That float spilled. Fill both together with a Cup rectangle or linked pour.",
@@ -150,6 +153,6 @@
   "@guideAim": {"placeholders": {"suit": {"type": "String"}}},
   "guideEnclose": "A rectangle of {suit} can score for targets it covers.",
   "@guideEnclose": {"placeholders": {"suit": {"type": "String"}}},
-  "guideRectangle": "A rectangle clears every suit inside and along its sides.",
+  "guideRectangle": "Avoid blockers on the outline. Clear every suit inside and along it.",
   "guideWildcard": "A target can match any suit at a corner."
 }

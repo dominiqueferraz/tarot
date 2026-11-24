@@ -19,6 +19,7 @@ import 'package:tarot_squared/main.dart';
 
 import 'fool_deal_test.dart'
     show
+        brokenRoadReplay,
         catalog,
         cells,
         fairSplit,
@@ -326,23 +327,64 @@ void main() {
     await tester.tap(find.text(english.viewFoolJourney));
     await tester.pumpAndSettle();
     expect(find.text(english.foolFragments(10, 10)), findsOneWidget);
-    expect(saves, ['cleared:010']);
+    expect(saves, ['011']);
 
     await start(saves.single);
     await openPhase(tester, night.id);
     for (final (trace, _, _) in nightFishingReplay) {
       await dragStroke(tester, trace, size: night.size);
     }
-    expect(find.text(english.continueJourney), findsOneWidget);
+    expect(find.text(english.nextPuzzle), findsOneWidget);
     expect(reward, findsNothing);
     expect(box, findsNothing);
-    expect(saves, ['cleared:010']);
+    expect(saves, ['011']);
 
-    await tester.tap(find.text(english.continueJourney));
+    await tester.tap(find.text(english.nextPuzzle));
+    await tester.pumpAndSettle();
+    expect(find.text(english.brokenRoadTitle), findsOneWidget);
+    await tester.tap(find.byTooltip(english.close));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('view-fool-journey')));
     await tester.pumpAndSettle();
     expect(find.text(english.foolFragments(10, 10)), findsOneWidget);
+  });
+
+  testWidgets('The Broken Road rings the bell with aimed Coin traces', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(360, 720);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(
+      TarotSquaredApp(
+        catalog: catalog,
+        artwork: artwork,
+        unlockedPuzzle: '011',
+      ),
+    );
+    await openPhase(tester, '011');
+    expect(find.text(english.brokenRoadObjective), findsOneWidget);
+    final scene = tester.getRect(find.byKey(const Key('broken-road-scene')));
+    final grid = tester.getRect(find.byKey(const Key('fool-grid')));
+    expect(
+      grid.top - scene.bottom,
+      closeTo(BoardStyle.spacing + BoardStyle.frameWidth * 2, .01),
+    );
+    expect(
+      find.bySemanticsLabel(english.labelWithDetail('C2', english.roadGap)),
+      findsOneWidget,
+    );
+    final bell = find.byKey(const Key('target-value-E4'));
+    await dragStroke(tester, 'B1 E1 E4 B4 B1');
+    expect(find.bySemanticsLabel(english.movesRemaining(14)), findsOneWidget);
+    expect(tester.widget<Text>(bell).data, english.targetProgress(0, 11));
+    for (final (trace, total) in brokenRoadReplay) {
+      await dragStroke(tester, trace);
+      expect(tester.widget<Text>(bell).data, english.targetProgress(total, 11));
+    }
+    expect(find.text(english.continueJourney), findsOneWidget);
+    expect(find.byKey(const Key('fragment-reward-box')), findsNothing);
   });
 
   testWidgets('shows the Cups suit and a brief, nonnumeric fading cue', (
